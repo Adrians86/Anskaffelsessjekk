@@ -1,0 +1,20 @@
+# The regime tree — the FIRST branch of every assessment, before any amounts.
+# Evaluation order matters: exemptions are checked before the default regimes.
+regimes:
+  - id: ART123
+    label: "EØS art. 123 — vesentlige sikkerhetsinteresser (unntak)"
+    description: >
+      Applies when essential national security interests justify an exemption
+      from FOSA/FOA. Consequence: RAF Del III documentation duty. The exemption
+      must be justified per procurement — never assumed by sector.
+  - id: FOSA
+    label: "Forsvars- og sikkerhetsanskaffelser (FOSA)"
+    description: >
+      Defence and security procurement under directive 2009/81/EF. Protocol duty
+      from 100k NOK. No national publication duty below EØS thresholds. The 500k
+      innslagspunkt of anskaffelsesloven does NOT apply here.
+  - id: FOA
+    label: "Klassisk sektor (anskaffelsesloven + FOA)"
+    description: >
+      Default regime for public procurement. Innslagspunkt 500k NOK from
+      2026-07-01 (100k before), national threshold 1.3M, EØS thresholds above.
