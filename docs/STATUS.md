@@ -25,3 +25,18 @@ edit old entries — append only.
 - Next planned step: Claude Code takes over local work — tasks 1–2 in CLAUDE.md
   (install fix verification + visual polish). Commercialization gate review: 2026-07-21
   (survey results decide the commercial track).
+
+---
+
+### 2026-07-08 · claude-code
+- Done: Task 1 (install verification) + Task 2 (visual polish complete):
+  - `.streamlit/config.toml`: navy #1F3A5F primary, gold #B08D2E accent theme
+  - Hjem.py: 2×2 feature cards with borders, centered layout, gold title underline
+  - 1_Fakturakontroll: verdict as colored blocks (st.success/st.warning/st.error)
+  - 4_Styringsinformasjon: metrics in bordered containers, horizontal Altair bar chart
+    (green/yellow/red by verdict)
+  - All pages: emoji removed from titles, footer added "Anskaffelsessjekk · AS North Advisory · Syntetiske data"
+  - git init, fetched origin/main, staged UI changes, committed with conventional commit message
+- Tests: 24 passed (pytest run post-changes, verified no logic regression)
+- Decisions needed / questions: none
+- Next planned step: Monitor for partner feedback on visual polish before commercialization gate (2026-07-21)
