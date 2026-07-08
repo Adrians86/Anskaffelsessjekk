@@ -1,0 +1,115 @@
+# Terskelverdier — verified against official sources, July 2026.
+# Rules are DATA: a change in the law is a new entry with validity dates,
+# never a code change. Amounts in NOK, excluding VAT.
+#
+# NOTE v1 scope: goods/services for state authorities (statlige myndigheter).
+# Works (bygge- og anleggskontrakter) and non-state EØS thresholds: next batch.
+
+# ---------- FOA (classic regime: anskaffelsesloven + forskrift) ----------
+
+- id: LOA_INNSLAGSPUNKT_PRE_2026H2
+  regime: FOA
+  valid_from: 2017-01-01
+  valid_to: 2026-06-30
+  when: {field: estimated_value, op: lt, value: 100000}
+  consequence: UTENFOR_LOVEN
+  citation: "Anskaffelsesloven § 2 (innslagspunkt 100 000 kr, t.o.m. 30.06.2026)"
+  citation_url: "https://lovdata.no/lov/2016-06-17-73/§2"
+
+- id: LOA_INNSLAGSPUNKT_2026
+  regime: FOA
+  valid_from: 2026-07-01
+  valid_to: null
+  when: {field: estimated_value, op: lt, value: 500000}
+  consequence: UTENFOR_LOVEN
+  citation: "Anskaffelsesloven § 2, endret ved lovvedtak 05.02.2026 (innslagspunkt 500 000 kr fra 01.07.2026)"
+  citation_url: "https://lovdata.no/lov/2016-06-17-73/§2"
+
+- id: FOA_DEL_I_PRE_2026H2
+  regime: FOA
+  valid_from: 2017-01-01
+  valid_to: 2026-06-30
+  when:
+    all:
+      - {field: estimated_value, op: gte, value: 100000}
+      - {field: estimated_value, op: lt, value: 1300000}
+  consequence: DEL_I_GRUNNLEGGENDE
+  citation: "FOA del I — grunnleggende prinsipper; ingen kunngjøringsplikt under nasjonal terskelverdi"
+  citation_url: "https://lovdata.no/forskrift/2016-08-12-974"
+
+- id: FOA_DEL_I_2026H2
+  regime: FOA
+  valid_from: 2026-07-01
+  valid_to: null
+  when:
+    all:
+      - {field: estimated_value, op: gte, value: 500000}
+      - {field: estimated_value, op: lt, value: 1300000}
+  consequence: DEL_I_GRUNNLEGGENDE
+  citation: "FOA del I — grunnleggende prinsipper; ingen kunngjøringsplikt under nasjonal terskelverdi"
+  citation_url: "https://lovdata.no/forskrift/2016-08-12-974"
+
+- id: FOA_NASJONAL_TERSKEL
+  regime: FOA
+  valid_from: 2017-01-01
+  valid_to: null
+  when:
+    all:
+      - {field: estimated_value, op: gte, value: 1300000}
+      - {field: estimated_value, op: lt, value: 1490000}
+  consequence: KUNNGJORING_DOFFIN_DEL_II
+  citation: "FOA del II — nasjonal terskelverdi 1,3 mill. kr; kunngjøringsplikt på Doffin"
+  citation_url: "https://lovdata.no/forskrift/2016-08-12-974"
+
+- id: FOA_EOS_STATLIG_2026
+  regime: FOA
+  valid_from: 2026-04-21
+  valid_to: null
+  when: {field: estimated_value, op: gte, value: 1490000}
+  consequence: EOS_PROSEDYRE_DEL_III
+  citation: "FOA del III — EØS-terskelverdi for statlige myndigheters vare-/tjenestekjøp: 1,49 mill. kr (fra 21.04.2026); kunngjøring Doffin + TED"
+  citation_url: "https://www.regjeringen.no/no/tema/naringsliv/konkurransepolitikk/offentlige-anskaffelser-/andre-kolonne/terskelverdier2/"
+
+# ---------- FOSA (defence and security procurement) ----------
+# NOTE: the 500k innslagspunkt does NOT apply to FOSA. Protocol duty from 100k.
+# No national kunngjøringsplikt below the EØS thresholds. A new lov om forsvars-
+# og sikkerhetsanskaffelser is in preparation (proposed innslagspunkt 300k) —
+# when adopted, it becomes a new dated entry here.
+
+- id: FOSA_PROTOKOLLPLIKT
+  regime: FOSA
+  valid_from: 2014-01-01
+  valid_to: null
+  when: {field: estimated_value, op: gte, value: 100000}
+  consequence: PROTOKOLLPLIKT
+  citation: "FOSA — protokollplikt for anskaffelser over 100 000 kr (vedlegg 3/4)"
+  citation_url: "https://lovdata.no/forskrift/2013-10-04-1185"
+
+- id: FOSA_UNDER_EOS_INGEN_KUNNGJORING
+  regime: FOSA
+  valid_from: 2014-01-01
+  valid_to: null
+  when: {field: estimated_value, op: lt, value: 5000000}
+  consequence: INGEN_NASJONAL_KUNNGJORINGSPLIKT
+  citation: "FOSA — ingen nasjonal kunngjøringsplikt under EØS-terskelverdiene (ulikt FOA)"
+  citation_url: "https://lovdata.no/forskrift/2013-10-04-1185"
+
+- id: FOSA_EOS_VARER_TJENESTER_2026
+  regime: FOSA
+  valid_from: 2026-04-21
+  valid_to: null
+  when: {field: estimated_value, op: gte, value: 5000000}
+  consequence: EOS_PROSEDYRE_FOSA
+  citation: "FOSA — EØS-terskelverdi varer/tjenester 5,0 mill. kr (fra 21.04.2026); prosedyre etter direktiv 2009/81/EF"
+  citation_url: "https://www.regjeringen.no/no/tema/naringsliv/konkurransepolitikk/offentlige-anskaffelser-/andre-kolonne/terskelverdier2/"
+
+# ---------- Art. 123 EEA exemption -> RAF Del III ----------
+
+- id: ART123_RAF_DEL_III
+  regime: ART123
+  valid_from: 2026-01-01
+  valid_to: null
+  when: {field: estimated_value, op: gte, value: 0}
+  consequence: RAF_DEL_III_DOKUMENTASJONSPLIKT
+  citation: "RAF del III — unntak etter EØS-avtalen art. 123 krever begrunnelse i protokollen og informasjon til leverandører (fra 01.01.2026)"
+  citation_url: "https://www.regjeringen.no/no/dokumenter/retningslinjer-for-anskaffelser-i-forsvarssektoren/"
