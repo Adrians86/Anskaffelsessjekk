@@ -1,6 +1,6 @@
 [theme]
 base = "light"
-primaryColor = "#1F3A5F"        # navy — brand color (matches project docs)
+primaryColor = "#1F3A5F"
 backgroundColor = "#FAFBFC"
 secondaryBackgroundColor = "#EEF2F6"
 textColor = "#1A1D21"

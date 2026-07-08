@@ -6,7 +6,7 @@ import streamlit as st
 from core.rules.engine import Facts, RulesEngine
 
 st.set_page_config(page_title="Terskelsjekk", page_icon="⚖️", layout="wide")
-st.title("⚖️ Terskelsjekk")
+st.title("Terskelsjekk")
 st.caption("Første steg er alltid valg av regime — beløpet avgjør aldri regimet. "
            "Reglene er versjonerte data med gyldighetsdatoer (per juli 2026).")
 
@@ -40,3 +40,6 @@ if st.button("Vurder", type="primary"):
             st.caption(f"Regel-ID: {h.rule_id} · Regime: {h.regime}")
     st.caption("Veiledende vurdering basert på registrerte regler — "
                "beslutningsstøtte, ikke juridisk rådgivning.")
+
+st.markdown("---")
+st.caption("🔒 Anskaffelsessjekk · AS North Advisory · Syntetiske data")

@@ -7,9 +7,8 @@ from core.models import Invoice, Supplier
 from core.reporting import check_invoice
 
 st.set_page_config(page_title="Fakturakontroll", page_icon="🧾", layout="wide")
-st.title("🧾 Fakturakontroll")
+st.title("Fakturakontroll")
 
-_BADGE = {"SAMSVAR": "✅ SAMSVAR", "TIL_VURDERING": "🟡 TIL VURDERING", "AVVIK": "🔴 AVVIK"}
 _SEV_ICON = {Severity.DEVIATION: "🔴", Severity.WARN: "🟡", Severity.INFO: "ℹ️"}
 
 with get_session() as session:
@@ -25,7 +24,13 @@ with get_session() as session:
         inv = session.get(Invoice, chosen)
         result = check_invoice(session, inv, actor="demo-bruker")
 
-        st.header(_BADGE[result.verdict.value])
+        if result.verdict.value == "SAMSVAR":
+            st.success("✅ SAMSVAR", icon="✓")
+        elif result.verdict.value == "TIL_VURDERING":
+            st.warning("🟡 TIL VURDERING", icon="⚠")
+        else:
+            st.error("🔴 AVVIK", icon="✗")
+
         if result.verdi_funnet:
             st.metric("Verdi funnet (avvik)", nok(result.verdi_funnet))
 
@@ -44,3 +49,6 @@ with get_session() as session:
 
         st.caption("Anbefaling — beslutningen tas av saksbehandler. "
                    "Kontrollen er logget i revisjonssporet.")
+
+st.markdown("---")
+st.caption("🔒 Anskaffelsessjekk · AS North Advisory · Syntetiske data")

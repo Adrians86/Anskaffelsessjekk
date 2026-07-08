@@ -5,7 +5,7 @@ from db import get_session, nok
 from core.models import Commitment, Contract, ContractLine, Supplier
 
 st.set_page_config(page_title="Avtaler og forpliktelser", page_icon="📋", layout="wide")
-st.title("📋 Avtaler og forpliktelser")
+st.title("Avtaler og forpliktelser")
 st.caption("Alle avtalte betingelser i ett register — formelle kontrakter OG bekreftede "
            "e-postavtaler. Dette er kontrollgrunnlaget for fakturakontrollen.")
 
@@ -43,3 +43,6 @@ with get_session() as session:
                     icon="📧" if c.source_type.value == "EMAIL" else "📄",
                 )
         st.divider()
+
+st.markdown("---")
+st.caption("🔒 Anskaffelsessjekk · AS North Advisory · Syntetiske data")
