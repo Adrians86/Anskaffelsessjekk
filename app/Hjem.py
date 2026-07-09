@@ -3,7 +3,7 @@ import streamlit as st
 st.set_page_config(page_title="Anskaffelsessjekk", page_icon="✅", layout="centered")
 
 st.title("Anskaffelsessjekk")
-st.markdown('<div style="border-bottom: 2px solid #B08D2E; margin: -10px 0 20px 0;"></div>', unsafe_allow_html=True)
+st.markdown('<div style="border-bottom: 3px solid #B08D2E; margin: -10px 0 20px 0;"></div>', unsafe_allow_html=True)
 
 st.subheader("KI-drevet kontroll av fakturaer, avtaler og anskaffelsesregelverk")
 st.markdown("*med full sporbarhet*")

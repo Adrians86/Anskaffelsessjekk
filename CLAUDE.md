@@ -26,8 +26,17 @@ and in `docs/ARCHITECTURE.md`. Your job: implement within this contract.
    Norwegian domain terms stay untranslated in code (rammeavtale, avrop, mottak, terskel).
 6. Synthetic data only — clearly labelled. Never introduce real supplier/invoice data.
 7. Audit trail is append-only.
-8. `pytest` must be green (currently 24 passed) before every commit. Run it before and after changes.
+8. `pytest` must be green (currently 26 passed) before every commit. Run it before and after changes.
 9. Conventional commit messages (feat/fix/test/docs/style/build).
+
+## Definition of DONE (for Claude Code agents)
+A task is **done** only when ALL four are true:
+- (a) `pytest` green (no red)
+- (b) Every touched Streamlit page actually executed/opened in browser (pytest does NOT cover app/ pages)
+- (c) Committed AND pushed to `origin/main` (local commits are not done)
+- (d) STATUS.md entry appended and pushed to `origin/main`
+
+Reporting "done" without all four is a process violation. A missing push is not a done task.
 
 ## Scope freeze — until the commercialization gate (2026-07-21)
 ALLOWED: visual polish of the Streamlit app, PDF protokoll export, bugfixes,
@@ -37,16 +46,25 @@ change, authentication, new modules/features, database migration (SQLite stays),
 external integrations, changes to core data model.
 
 ## Current tasks (updated by the strategic partner)
-1. **Fix local install if still broken**: `pip install -e ".[ui]"` must succeed in `.venv`
-   and `python -m streamlit run app/Hjem.py` must start. pyproject has explicit package
-   discovery since commit 535ab91.
-2. **Visual polish of the Streamlit app** (no logic changes, no core/ changes):
-   - palette from `.streamlit/config.toml`: navy #1F3A5F primary, gold #B08D2E accent only
-   - Hjem.py: four feature cards with `st.container(border=True)`; header with product
-     name and a thin gold rule under the title; `layout="centered"` on Hjem, wide elsewhere
-   - 1_Fakturakontroll: verdict as a colored block (st.success/st.warning/st.error), large text
-   - 4_Styringsinformasjon: metrics in bordered containers; replace bar_chart with a
-     horizontal bar (plotly or altair) colored green/yellow/red per verdict
-   - remove emoji from page titles (keep in sidebar); footer on every page:
-     “Anskaffelsessjekk · AS North Advisory · Syntetiske data”
-3. After each task: run pytest (24 passed), commit, append a STATUS.md entry.
+
+**BLOCKER FIX** — `app/pages/4_Styringsinformasjon.py`: mark_barh() does not exist in Altair;
+page crashes at runtime. Use mark_bar() with axes already swapped (→ horizontal). Replace
+deprecated `use_container_width=True` with responsive properties.
+
+**FIX** — `app/Hjem.py`: gold rule under title was lost (HTML div in gold #B08D2E, 3px).
+
+**NEW FEATURE** — PDF protokoll export (last missing MVP piece):
+- New module `core/reporting/protokoll.py` with `build_protokoll(session, invoice) -> bytes`
+- Use fpdf2 (add to pyproject deps)
+- Content in Norwegian: header “Anskaffelsesprotokoll — utkast”, invoice/supplier/order refs,
+  verdict, findings table (grunnlag/citations), verdi_funnet, rules_version, timestamp,
+  footer “Beslutningsstøtte — utkast generert av Anskaffelsessjekk. Kontrolleres og
+  godkjennes av saksbehandler.” No Streamlit imports in core.
+- UI: `st.download_button` (“Last ned protokoll (PDF)”) on 1_Fakturakontroll after check runs
+- Tests: `tests/test_protokoll.py` — returns non-empty bytes starting with %PDF and
+  produces different output for different invoices
+
+**UPDATE** — This CLAUDE.md contract:
+- Add “Definition of DONE” section (a/b/c/d above)
+- Replace “Current tasks” section with findings above
+- Update hard rule #8: pytest target is now 26 (not 24)

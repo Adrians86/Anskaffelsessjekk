@@ -4,7 +4,7 @@ from sqlmodel import select
 from db import get_session, nok
 from core.matching.findings import Severity
 from core.models import Invoice, Supplier
-from core.reporting import check_invoice
+from core.reporting import check_invoice, build_protokoll
 
 st.set_page_config(page_title="Fakturakontroll", page_icon="🧾", layout="wide")
 st.title("Fakturakontroll")
@@ -49,6 +49,14 @@ with get_session() as session:
 
         st.caption("Anbefaling — beslutningen tas av saksbehandler. "
                    "Kontrollen er logget i revisjonssporet.")
+
+        pdf_bytes = build_protokoll(session, inv)
+        st.download_button(
+            label="📥 Last ned protokoll (PDF)",
+            data=pdf_bytes,
+            file_name=f"Anskaffelsesprotokoll_{inv.invoice_number}.pdf",
+            mime="application/pdf"
+        )
 
 st.markdown("---")
 st.caption("🔒 Anskaffelsessjekk · AS North Advisory · Syntetiske data")

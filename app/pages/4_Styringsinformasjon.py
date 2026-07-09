@@ -51,11 +51,11 @@ with get_session() as session:
     color_scale = alt.Scale(domain=["SAMSVAR", "TIL VURDERING", "AVVIK"],
                             range=["#2ECC71", "#F39C12", "#E74C3C"])
 
-    chart = alt.Chart(chart_data).mark_barh().encode(
+    chart = alt.Chart(chart_data).mark_bar().encode(
         y=alt.Y("Vurdering:N", sort=["SAMSVAR", "TIL VURDERING", "AVVIK"]),
         x=alt.X("Antall:Q", title="Antall fakturaer"),
         color=alt.Color("Vurdering:N", scale=color_scale, legend=None)
-    ).properties(height=200, width=600)
+    ).properties(height=200)
 
     st.altair_chart(chart, use_container_width=True)
 
