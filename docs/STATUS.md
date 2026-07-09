@@ -59,3 +59,23 @@ edit old entries — append only.
 - Decisions needed / questions: none
 - Next planned step: Verify Streamlit pages open/execute in browser (Definition of DONE rule b)
   before push; then push to origin/main with STATUS.md entry
+
+---
+
+### 2026-07-09 · claude-code (design tokens)
+- Done: Brand design tokens documented and verified:
+  - Create docs/BRAND.md with AS North design system (primary: navy #1F3A5F, accent: gold #B08D2E)
+  - Verify .streamlit/config.toml against tokens: ALL CORRECT
+    - primaryColor: #1F3A5F ✓
+    - backgroundColor: #FAFBFC ✓
+    - secondaryBackgroundColor: #EEF2F6 ✓
+    - textColor: #1A1D21 ✓
+  - Verify Hjem.py gold rule: #B08D2E (3px) ✓
+  - Fix Styringsinformasjon chart colors to brand spec:
+    - SAMSVAR: #2E7D32 (was #2ECC71) ✓
+    - TIL_VURDERING: #B58900 (was #F39C12) ✓
+    - AVVIK: #C62828 (was #E74C3C) ✓
+  - Update requirements.txt with fpdf2>=2.8 for Streamlit Cloud
+- Tests: 26 passed (color fixes do not affect logic)
+- Decisions needed / questions: none
+- Next planned step: Push to origin/main
