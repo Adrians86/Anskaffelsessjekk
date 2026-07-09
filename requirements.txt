@@ -1,4 +1,5 @@
 # Streamlit Community Cloud deployment dependencies
 sqlmodel>=0.0.16
 pyyaml>=6.0
+fpdf2>=2.8
 streamlit>=1.35

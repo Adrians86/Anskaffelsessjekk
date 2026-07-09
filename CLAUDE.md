@@ -35,8 +35,11 @@ A task is **done** only when ALL four are true:
 - (b) Every touched Streamlit page actually executed/opened in browser (pytest does NOT cover app/ pages)
 - (c) Committed AND pushed to `origin/main` (local commits are not done)
 - (d) STATUS.md entry appended and pushed to `origin/main`
+- (e) Every new dependency added to BOTH `pyproject.toml` AND `requirements.txt` in the same change
+  (pyproject drives local/editable installs and tests; requirements.txt drives Streamlit Community
+  Cloud deploy — a dependency missing from either surface is a runtime crash in that environment)
 
-Reporting "done" without all four is a process violation. A missing push is not a done task.
+Reporting "done" without all five is a process violation. A missing push is not a done task.
 
 ## Scope freeze — until the commercialization gate (2026-07-21)
 ALLOWED: visual polish of the Streamlit app, PDF protokoll export, bugfixes,

@@ -49,7 +49,7 @@ with get_session() as session:
     ])
 
     color_scale = alt.Scale(domain=["SAMSVAR", "TIL VURDERING", "AVVIK"],
-                            range=["#2ECC71", "#F39C12", "#E74C3C"])
+                            range=["#2E7D32", "#B58900", "#C62828"])
 
     chart = alt.Chart(chart_data).mark_bar().encode(
         y=alt.Y("Vurdering:N", sort=["SAMSVAR", "TIL VURDERING", "AVVIK"]),
