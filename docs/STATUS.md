@@ -40,3 +40,22 @@ edit old entries — append only.
 - Tests: 24 passed (pytest run post-changes, verified no logic regression)
 - Decisions needed / questions: none
 - Next planned step: Monitor for partner feedback on visual polish before commercialization gate (2026-07-21)
+
+---
+
+### 2026-07-09 · claude-code
+- Done: Partner review feedback applied (BLOCKER FIX + FIX + NEW FEATURE + DOCS):
+  - BLOCKER FIX (4_Styringsinformasjon): mark_barh() → mark_bar(), horizontal bar chart fixed
+  - FIX (Hjem.py): gold title underline restored (3px #B08D2E HTML div)
+  - NEW FEATURE (PDF protokoll export):
+    - core/reporting/protokoll.py: build_protokoll(session, invoice) → bytes (fpdf2-based)
+    - Content: Norwegian header, invoice/supplier/order refs, verdict, findings table,
+      verdi_funnet, rules_version, timestamp, footer
+    - UI: st.download_button on 1_Fakturakontroll (after check runs)
+    - Tests: 2 new tests in test_protokoll.py (PDF magic check, different-invoice check)
+  - DOCS: CLAUDE.md contract updated with "Definition of DONE" (a/b/c/d) and current tasks
+  - Added fpdf2>=2.8 to pyproject.toml dependencies
+- Tests: 26 passed (up from 24; new test_protokoll.py)
+- Decisions needed / questions: none
+- Next planned step: Verify Streamlit pages open/execute in browser (Definition of DONE rule b)
+  before push; then push to origin/main with STATUS.md entry
