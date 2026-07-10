@@ -79,3 +79,24 @@ edit old entries — append only.
 - Tests: 26 passed (color fixes do not affect logic)
 - Decisions needed / questions: none
 - Next planned step: Push to origin/main
+
+---
+
+### 2026-07-10 · claude-code
+- Done: Implementation Brief T1–T8 (demo re-staging after buyer-perspective audit):
+  - **T1** — Hjem.py result-first hero: live F-1003 example, verdi funnet metric, modules below fold
+  - **T2** — Fakturakontroll.py audit card: preselect from Hjem, auto-run, large verdict + amount,
+    findings as cards with "Anbefalt handling" (PRICE_ABOVE_AGREED → kreditnota, etc.)
+  - **T3** — Avtaler og forpliktelser: e-mail commitments marked 📧 (existing in code)
+  - **T4** — Terskelsjekk.py: visual 3-step path (regime → terskel → konsekvens) with arrows
+  - **T5** — Styringsinformasjon.py: verdi funnet as hero metric, CSV export (findings per row),
+    per-supplier breakdown reordered
+  - **T6** — New page app/pages/5_Sikkerhet.py: static content on data, audit trail, architecture,
+    roadmap (DPIA, SSO, on-prem, forsvarssektoren)
+  - **T7** — Consistent footer: Adrian's bio + contact + "Syntetiske data" on all pages
+  - **T8** — CLAUDE.md updated with Implementation Brief note; Current tasks superseded
+  - New file app/texts.py: UI text mappings (RECOMMENDED_ACTIONS dict for findings)
+- Tests: 26 passed (no logic changes)
+- Decisions needed / questions: none
+- Next planned step: Uruchomić pytest, verify all Streamlit pages on localhost, commit, push,
+  test on live Streamlit Cloud

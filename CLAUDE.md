@@ -48,26 +48,12 @@ FORBIDDEN without partner approval (ask via STATUS.md): Next.js or any UI framew
 change, authentication, new modules/features, database migration (SQLite stays),
 external integrations, changes to core data model.
 
-## Current tasks (updated by the strategic partner)
+## Current tasks (updated by the strategic partner — Implementation Brief T1–T8, 2026-07-10)
 
-**BLOCKER FIX** — `app/pages/4_Styringsinformasjon.py`: mark_barh() does not exist in Altair;
-page crashes at runtime. Use mark_bar() with axes already swapped (→ horizontal). Replace
-deprecated `use_container_width=True` with responsive properties.
+**T1–T7 supersede all previous polish tasks.** Definition of DONE (a–e) applies to every task.
+Work completed in order: Hjem hero page (T1), Fakturakontroll audit card with preselection (T2),
+Terskelsjekk visual steps (T4), Styringsinformasjon with CSV export (T5), new Sikkerhet page (T6),
+consistent footer and chrome (T7). No core/ changes except T5 CSV helper at UI level (textoption).
 
-**FIX** — `app/Hjem.py`: gold rule under title was lost (HTML div in gold #B08D2E, 3px).
-
-**NEW FEATURE** — PDF protokoll export (last missing MVP piece):
-- New module `core/reporting/protokoll.py` with `build_protokoll(session, invoice) -> bytes`
-- Use fpdf2 (add to pyproject deps)
-- Content in Norwegian: header “Anskaffelsesprotokoll — utkast”, invoice/supplier/order refs,
-  verdict, findings table (grunnlag/citations), verdi_funnet, rules_version, timestamp,
-  footer “Beslutningsstøtte — utkast generert av Anskaffelsessjekk. Kontrolleres og
-  godkjennes av saksbehandler.” No Streamlit imports in core.
-- UI: `st.download_button` (“Last ned protokoll (PDF)”) on 1_Fakturakontroll after check runs
-- Tests: `tests/test_protokoll.py` — returns non-empty bytes starting with %PDF and
-  produces different output for different invoices
-
-**UPDATE** — This CLAUDE.md contract:
-- Add “Definition of DONE” section (a/b/c/d above)
-- Replace “Current tasks” section with findings above
-- Update hard rule #8: pytest target is now 26 (not 24)
+After T1–T7: append STATUS.md entry and push to origin/main. Verify on live Streamlit Cloud URL
+(auto-redeploy after push) — open every page including new Sikkerhet and test PDF + CSV downloads.
