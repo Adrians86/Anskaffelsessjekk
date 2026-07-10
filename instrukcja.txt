@@ -1,0 +1,24 @@
+SpareParts Web - instrukcja i raport
+====================================
+
+Data: 2026-07-09
+Projekt: D:\spareparts-web
+
+Co zrobiono:
+- Utworzono pełną strukturę projektu Next.js w folderze spareparts-web.
+- Dodano pliki aplikacji w katalogu src/app: layout, page, login, dashboard, upload, rop oraz API routes.
+- Dodano obsługę Supabase SSR, auth flow, setup organizacji oraz import danych.
+- Dodano parser plików CSV/XLSX, mapowanie kolumn i prosty silnik ROP.
+- Dodano stylowanie Tailwind oraz podstawowe komponenty UI.
+- Zainstalowano zależności npm wymagane do uruchomienia aplikacji.
+
+Wykonane testy:
+- Instalacja zależności: npm install -> zakończono sukcesem.
+- Zainstalowano 127 pakietów.
+- Nie wykryto błędów instalacji.
+
+Uwagi:
+- Aplikacja jest gotowa do uruchomienia lokalnego przez komendę:
+  npm run dev
+- Aby funkcje logowania/importu działały w pełni, należy w pliku .env.local uzupełnić poprawny klucz anon Supabase.
+- Jeśli pojawią się błędy związane z Supabase, sprawdź SQL z plików supabase_schema.sql i supabase_schema_patch_v2.sql.

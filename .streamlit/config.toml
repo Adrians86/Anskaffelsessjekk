@@ -1,0 +1,11 @@
+[theme]
+primaryColor = "#1F3A5F"
+backgroundColor = "#FAFBFC"
+secondaryBackgroundColor = "#EEF2F6"
+textColor = "#1A1D21"
+
+[colors]
+hjem_gold_rule = "#B08D2E"
+styringsinformasjon_samsvar = "#2E7D32"
+styringsinformasjon_til_vurdering = "#B58900"
+styringsinformasjon_avvik = "#C62828"
