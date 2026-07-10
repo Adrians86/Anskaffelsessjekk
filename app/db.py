@@ -2,10 +2,13 @@
 
 One in-memory engine per server process, seeded once with BOTH synthetic
 scenarios. ALL DATA IS SYNTHETIC — this is a demo, not a production store.
+StaticPool pins every thread to the single in-memory connection —
+required on Streamlit Cloud, where pages run in separate threads.
 """
 from __future__ import annotations
 
 import streamlit as st
+from sqlalchemy.pool import StaticPool
 from sqlmodel import Session, SQLModel, create_engine
 
 from core.synth import scenario_deler, scenario_konsulent
@@ -14,7 +17,9 @@ from core.synth import scenario_deler, scenario_konsulent
 @st.cache_resource
 def get_engine():
     engine = create_engine(
-        "sqlite://", connect_args={"check_same_thread": False}
+        "sqlite://",
+        connect_args={"check_same_thread": False},
+        poolclass=StaticPool,
     )
     SQLModel.metadata.create_all(engine)
     with Session(engine) as s:
