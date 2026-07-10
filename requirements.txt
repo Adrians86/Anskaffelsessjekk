@@ -3,3 +3,4 @@ sqlmodel>=0.0.16
 pyyaml>=6.0
 fpdf2>=2.8
 streamlit>=1.35
+# install this repo as a package (core) - required on Streamlit Cloud
