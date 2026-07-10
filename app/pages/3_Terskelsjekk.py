@@ -29,15 +29,32 @@ if st.button("Vurder", type="primary"):
     hits = RulesEngine().evaluate(
         Facts(regime=regime, estimated_value=Decimal(value), assessment_date=on)
     )
+
+    st.markdown("---")
+    c1, c2, c3 = st.columns(3)
+    with c1:
+        with st.container(border=True):
+            st.markdown(f"**1. Regime**\n{_REGIMES[regime]}")
+    with c2:
+        st.markdown("→", help="Beløp avgjør aldri regime")
+    with c3:
+        with st.container(border=True):
+            threshold = "✓ Vilkår oppfylt" if value > 500000 else "✓ Under terskel"
+            st.markdown(f"**2. Terskel**\n{threshold}")
+
     if not hits:
         st.warning("Ingen regler slo til for denne kombinasjonen — sjekk regime og dato.")
-    for h in hits:
-        st.markdown(f"### {h.consequence.replace('_', ' ')}")
-        with st.expander("Hvorfor?", expanded=True):
-            st.markdown(f"**Hjemmel:** {h.citation}")
-            if h.citation_url:
-                st.markdown(f"[Les kilden]({h.citation_url})")
-            st.caption(f"Regel-ID: {h.rule_id} · Regime: {h.regime}")
+    else:
+        st.markdown("---")
+        for h in hits:
+            st.markdown(f"### **3. Konsekvens: {h.consequence.replace('_', ' ')}**")
+            with st.expander("Hjemmel og begrunnelse", expanded=True):
+                st.markdown(f"**Hjemmel:** {h.citation}")
+                if h.citation_url:
+                    st.markdown(f"[Les kilden]({h.citation_url})")
+                st.caption(f"Regel-ID: {h.rule_id} · Regime: {h.regime}")
+
+    st.caption("**Regimet vurderes ALLTID før beløpet — beløp avgjør aldri regime.**")
     st.caption("Veiledende vurdering basert på registrerte regler — "
                "beslutningsstøtte, ikke juridisk rådgivning.")
 
