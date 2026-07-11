@@ -4,7 +4,7 @@ primaryColor = "#1F3A5F"
 backgroundColor = "#FAFBFC"
 secondaryBackgroundColor = "#EEF2F6"
 textColor = "#1A1D21"
-font = "sans serif"
+font = "inter"
 
 [browser]
 gatherUsageStats = false

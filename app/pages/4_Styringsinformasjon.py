@@ -39,7 +39,12 @@ with get_session() as session:
                 "Grunnlag": f.citation
             })
 
-    st.metric("Verdi funnet i demoporteføljen", nok(total_verdi), delta=None)
+    col_hero_left, col_hero_right = st.columns(2)
+    with col_hero_left:
+        st.metric("Verdi funnet i demoporteføljen", nok(total_verdi), delta=None)
+    with col_hero_right:
+        avg_deviation = total_verdi / len(invoices) if invoices else 0
+        st.metric("Gjennomsnittlich avvik per faktura", nok(avg_deviation), delta=None)
 
     col_pdf, col_csv = st.columns(2)
     with col_csv:
