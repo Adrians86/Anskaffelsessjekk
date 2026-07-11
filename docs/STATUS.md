@@ -100,3 +100,14 @@ edit old entries — append only.
 - Decisions needed / questions: none
 - Next planned step: Uruchomić pytest, verify all Streamlit pages on localhost, commit, push,
   test on live Streamlit Cloud
+
+---
+
+### 2026-07-10 · claude-code (T9 visual refinements)
+- Done: Visual refinements T9 per partner spec:
+  - **(A) Visual hierarchy**: Inter font in .streamlit/config.toml; 8px grid via consistent spacing
+  - **(C) Data presentation**: Gjennomsnittlich avvik per faktura metric on Styringsinformasjon
+  - **Notes**: B (build date footer) deferred to next phase; breadcrumbs rejected per spec
+- Tests: 26 passed (no logic changes)
+- Decisions needed / questions: none
+- Next planned step: Push to origin/main, verify on live Streamlit Cloud
