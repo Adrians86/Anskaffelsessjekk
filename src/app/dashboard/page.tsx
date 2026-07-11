@@ -1,18 +1,8 @@
 'use client'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { AlertTriangle, Package, TrendingDown, DollarSign, Tag, Upload } from 'lucide-react'
 import Link from 'next/link'
 import type { DashboardStats } from '@/lib/types'
-
-const MOCK_STATS: DashboardStats = {
-  total_materials: 64,
-  critical_count: 3,
-  watch_count: 7,
-  ok_count: 54,
-  frozen_capital_nok: 0,
-  active_promotions: 0,
-  last_import: '2026-06-01',
-}
 
 function KpiCard({ label, value, sub, accent, icon: Icon }: { label: string; value: string | number; sub?: string; accent: 'gold' | 'red' | 'green' | 'yellow' | 'orange'; icon: React.ElementType }) {
   const colors = { gold: 'border-t-[#C9A84C]', red: 'border-t-red-500', green: 'border-t-green-500', yellow: 'border-t-yellow-400', orange: 'border-t-orange-500' }
@@ -32,9 +22,10 @@ function KpiCard({ label, value, sub, accent, icon: Icon }: { label: string; val
 }
 
 function StatusBar({ critical, watch, ok, total }: { critical: number; watch: number; ok: number; total: number }) {
-  const pCrit = (critical / total) * 100
-  const pWatch = (watch / total) * 100
-  const pOk = (ok / total) * 100
+  const denom = total > 0 ? total : 1
+  const pCrit = (critical / denom) * 100
+  const pWatch = (watch / denom) * 100
+  const pOk = (ok / denom) * 100
   return (
     <div className="mt-2">
       <div className="flex h-2 rounded-full overflow-hidden gap-0.5">
@@ -66,26 +57,58 @@ function QuickAction({ href, icon: Icon, label, desc, color }: { href: string; i
 }
 
 export default function DashboardPage() {
-  const [stats] = useState<DashboardStats>(MOCK_STATS)
+  const [stats, setStats] = useState<DashboardStats | null>(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    fetch('/api/dashboard')
+      .then(r => r.json())
+      .then(d => { setStats(d.stats || null); setLoading(false) })
+      .catch(() => setLoading(false))
+  }, [])
+
+  if (loading) {
+    return <div className="p-8 max-w-7xl mx-auto text-[#8899BB]">Loading dashboard…</div>
+  }
+
+  const s: DashboardStats = stats ?? { total_materials: 0, critical_count: 0, watch_count: 0, ok_count: 0, rop_total: 0, frozen_capital_nok: 0, active_promotions: 0, last_import: null }
+  const ropTotal = s.rop_total ?? (s.critical_count + s.watch_count + s.ok_count)
+
+  if (s.total_materials === 0) {
+    return (
+      <div className="p-8 max-w-7xl mx-auto">
+        <div className="mb-8">
+          <h1 className="text-2xl font-bold text-[#E8EDF5]">Dashboard</h1>
+          <p className="text-[#8899BB] text-sm mt-1">AS North Advisory · SpareParts AI</p>
+        </div>
+        <div className="card-dark p-12 text-center border-dashed">
+          <Upload size={40} className="text-[#C9A84C] mx-auto mb-4 opacity-60" />
+          <h3 className="text-[#E8EDF5] font-semibold text-lg mb-2">Importer data for å komme i gang</h3>
+          <p className="text-[#8899BB] text-sm mb-6 max-w-sm mx-auto">Upload your SAP MB51 (movement history) or MB52 (stock snapshot) to start the analysis.</p>
+          <Link href="/dashboard/upload" className="btn-primary inline-block">Upload First File</Link>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="p-8 max-w-7xl mx-auto">
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-[#E8EDF5]">Dashboard</h1>
-        <p className="text-[#8899BB] text-sm mt-1">AS North Advisory · SpareParts AI · {stats.last_import ? `Last import: ${stats.last_import}` : 'No data imported yet'}</p>
+        <p className="text-[#8899BB] text-sm mt-1">AS North Advisory · SpareParts AI · {s.last_import ? `Last import: ${s.last_import}` : 'No import logged yet'}</p>
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        <KpiCard label="Total Materials" value={stats.total_materials} sub="In warehouse" accent="gold" icon={Package} />
-        <KpiCard label="Order Now / Out" value={stats.critical_count} sub="Immediate action" accent="red" icon={AlertTriangle} />
-        <KpiCard label="Monitor" value={stats.watch_count} sub="Order soon" accent="yellow" icon={TrendingDown} />
-        <KpiCard label="Frozen Capital" value={stats.frozen_capital_nok > 0 ? `${stats.frozen_capital_nok.toLocaleString('no-NO')} NOK` : '—'} sub="Upload MB52 for value" accent="orange" icon={DollarSign} />
+        <KpiCard label="Total Materials" value={s.total_materials} sub="In warehouse" accent="gold" icon={Package} />
+        <KpiCard label="Order Now / Out" value={s.critical_count} sub="Immediate action" accent="red" icon={AlertTriangle} />
+        <KpiCard label="Monitor" value={s.watch_count} sub="Order soon" accent="yellow" icon={TrendingDown} />
+        <KpiCard label="Frozen Capital" value={s.frozen_capital_nok > 0 ? `${s.frozen_capital_nok.toLocaleString('no-NO')} NOK` : '—'} sub="Upload MB52 for value" accent="orange" icon={DollarSign} />
       </div>
 
-      {stats.total_materials > 0 && (
+      {ropTotal > 0 && (
         <div className="card-dark p-5 mb-8">
           <div className="section-title">Stock Health Overview</div>
-          <StatusBar critical={stats.critical_count} watch={stats.watch_count} ok={stats.ok_count} total={stats.total_materials} />
+          <StatusBar critical={s.critical_count} watch={s.watch_count} ok={s.ok_count} total={ropTotal} />
         </div>
       )}
 
@@ -93,17 +116,7 @@ export default function DashboardPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 mb-8">
         <QuickAction href="/dashboard/upload" icon={Upload} label="Import SAP Data" desc="Upload MB51 or MB52 file" color="text-[#C9A84C]" />
         <QuickAction href="/dashboard/rop" icon={TrendingDown} label="View ROP Results" desc="Reorder points & actions" color="text-red-400" />
-        <QuickAction href="/dashboard/promotions" icon={Tag} label="Create Promotion" desc="AI-generated campaigns for dead stock" color="text-green-400" />
       </div>
-
-      {stats.total_materials === 0 && (
-        <div className="card-dark p-12 text-center border-dashed">
-          <Upload size={40} className="text-[#C9A84C] mx-auto mb-4 opacity-60" />
-          <h3 className="text-[#E8EDF5] font-semibold text-lg mb-2">No data yet</h3>
-          <p className="text-[#8899BB] text-sm mb-6 max-w-sm mx-auto">Upload your SAP MB51 (movement history) or MB52 (stock snapshot) to start the analysis.</p>
-          <Link href="/dashboard/upload" className="btn-primary inline-block">Upload First File</Link>
-        </div>
-      )}
     </div>
   )
 }

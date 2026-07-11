@@ -71,7 +71,8 @@ export interface DashboardStats {
   critical_count: number
   watch_count: number
   ok_count: number
+  rop_total?: number
   frozen_capital_nok: number
   active_promotions: number
-  last_import?: string
+  last_import?: string | null
 }

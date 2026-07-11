@@ -1,19 +1,12 @@
 'use client'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { LayoutDashboard, Package, TrendingUp, Calendar, BarChart3, AlertTriangle, Tag, ClipboardCheck, Upload, Settings, LogOut } from 'lucide-react'
+import { LayoutDashboard, TrendingUp, Upload, LogOut } from 'lucide-react'
 
 const NAV = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/dashboard/upload', label: 'Import Data', icon: Upload },
   { href: '/dashboard/rop', label: 'ROP & Orders', icon: TrendingUp },
-  { href: '/dashboard/stock', label: 'Stock', icon: Package },
-  { href: '/dashboard/aging', label: 'Aging', icon: Calendar },
-  { href: '/dashboard/abc', label: 'ABC Analysis', icon: BarChart3 },
-  { href: '/dashboard/anomalies', label: 'Anomalies', icon: AlertTriangle },
-  { href: '/dashboard/promotions', label: 'Promotions', icon: Tag },
-  { href: '/dashboard/audit', label: 'ISO Audit', icon: ClipboardCheck },
-  { href: '/dashboard/settings', label: 'Settings', icon: Settings },
 ]
 
 const LANG_FLAGS: Record<string, string> = { EN: '🇬🇧', NO: '🇳🇴', PL: '🇵🇱' }
