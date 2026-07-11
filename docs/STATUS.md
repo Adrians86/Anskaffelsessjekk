@@ -111,3 +111,19 @@ edit old entries — append only.
 - Tests: 26 passed (no logic changes)
 - Decisions needed / questions: none
 - Next planned step: Push to origin/main, verify on live Streamlit Cloud
+
+---
+
+### 2026-07-11 · claude-code (Streamlit app startup fix)
+- Done: BLOCKER FIX — app no longer starts due to two Streamlit API errors:
+  - **Error 1 (Hjem.py)**: st.switch_page("app/pages/1_Fakturakontroll.py") → st.switch_page("pages/1_Fakturakontroll.py")
+    (Streamlit expects path relative to app directory, not repo root)
+  - **Error 2 (Hjem.py + 1_Fakturakontroll.py)**: st.success/st.warning/st.error icon parameter rejected Unicode
+    chars (✓, ⚠, ✗). Removed icon parameter to use emoji in text only (✅, 🟡, 🔴).
+  - Fixed 4 locations: Hjem.py lines 29–33, 47; 1_Fakturakontroll.py lines 37–44
+  - Local commit: 78bebe08 (fix: remove invalid icon parameters from alert functions)
+- Tests: 26 passed (no logic changes)
+- Decisions needed / questions: none
+- Next planned step: Verify git push succeeds; start Streamlit app on localhost:8501;
+  test all pages (Hjem, Fakturakontroll, Avtaler, Terskelsjekk, Styringsinformasjon, Sikkerhet);
+  verify PDF + CSV downloads; then test live URL after auto-redeploy
