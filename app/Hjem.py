@@ -26,11 +26,11 @@ with get_session() as session:
         with col1:
             with st.container(border=True):
                 if check.verdict.value == "SAMSVAR":
-                    st.success("✅ SAMSVAR", icon="✓")
+                    st.success("✅ SAMSVAR")
                 elif check.verdict.value == "TIL_VURDERING":
-                    st.warning("🟡 TIL VURDERING — 12 000 kr over avtalt", icon="⚠")
+                    st.warning("🟡 TIL VURDERING — 12 000 kr over avtalt")
                 else:
-                    st.error(f"🔴 AVVIK — {nok(check.verdi_funnet)}", icon="✗")
+                    st.error(f"🔴 AVVIK — {nok(check.verdi_funnet)}")
 
                 st.markdown("**Prisskandal.**")
                 if check.findings:
@@ -44,7 +44,7 @@ with get_session() as session:
 
                 if st.button("Se hele analysen →", type="primary", use_container_width=True):
                     st.session_state.preselect_invoice = f1003.id
-                    st.switch_page("app/pages/1_Fakturakontroll.py")
+                    st.switch_page("pages/1_Fakturakontroll.py")
 
         with col2:
             total_verdi = sum(float(inv.total_ex_vat) for inv in invoices)

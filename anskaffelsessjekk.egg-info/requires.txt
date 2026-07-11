@@ -1,0 +1,12 @@
+sqlmodel>=0.0.16
+pyyaml>=6.0
+fpdf2>=2.8
+
+[dev]
+pytest>=8.0
+pytest-cov>=5.0
+ruff>=0.4
+mypy>=1.10
+
+[ui]
+streamlit>=1.35

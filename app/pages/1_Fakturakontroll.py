@@ -34,14 +34,14 @@ with get_session() as session:
         result = check_invoice(session, inv, actor="demo-bruker")
 
         if result.verdict.value == "SAMSVAR":
-            st.success("✅ SAMSVAR", icon="✓")
+            st.success("✅ SAMSVAR")
         elif result.verdict.value == "TIL_VURDERING":
             if result.verdi_funnet:
-                st.warning(f"🟡 TIL VURDERING — {nok(result.verdi_funnet)} over avtalt", icon="⚠")
+                st.warning(f"🟡 TIL VURDERING — {nok(result.verdi_funnet)} over avtalt")
             else:
-                st.warning("🟡 TIL VURDERING", icon="⚠")
+                st.warning("🟡 TIL VURDERING")
         else:
-            st.error(f"🔴 AVVIK — {nok(result.verdi_funnet)}", icon="✗")
+            st.error(f"🔴 AVVIK — {nok(result.verdi_funnet)}")
 
         if not result.findings:
             st.success("Ingen funn. Fakturaen samsvarer med bestilling, mottak og "

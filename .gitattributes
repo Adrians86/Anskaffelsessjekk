@@ -1,0 +1,2 @@
+# Normalize line endings to LF in the repository (kills CRLF churn on Windows checkouts)
+* text=auto eol=lf

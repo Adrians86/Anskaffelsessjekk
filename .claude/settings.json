@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(curl -s http://localhost:8501)",
+      "Bash(cd \"d:\\\\Anskaffelsessjekk\" && sed -i 's|st.caption\\(\"🔒 Anskaffelsessjekk · AS North Advisory · Adrian Śliwa.*|from app.texts import FOOTER, VERSION, BUILD_DATE\\\\nst.caption\\(f\"{FOOTER} · Built {BUILD_DATE}\"\\)|g' app/Hjem.py app/pages/*.py)",
+      "PowerShell(Get-Process -Name streamlit -ErrorAction SilentlyContinue)",
+      "Bash(python -m pytest --tb=short -v)"
+    ],
+    "additionalDirectories": [
+      "D:\\Anskaffelsessjekk\\app\\pages"
+    ]
+  }
+}
