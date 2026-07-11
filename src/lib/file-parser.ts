@@ -193,3 +193,52 @@ export function applyMapping(parsed: ParsedFile, mapping: MappingResult): Mapped
 
   return results
 }
+
+export interface MappingIssue {
+  field: SemanticField
+  level: 'error' | 'warn'
+  message: string
+}
+
+export function validateMapping(parsed: ParsedFile, mapping: MappingResult): MappingIssue[] {
+  const issues: MappingIssue[] = []
+  const sample = parsed.rows.slice(0, 20)
+  const colVals = (idx: number) => sample.map(r => String(r[idx] ?? '').trim()).filter(Boolean)
+
+  const required: [SemanticField, string][] = [
+    ['material_number', 'Material Number'],
+    ['date', 'Date'],
+    ['quantity', 'Quantity'],
+  ]
+  for (const [f, label] of required) {
+    if (mapping[f] == null) {
+      issues.push({ field: f, level: 'error', message: `${label} is not mapped yet. Pick the matching column from the dropdown.` })
+    }
+  }
+
+  if (mapping.date != null) {
+    const vals = colVals(mapping.date.column_index)
+    const hits = vals.filter(v => /^\d{4}-\d{2}-\d{2}/.test(v) || /^\d{1,2}[.\-/]\d{1,2}[.\-/]\d{4}/.test(v)).length
+    if (vals.length && hits / vals.length < 0.5) {
+      issues.push({ field: 'date', level: 'error', message: `The "Date" field points to a column that is not dates (e.g. "${vals[0]}"). Choose the column with values like 2025-08-02.` })
+    }
+  }
+
+  if (mapping.quantity != null) {
+    const vals = colVals(mapping.quantity.column_index)
+    const hits = vals.filter(v => /^-?\d+([.,]\d+)?-?$/.test(v)).length
+    if (vals.length && hits / vals.length < 0.5) {
+      issues.push({ field: 'quantity', level: 'error', message: `The "Quantity" field points to a column that is not numbers (e.g. "${vals[0]}"). Choose the quantity column.` })
+    }
+  }
+
+  if (mapping.material_number != null) {
+    const vals = colVals(mapping.material_number.column_index)
+    const dateish = vals.filter(v => /^\d{4}-\d{2}-\d{2}/.test(v)).length
+    if (vals.length && dateish / vals.length > 0.5) {
+      issues.push({ field: 'material_number', level: 'warn', message: `The "Material Number" field looks like dates. Double-check the mapping.` })
+    }
+  }
+
+  return issues
+}

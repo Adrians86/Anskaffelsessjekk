@@ -1,7 +1,7 @@
 'use client'
 import { useState, useCallback } from 'react'
 import { Upload, CheckCircle, AlertCircle, ChevronDown } from 'lucide-react'
-import { parseFile, mapColumns, applyMapping, type MappingResult, type SemanticField } from '@/lib/file-parser'
+import { parseFile, mapColumns, applyMapping, validateMapping, type MappingResult, type SemanticField } from '@/lib/file-parser'
 
 const FIELDS: { key: SemanticField; label: string; required: boolean }[] = [
   { key: 'material_number', label: 'Material Number', required: true },
@@ -85,6 +85,9 @@ export default function UploadPage() {
 
   const confidenceColor = (c: number) => c >= 0.85 ? 'text-green-400' : c >= 0.7 ? 'text-yellow-400' : 'text-red-400'
 
+  const mapIssues = parsed ? validateMapping(parsed, mapping) : []
+  const mapErrors = mapIssues.filter(i => i.level === 'error')
+
   return (
     <div className="p-8 max-w-4xl mx-auto">
       <h1 className="text-2xl font-bold text-[#E8EDF5] mb-1">Import Data</h1>
@@ -148,9 +151,25 @@ export default function UploadPage() {
             })}
           </div>
 
+          {mapIssues.length > 0 ? (
+            <div className="mb-5 space-y-2">
+              {mapIssues.map((iss, k) => (
+                <div key={k} className={`flex items-start gap-2 rounded-lg p-3 text-sm border ${iss.level === 'error' ? 'bg-red-500/10 border-red-500/40 text-red-300' : 'bg-yellow-500/10 border-yellow-500/40 text-yellow-200'}`}>
+                  <AlertCircle size={16} className="flex-shrink-0 mt-0.5" />
+                  <span>{iss.message}</span>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="mb-5 flex items-center gap-2 rounded-lg p-3 text-sm bg-green-500/10 border border-green-500/40 text-green-300">
+              <CheckCircle size={16} className="flex-shrink-0" />
+              <span>Mapping looks good — required columns detected and validated.</span>
+            </div>
+          )}
+
           <div className="flex gap-3">
             <button onClick={() => setStep('upload')} className="btn-secondary">← Back</button>
-            <button onClick={applyAndPreview} disabled={!mapping.material_number} className="btn-primary disabled:opacity-50">Preview Data →</button>
+            <button onClick={applyAndPreview} disabled={mapErrors.length > 0} title={mapErrors.length > 0 ? 'Fix the highlighted mapping issues first' : ''} className="btn-primary disabled:opacity-50">Preview Data →</button>
           </div>
         </div>
       )}
