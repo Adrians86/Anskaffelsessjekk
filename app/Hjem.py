@@ -1,101 +1,206 @@
 import streamlit as st
 from sqlmodel import select
+import pandas as pd
 
 from app.db import get_session, nok
-from core.models import Invoice, Supplier
+from app.texts import RECOMMENDED_ACTIONS
+from core.models import Invoice, Supplier, AuditLog
 from core.reporting import check_invoice
+from core.matching.findings import Severity
 
-st.set_page_config(page_title="Anskaffelsessjekk", page_icon="✅", layout="centered")
+st.set_page_config(page_title="Arbeidsflate", page_icon="📊", layout="wide")
+
+st.markdown("## Arbeidsflate")
+st.markdown('<span style="font-size:12px;color:#8A94A0">Demo · syntetiske data · regelverk per 01.07.2026</span>', unsafe_allow_html=True)
+st.markdown("Full oversikt over kontrollstatus — hva som krever deg, og hva som er i orden.")
 
 @st.cache_data
-def compute_portfolio_deviation():
-    """Compute sum of deviation_amount across all invoices (cached)."""
+def compute_portfolio_stats():
+    """Compute all portfolio metrics (cached)."""
     with get_session() as session:
         invoices = session.exec(select(Invoice)).all()
-        total = 0
+        counts = {"SAMSVAR": 0, "TIL_VURDERING": 0, "AVVIK": 0}
+        total_verdi = 0
+
         for inv in invoices:
             result = check_invoice(session, inv, actor="cache")
+            counts[result.verdict.value] += 1
             if result.verdi_funnet:
-                total += float(result.verdi_funnet)
-        return total
+                total_verdi += float(result.verdi_funnet)
 
-st.title("Anskaffelsessjekk")
-st.markdown('<div style="border-bottom: 3px solid #B08D2E; margin: -10px 0 20px 0;"></div>', unsafe_allow_html=True)
+        return {
+            "total_invoices": len(invoices),
+            "counts": counts,
+            "total_verdi": total_verdi
+        }
 
-st.markdown("**Kontroll av fakturaer mot rammeavtaler, e-postavtaler og regelverket 2026 — med full sporbarhet.**")
+stats = compute_portfolio_stats()
+
+# KPI strip (5 containers)
+cols = st.columns(5)
+with cols[0]:
+    st.metric("Kontrollert", stats["total_invoices"])
+with cols[1]:
+    st.metric("Avvik", stats["counts"]["AVVIK"])
+with cols[2]:
+    st.metric("Til vurdering", stats["counts"]["TIL_VURDERING"])
+with cols[3]:
+    st.metric("Samsvar", stats["counts"]["SAMSVAR"])
+with cols[4]:
+    st.metric("Verdi funnet", nok(stats["total_verdi"]) if stats["total_verdi"] > 0 else "0 kr")
 
 st.markdown("---")
+
+# Porteføljehelse bar (horizontal stacked)
+total = stats["total_invoices"]
+if total > 0:
+    pct_err = (stats["counts"]["AVVIK"] / total) * 100
+    pct_warn = (stats["counts"]["TIL_VURDERING"] / total) * 100
+    pct_ok = (stats["counts"]["SAMSVAR"] / total) * 100
+
+    col_bar, col_legend = st.columns([4, 1])
+    with col_bar:
+        st.write("**Porteføljehelse**")
+        bar_html = f"""
+        <div style="display:flex;height:12px;border-radius:6px;overflow:hidden;margin:8px 0">
+            <div style="width:{pct_err}%;background:#C62828"></div>
+            <div style="width:{pct_warn}%;background:#B58900"></div>
+            <div style="width:{pct_ok}%;background:#2E7D32"></div>
+        </div>
+        """
+        st.markdown(bar_html, unsafe_allow_html=True)
+    with col_legend:
+        st.caption(f"● {stats['counts']['AVVIK']} avvik · {stats['counts']['TIL_VURDERING']} til vurdering · {stats['counts']['SAMSVAR']} samsvar")
+
+st.markdown("---")
+
+# Action tiles (3, gold left border)
+cols = st.columns(3)
+with cols[0]:
+    if st.button("⬆ Last opp faktura (EHF)", use_container_width=True):
+        st.switch_page("pages/1_Fakturakontroll.py")
+    st.caption("Kontroller en faktura mot hele forpliktelsesbildet")
+
+with cols[1]:
+    if st.button("✎ Registrer forpliktelse", use_container_width=True):
+        st.switch_page("pages/2_Avtaler.py")
+    st.caption("Avtale, e-postavtale eller annen betingelse")
+
+with cols[2]:
+    if st.button("⚖ Kjør terskelsjekk", use_container_width=True):
+        st.switch_page("pages/4_Terskelsjekk.py")
+    st.caption("Riktig regime og prosedyre — med paragraf")
+
+st.markdown("---")
+
+# Fakturakø with tabs
+st.write("**Fakturakø**")
+
+with get_session() as session:
+    invoices = session.exec(select(Invoice).order_by(Invoice.invoice_number)).all()
+
+    # Build rows for table
+    rows = []
+    for inv in invoices:
+        result = check_invoice(session, inv, actor="worklist")
+        sup = session.get(Supplier, inv.supplier_id)
+
+        finding_text = "—"
+        if result.findings:
+            f = result.findings[0]
+            prefix = "📧 " if f.code.value == "INFORMAL_BASIS" else ""
+            finding_text = prefix + f.message[:60]
+
+        rows.append({
+            "invoice": inv.invoice_number,
+            "supplier": sup.name,
+            "amount": nok(inv.total_ex_vat),
+            "status": result.verdict.value,
+            "finding": finding_text,
+            "invoice_id": inv.id
+        })
+
+    # Tabs for filtering
+    tab_names = ["Alle", "Avvik", "Til vurdering", "Samsvar"]
+    tab_filters = [None, "AVVIK", "TIL_VURDERING", "SAMSVAR"]
+
+    tabs = st.tabs([f"{name} ({sum(1 for r in rows if r['status'] == f or f is None)})" for name, f in zip(tab_names, tab_filters)])
+
+    for tab_idx, (tab, filter_status) in enumerate(zip(tabs, tab_filters)):
+        with tab:
+            filtered_rows = [r for r in rows if filter_status is None or r["status"] == filter_status]
+
+            for row in filtered_rows[:8]:  # Show first 8
+                col1, col2, col3, col4, col5, col6 = st.columns([1.5, 2.5, 1.5, 1.2, 2, 0.8])
+                with col1:
+                    st.text(row["invoice"])
+                with col2:
+                    st.text(row["supplier"])
+                with col3:
+                    st.text(row["amount"])
+                with col4:
+                    if row["status"] == "AVVIK":
+                        st.markdown('<span style="color:#C62828;font-weight:600">🔴 AVVIK</span>', unsafe_allow_html=True)
+                    elif row["status"] == "TIL_VURDERING":
+                        st.markdown('<span style="color:#B58900;font-weight:600">🟡 TIL VURDERING</span>', unsafe_allow_html=True)
+                    else:
+                        st.markdown('<span style="color:#2E7D32;font-weight:600">✓ SAMSVAR</span>', unsafe_allow_html=True)
+                with col5:
+                    st.caption(row["finding"])
+                with col6:
+                    if st.button("Åpne →", key=f"open_{row['invoice_id']}", use_container_width=True):
+                        st.session_state.preselect_invoice = row["invoice_id"]
+                        st.switch_page("pages/1_Fakturakontroll.py")
+
+st.markdown("---")
+
+# "Krever handling" section (WARN or DEVIATION findings as actionable rows)
+st.write("**Krever handling**")
 
 with get_session() as session:
     invoices = session.exec(select(Invoice)).all()
-    f1003 = next((inv for inv in invoices if inv.invoice_number == "F-1003"), None)
+    action_items = []
 
-    if f1003:
-        supplier = session.get(Supplier, f1003.supplier_id)
-        check = check_invoice(session, f1003, actor="homepage-demo")
+    for inv in invoices:
+        result = check_invoice(session, inv, actor="worklist")
+        for finding in result.findings:
+            if finding.severity.value in ["WARN", "DEVIATION"]:
+                action_items.append({
+                    "invoice": inv.invoice_number,
+                    "message": finding.message,
+                    "recommended": RECOMMENDED_ACTIONS.get(finding.code.value, "Vurder med saksbehandler")
+                })
 
-        col1, col2 = st.columns([2, 1])
-        with col1:
-            with st.container(border=True):
-                if check.verdict.value == "SAMSVAR":
-                    st.success("✅ SAMSVAR")
-                elif check.verdict.value == "TIL_VURDERING":
-                    st.warning("🟡 TIL VURDERING — 12 000 kr over avtalt")
-                else:
-                    st.error(f"🔴 AVVIK — {nok(check.verdi_funnet)}")
-
-                if check.findings:
-                    f = check.findings[0]
-                    story = "Systemet fant at " + (
-                        "prisen avvek fra rammeavtalen — fant e-postavtalen fra 12. juni (J. Hansen). Krever formalisering."
-                        if f.code.value == "PRICE_ABOVE_AGREED"
-                        else f.message.lower()
-                    )
-                    st.markdown(story)
-
-                if st.button("Se hele analysen →", type="primary", use_container_width=True):
-                    st.session_state.preselect_invoice = f1003.id
-                    st.switch_page("pages/1_Fakturakontroll.py")
-
-        with col2:
-            portfolio_deviation = compute_portfolio_deviation()
-            if portfolio_deviation == 0:
-                st.warning("Verdi funnet: 0 kr (demo)")
-            else:
-                st.metric("Verdi funnet", nok(portfolio_deviation))
-
-    st.markdown("---")
-
-    st.caption(
-        "**SYNTETISKE DATA** — alle leverandører, avtaler og fakturaer er generert. "
-        "Ingen reelle data inngår."
-    )
-
-    st.markdown("---")
-
-    st.subheader("Moduler")
-
-    col1, col2 = st.columns(2)
-    with col1:
-        with st.container(border=True):
-            st.markdown("**🧾 Fakturakontroll**")
-            st.markdown("Three-way match og kontroll mot hele forpliktelsesbildet.")
-
-    with col2:
-        with st.container(border=True):
-            st.markdown("**📋 Avtaler og forpliktelser**")
-            st.markdown("Rammeavtaler og e-postavtaler i ett register.")
-
-    col3, col4 = st.columns(2)
-    with col3:
-        with st.container(border=True):
-            st.markdown("**⚖️ Terskelsjekk**")
-            st.markdown("Regime, terskel og prosedyre med paragrafhenvisning.")
-
-    with col4:
-        with st.container(border=True):
-            st.markdown("**📊 Styringsinformasjon**")
-            st.markdown("Verdi funnet og kontrollstatus for hele porteføljen.")
+    if action_items:
+        for idx, item in enumerate(action_items[:10]):  # Show first 10
+            col1, col2, col3 = st.columns([1, 2, 3])
+            with col1:
+                st.checkbox("", key=f"action_{idx}")
+            with col2:
+                st.text(f"{item['invoice']} — {item['message'][:40]}")
+            with col3:
+                st.caption(f"**Anbefalt:** {item['recommended']}")
+    else:
+        st.caption("Ingen funn som krever handling — alle fakturaer er i orden.")
 
 st.markdown("---")
-st.caption("🔒 Anskaffelsessjekk · AS North Advisory · Adrian Śliwa — 19 år i logistikk og innkjøp · asliwa1986@gmail.com · Syntetiske data")
+
+# "Siste hendelser" feed (last 8 AuditLog entries)
+st.write("**Siste hendelser**")
+
+with get_session() as session:
+    events = session.exec(select(AuditLog).order_by(AuditLog.created_at.desc())).all()[:8]
+
+    if events:
+        for event in events:
+            st.caption(f"**{event.created_at.strftime('%H:%M')}** — {event.actor}: {event.action} ({event.entity})")
+    else:
+        st.caption("Ingen hendelser ennå.")
+
+st.markdown("---")
+
+st.caption("**SYNTETISKE DATA** — alle leverandører, avtaler og fakturaer er generert. Ingen reelle data inngår.")
+
+st.markdown("---")
+
+st.caption("🔒 Anskaffelsessjekk · AS North Advisory · Adrian Śliwa — 19 år i logistikk og innkjøp · Beslutningsstøtte, ikke juridisk rådgivning · Syntetiske data")
