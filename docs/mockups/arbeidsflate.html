@@ -1,0 +1,89 @@
+<!DOCTYPE html><html lang="no"><head><meta charset="utf-8"><title>Anskaffelsessjekk — Arbeidsflate (makieta)</title>
+<style>
+:root{--navy9:#0F1B2D;--navy7:#1F3A5F;--navy1:#EEF2F6;--gold:#B08D2E;--bg:#FAFBFC;--txt:#1A1D21;--ok:#2E7D32;--warn:#B58900;--err:#C62828}
+*{box-sizing:border-box;margin:0}body{font-family:Inter,system-ui,sans-serif;background:var(--bg);color:var(--txt);display:flex;min-height:100vh}
+aside{width:230px;background:var(--navy7);color:#E8ECF1;padding:20px 0;flex-shrink:0}
+aside .logo{padding:0 20px 16px;border-bottom:1px solid rgba(255,255,255,.15);margin-bottom:12px}
+aside .logo b{font-size:17px;color:#fff}aside .logo span{display:block;font-size:11px;color:var(--gold);letter-spacing:.5px}
+aside a{display:block;padding:10px 20px;color:#C9D4E0;text-decoration:none;font-size:14px;border-left:3px solid transparent}
+aside a.active{background:rgba(255,255,255,.08);color:#fff;border-left-color:var(--gold)}
+main{flex:1;padding:26px 32px;max-width:1150px}
+.topbar{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px}
+h1{font-size:22px}.sub{font-size:12.5px;color:#5A6472;margin-bottom:18px}
+.kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:20px}
+.kpi{background:#fff;border:1px solid #E3E8EE;border-radius:10px;padding:14px 16px;border-top:3px solid var(--navy7)}
+.kpi small{font-size:10.5px;letter-spacing:.8px;color:#5A6472;text-transform:uppercase}
+.kpi b{display:block;font-size:26px;margin-top:2px}
+.kpi.err{border-top-color:var(--err)}.kpi.err b{color:var(--err)}
+.kpi.warn{border-top-color:var(--warn)}.kpi.warn b{color:var(--warn)}
+.kpi.ok{border-top-color:var(--ok)}.kpi.ok b{color:var(--ok)}
+.kpi.gold{border-top-color:var(--gold)}.kpi.gold b{color:var(--gold)}
+.health{background:#fff;border:1px solid #E3E8EE;border-radius:10px;padding:14px 16px;margin-bottom:20px}
+.health small{font-size:10.5px;letter-spacing:.8px;color:#5A6472;text-transform:uppercase}
+.bar{display:flex;height:10px;border-radius:5px;overflow:hidden;margin:10px 0 6px}
+.bar i{display:block}.legend{font-size:12px;color:#5A6472}
+.actions{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:22px}
+.act{background:#fff;border:1px solid #E3E8EE;border-left:4px solid var(--gold);border-radius:10px;padding:14px 16px;cursor:pointer}
+.act b{font-size:14.5px;color:var(--navy7)}.act span{display:block;font-size:12px;color:#5A6472;margin-top:2px}
+h2{font-size:13px;letter-spacing:.8px;color:#5A6472;text-transform:uppercase;margin:0 0 10px}
+.tabs{display:flex;gap:6px;margin-bottom:10px}
+.tab{font-size:12.5px;padding:5px 12px;border-radius:14px;background:var(--navy1);color:#3A4553;cursor:pointer}
+.tab.active{background:var(--navy7);color:#fff}
+table{width:100%;background:#fff;border:1px solid #E3E8EE;border-radius:10px;border-collapse:separate;border-spacing:0;font-size:13px;overflow:hidden}
+th{background:var(--navy1);text-align:left;padding:9px 12px;font-size:11px;letter-spacing:.5px;color:#3A4553;text-transform:uppercase}
+td{padding:9px 12px;border-top:1px solid #EEF1F5}
+.pill{font-size:11px;font-weight:600;padding:3px 9px;border-radius:10px}
+.pill.err{background:#FBEAEA;color:var(--err)}.pill.warn{background:#FCF4DE;color:#8a6d00}.pill.ok{background:#E8F4E8;color:var(--ok)}
+.open{color:var(--navy7);font-weight:600;text-decoration:none}
+.feed{margin-top:22px;background:#fff;border:1px solid #E3E8EE;border-radius:10px;padding:14px 16px;font-size:12.5px;color:#3A4553}
+.feed div{padding:5px 0;border-bottom:1px dashed #EEF1F5}.feed div:last-child{border:0}
+.feed time{color:#8A94A0;margin-right:8px;font-variant-numeric:tabular-nums}
+footer{margin-top:22px;font-size:11.5px;color:#8A94A0;border-top:1px solid #E3E8EE;padding-top:10px}
+</style></head><body>
+<aside>
+  <div class="logo"><b>Anskaffelsessjekk</b><span>AS NORTH ADVISORY</span></div>
+  <a class="active" href="#">Arbeidsflate</a><a href="#">Fakturakontroll</a><a href="#">Avtaler og forpliktelser</a>
+  <a href="#">Leverandører</a><a href="#">Terskelsjekk</a><a href="#">Styringsinformasjon</a><a href="#">Sikkerhet</a>
+</aside>
+<main>
+  <div class="topbar"><h1>Arbeidsflate</h1><span style="font-size:12px;color:#8A94A0">Demo · syntetiske data · regelverk per 01.07.2026</span></div>
+  <div class="sub">Full oversikt over kontrollstatus — hva som krever deg, og hva som er i orden.</div>
+
+  <div class="kpis">
+    <div class="kpi"><small>Kontrollert</small><b>8</b></div>
+    <div class="kpi err"><small>Avvik</small><b>2</b></div>
+    <div class="kpi warn"><small>Til vurdering</small><b>3</b></div>
+    <div class="kpi ok"><small>Samsvar</small><b>3</b></div>
+    <div class="kpi gold"><small>Verdi funnet</small><b>10 310 kr</b></div>
+  </div>
+
+  <div class="health"><small>Porteføljehelse</small>
+    <div class="bar"><i style="width:25%;background:var(--err)"></i><i style="width:37.5%;background:var(--warn)"></i><i style="width:37.5%;background:var(--ok)"></i></div>
+    <div class="legend">● 2 avvik &nbsp; ● 3 til vurdering &nbsp; ● 3 samsvar</div>
+  </div>
+
+  <div class="actions">
+    <div class="act"><b>⬆ Last opp faktura (EHF)</b><span>Kontroller en faktura mot hele forpliktelsesbildet</span></div>
+    <div class="act"><b>✎ Registrer forpliktelse</b><span>Avtale, e-postavtale eller annen betingelse</span></div>
+    <div class="act"><b>⚖ Kjør terskelsjekk</b><span>Riktig regime og prosedyre — med paragraf</span></div>
+  </div>
+
+  <h2>Fakturakø</h2>
+  <div class="tabs"><span class="tab active">Alle (8)</span><span class="tab">Avvik (2)</span><span class="tab">Til vurdering (3)</span><span class="tab">Samsvar (3)</span></div>
+  <table>
+    <tr><th>Faktura</th><th>Leverandør</th><th>Beløp</th><th>Status</th><th>Funn</th><th></th></tr>
+    <tr><td>K-2002</td><td>Konsulenthuset Øst AS</td><td>128 000 kr</td><td><span class="pill err">AVVIK</span></td><td>Timepris 1600 kr — 12 000 kr over avtalt</td><td><a class="open" href="#">Åpne →</a></td></tr>
+    <tr><td>F-1004</td><td>Hydraulikk Nord AS</td><td>27 000 kr</td><td><span class="pill err">AVVIK</span></td><td>Mengde over avtalt maks — 4 500 kr</td><td><a class="open" href="#">Åpne →</a></td></tr>
+    <tr><td>F-1003</td><td>Hydraulikk Nord AS</td><td>118 000 kr</td><td><span class="pill warn">TIL VURDERING</span></td><td>📧 Pris iht. e-postavtale 12.06 — krever formalisering</td><td><a class="open" href="#">Åpne →</a></td></tr>
+    <tr><td>F-1005</td><td>Hydraulikk Nord AS</td><td>41 500 kr</td><td><span class="pill warn">TIL VURDERING</span></td><td>Mottak ikke bekreftet</td><td><a class="open" href="#">Åpne →</a></td></tr>
+    <tr><td>F-1001</td><td>Hydraulikk Nord AS</td><td>83 000 kr</td><td><span class="pill ok">SAMSVAR</span></td><td>—</td><td><a class="open" href="#">Åpne →</a></td></tr>
+  </table>
+
+  <div class="feed"><h2 style="margin-bottom:8px">Siste hendelser</h2>
+    <div><time>09:41</time> Faktura K-2002 kontrollert → AVVIK (12 000 kr) · regelversjon core-rules@0.1.0</div>
+    <div><time>09:38</time> E-postavtale (J. Hansen, 12.06) bekreftet av saksbehandler → aktiv i kontrollgrunnlaget</div>
+    <div><time>09:31</time> Protokoll generert for F-1003 (PDF)</div>
+  </div>
+
+  <footer>Anskaffelsessjekk · AS North Advisory · Adrian Śliwa — 19 år i logistikk og innkjøp · Beslutningsstøtte, ikke juridisk rådgivning · Syntetiske data</footer>
+</main></body></html>

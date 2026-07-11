@@ -7,6 +7,18 @@ from core.reporting import check_invoice
 
 st.set_page_config(page_title="Anskaffelsessjekk", page_icon="✅", layout="centered")
 
+@st.cache_data
+def compute_portfolio_deviation():
+    """Compute sum of deviation_amount across all invoices (cached)."""
+    with get_session() as session:
+        invoices = session.exec(select(Invoice)).all()
+        total = 0
+        for inv in invoices:
+            result = check_invoice(session, inv, actor="cache")
+            if result.verdi_funnet:
+                total += float(result.verdi_funnet)
+        return total
+
 st.title("Anskaffelsessjekk")
 st.markdown('<div style="border-bottom: 3px solid #B08D2E; margin: -10px 0 20px 0;"></div>', unsafe_allow_html=True)
 
@@ -32,7 +44,6 @@ with get_session() as session:
                 else:
                     st.error(f"🔴 AVVIK — {nok(check.verdi_funnet)}")
 
-                st.markdown("**Prisskandal.**")
                 if check.findings:
                     f = check.findings[0]
                     story = "Systemet fant at " + (
@@ -47,8 +58,11 @@ with get_session() as session:
                     st.switch_page("pages/1_Fakturakontroll.py")
 
         with col2:
-            total_verdi = sum(float(inv.total_ex_vat) for inv in invoices)
-            st.metric("Verdi funnet", nok(check.verdi_funnet) if check.verdi_funnet else "0 kr")
+            portfolio_deviation = compute_portfolio_deviation()
+            if portfolio_deviation == 0:
+                st.warning("Verdi funnet: 0 kr (demo)")
+            else:
+                st.metric("Verdi funnet", nok(portfolio_deviation))
 
     st.markdown("---")
 
