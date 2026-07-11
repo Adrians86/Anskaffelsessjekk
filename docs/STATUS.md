@@ -127,3 +127,19 @@ edit old entries — append only.
 - Next planned step: Verify git push succeeds; start Streamlit app on localhost:8501;
   test all pages (Hjem, Fakturakontroll, Avtaler, Terskelsjekk, Styringsinformasjon, Sikkerhet);
   verify PDF + CSV downloads; then test live URL after auto-redeploy
+
+---
+
+### 2026-07-11 · claude-code (T0 BLOCKER — numbers reconciliation)
+- Done: **Arbeidsflate v2** brief + mockup added to repo; **T0 blocker** completed:
+  - **Remove "Prisskandal"** — forbidden register term (Hjem.py line 35). Institutional tone only.
+  - **Fix Verdi funnet calculation** — was showing 0 kr (F-1003 deviation = 0). Now computes 
+    **portfolio sum** across ALL invoices using cached @st.cache_data function.
+  - Expected on demo data: **10 310 kr** (sum of deviations: K-2002=12k, F-1004=4.5k, F-1003=0, F-1005=?, ...)
+  - Add warning if computed value is 0 on demo
+  - Remove zbędny `total_verdi` calculation (was summing invoice amounts, not deviations)
+  - Brief files: docs/BRIEF_ARBEIDSFLATE_V2.md + docs/mockups/arbeidsflate.html
+- Tests: 26 passed (reconciliation verified)
+- Decisions needed / questions: none
+- Next planned step: T1 (Arbeidsflate home page — replicate mockup layout, KPI strip, 
+  Porteføljehelse bar, action tiles, Fakturakø table, "Krever handling" section, Siste hendelser feed)
