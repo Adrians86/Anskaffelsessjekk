@@ -143,3 +143,22 @@ edit old entries — append only.
 - Decisions needed / questions: none
 - Next planned step: T1 (Arbeidsflate home page — replicate mockup layout, KPI strip, 
   Porteføljehelse bar, action tiles, Fakturakø table, "Krever handling" section, Siste hendelser feed)
+
+---
+
+### 2026-07-11 · claude-code (T1 Arbeidsflate — professional home page)
+- Done: **T1 — Arbeidsflate home page** (replicas docs/mockups/arbeidsflate.html):
+  - Rewrote Hjem.py as professional AP-style workspace (per Medius/Basware paradigm)
+  - **Header**: "Arbeidsflate" + caption "Demo · syntetiske data · regelverk per 01.07.2026"
+  - **KPI strip** (5 bordered containers): Kontrollert, Avvik (red), Til vurdering (yellow), Samsvar (green), Verdi funnet (gold)
+  - **Porteføljehelse bar**: horizontal stacked bar (% shares) + color legend
+  - **Action tiles** (3, clickable, gold border): Upload EHF → Fakturakontroll, Registrer forpliktelse → Avtaler, Kjør terskelsjekk → Terskelsjekk
+  - **Fakturakø**: tabs (Alle/Avvik/Til vurdering/Samsvar) + table (Faktura, Leverandør, Beløp, Status, Funn, Åpne) with preselection + auto-check
+  - **"Krever handling"** section: every WARN/DEVIATION finding as actionable row with checkbox + anbefalt handling
+  - **"Siste hendelser"** feed: last 8 AuditLog entries (time · actor · action)
+  - **Footer** consistent with chrome
+  - All metrics **computed from engine** (cached); zero hardcode values
+  - Navigation via st.switch_page() to pages or session_state preselection
+- Tests: 26 passed (no logic changes)
+- Decisions needed / questions: none
+- Next planned step: T3 (Fakturakontroll upgrade + EHF upload tab with parser) if time allows; otherwise T2 (Leverandører) and full sequence resuming tomorrow
