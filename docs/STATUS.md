@@ -297,3 +297,33 @@ edit old entries — append only.
 - Tests: 32 passed. Page executes clean via AppTest.
 - Decisions needed / questions: none.
 - Next planned step: T9 (contract update + full DoD).
+
+---
+
+### 2026-07-18 · claude-code (T9 — contract update + full DoD)
+- Done: **T9 complete — Arbeidsflate v2 delivered.**
+  - **CLAUDE.md** "Current tasks" replaced with "Arbeidsflate v2 delivered — awaiting partner
+    review"; noted the two approved additions (core/extraction/ehf.py parser; CSV export at UI
+    level) and carried the T2 reconciliation question forward.
+  - Full brief delivered in the pasted order: T1-fix, T3, T2, T4, T5, T6, T7, T8, T9. Frozen
+    sidebar order in place: Arbeidsflate · Fakturakontroll · Avtaler og forpliktelser ·
+    Leverandører · Terskelsjekk · Styringsinformasjon · Plattformen · Sikkerhet.
+- **DoD status:**
+  - (a) pytest **32 passed** (26 baseline + 6 new EHF tests). ✅
+  - (b) Every page executed: all 8 pages run clean via Streamlit AppTest (0 exceptions), AND a
+    real `streamlit run` boot returns HTTP 200 with no errors in the log. Action tiles + Åpne
+    navigation, F-1003 email card, and the EHF upload→check loop all exercised. ✅ (local)
+    NOTE: I cannot reach the live Streamlit Cloud URL from this environment — Adrian/partner to
+    confirm on the auto-redeployed Cloud URL (open every page; test PDF, CSV, EHF sample download
+    and EHF upload).
+  - (c) All work committed AND pushed to origin/claude/anskaffelsessjekk-sprint-t1-t9-32t69c
+    (per this session's designated branch). ✅
+  - (d) STATUS.md entry per task, pushed. ✅
+  - (e) No new third-party dependency introduced (EHF parser is stdlib xml.etree; CSV via the
+    already-present pandas). requirements.txt / pyproject.toml unchanged — nothing to add. ✅
+- Decisions needed / questions for the partner:
+  1. **Branch/PR:** work landed on branch `claude/anskaffelsessjekk-sprint-t1-t9-32t69c` (session
+     policy), not directly on main. Please review and merge to main (or tell me to open a PR).
+  2. **Reconciliation (from T2):** hero "Verdi funnet" = 22 310 kr (both demo scenarios) vs the
+     10 310 kr literal in brief T0 (deler only). Confirm which is intended.
+- Next planned step: awaiting partner review; no further work until "Current tasks" is updated.

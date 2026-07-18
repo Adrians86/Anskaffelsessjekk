@@ -48,12 +48,25 @@ FORBIDDEN without partner approval (ask via STATUS.md): Next.js or any UI framew
 change, authentication, new modules/features, database migration (SQLite stays),
 external integrations, changes to core data model.
 
-## Current tasks (updated by the strategic partner — Implementation Brief T1–T8, 2026-07-10)
+## Current tasks
 
-**T1–T7 supersede all previous polish tasks.** Definition of DONE (a–e) applies to every task.
-Work completed in order: Hjem hero page (T1), Fakturakontroll audit card with preselection (T2),
-Terskelsjekk visual steps (T4), Styringsinformasjon with CSV export (T5), new Sikkerhet page (T6),
-consistent footer and chrome (T7). No core/ changes except T5 CSV helper at UI level (textoption).
+**Arbeidsflate v2 delivered — awaiting partner review.**
 
-After T1–T7: append STATUS.md entry and push to origin/main. Verify on live Streamlit Cloud URL
-(auto-redeploy after push) — open every page including new Sikkerhet and test PDF + CSV downloads.
+Implementation Brief "Arbeidsflate v2" (docs/BRIEF_ARBEIDSFLATE_V2.md) delivered in full:
+T1-fix (switch_page paths + `from db`/`from texts` imports for Streamlit Cloud), T3
+(Fakturakontroll audit card + EHF upload/parser), T2 (Leverandører page), T4 (Plattformen page),
+T5 (Terskelsjekk visual path), T6 (Styringsinformasjon upgrade), T7 (consistent chrome),
+T8 (Sikkerhet content), T9 (this wrap-up). Frozen sidebar order in place.
+
+Two partner-approved additions beyond visual polish:
+- **core/extraction/ehf.py** — namespace-tolerant EHF/UBL 2.1 invoice parser (completes the
+  original MVP scope; stdlib only, `core/` imports no UI). Covered by tests/test_ehf.py.
+- **CSV export at UI level** — one-row-per-finding export in Styringsinformasjon (no core change).
+
+Open question for the partner (see STATUS.md 2026-07-18 T2 entry): the demo seeds BOTH synthetic
+scenarios, so portfolio "Verdi funnet" reconciles at **22 310 kr** across all pages, not the
+10 310 kr literal in brief T0 (which is the deler-only figure). Awaiting decision on whether the
+hero should show 22 310 (both scenarios) or the demo should load only the deler scenario.
+
+Verify on the live Streamlit Cloud URL (auto-redeploy after push) — open every page and test the
+PDF, CSV and EHF sample downloads and the EHF upload loop.
