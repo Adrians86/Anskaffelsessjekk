@@ -2,6 +2,7 @@ import streamlit as st
 from sqlmodel import select
 
 from db import get_session, nok
+from chrome import header, footer
 from texts import RECOMMENDED_ACTIONS
 from core.extraction import build_sample_ehf, parse_ehf
 from core.extraction.ehf import EHFParseError
@@ -10,6 +11,7 @@ from core.models import Invoice, InvoiceLine, InvoiceSource, Supplier
 from core.reporting import check_invoice, build_protokoll
 
 st.set_page_config(page_title="Fakturakontroll", page_icon="🧾", layout="wide")
+header()
 st.title("Fakturakontroll")
 
 _SEV_ICON = {Severity.DEVIATION: "🔴", Severity.WARN: "🟡", Severity.INFO: "ℹ️"}
@@ -184,5 +186,4 @@ with tab_upload:
                 st.markdown("---")
                 render_audit_card(session, inv)
 
-st.markdown("---")
-st.caption("🔒 Anskaffelsessjekk · AS North Advisory · Adrian Śliwa — 19 år i logistikk og innkjøp · asliwa1986@gmail.com · Syntetiske data")
+footer()

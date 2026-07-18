@@ -1,7 +1,10 @@
 """Security and data handling — Sikkerhet og databehandling."""
 import streamlit as st
 
+from chrome import header, footer
+
 st.set_page_config(page_title="Sikkerhet og databehandling", page_icon="🔒", layout="wide")
+header()
 st.title("Sikkerhet og databehandling")
 
 st.markdown("""
@@ -52,7 +55,6 @@ men kan ikke erstatte menneskelig fagdømmekraft eller juridisk rådgivning.
 Alle verdikter er grunnlaget i siterte regler og avtaledata; ingen beslutning er fullstendig
 automatisert.
 
----
 """)
 
-st.caption("🔒 Anskaffelsessjekk · AS North Advisory · Adrian Śliwa — 19 år i logistikk og innkjøp · asliwa1986@gmail.com · Syntetiske data")
+footer()

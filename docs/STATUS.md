@@ -270,3 +270,16 @@ edit old entries — append only.
 - Tests: 32 passed. Page executes clean via AppTest.
 - Decisions needed / questions: none (T2 reconciliation flag still open).
 - Next planned step: T7 (chrome on every page).
+
+---
+
+### 2026-07-18 · claude-code (T7 — consistent chrome on every page)
+- Done: **T7 complete**. New **app/chrome.py** (UI layer) with `header()` (navy #1F3A5F product
+  band) and `footer()` (single consistent footer text from T1). Wired into all 8 pages
+  (Arbeidsflate + 7): header right after set_page_config, footer at the end; removed the eight
+  divergent ad-hoc footers (some previously read only "AS North Advisory · Syntetiske data").
+  Inter font already set in .streamlit/config.toml; verdict semantic colors untouched
+  (#2E7D32 / #B58900 / #C62828). No emoji in page H1 titles (kept in sidebar page_icon only).
+- Tests: 32 passed. Header band verified present on all 8 pages via AppTest.
+- Decisions needed / questions: none.
+- Next planned step: T8 (Sikkerhet page content — rewrite with correct bokmål).

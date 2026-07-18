@@ -3,10 +3,12 @@ from sqlmodel import select
 import pandas as pd
 
 from db import get_session, nok
+from chrome import header, footer
 from core.models import Contract, Invoice, Supplier
 from core.reporting import check_invoice
 
 st.set_page_config(page_title="Leverandører", page_icon="🏢", layout="wide")
+header()
 st.title("Leverandører")
 st.caption("Hvilke leverandører genererer flest avvik — ta det opp med kilden, "
            "ikke bare symptomene. (First Time Right)")
@@ -63,5 +65,4 @@ else:
     total_verdi = sum(r["_verdi"] for r in rows)
     st.caption(f"Total verdi funnet på tvers av leverandører: **{nok(total_verdi)}**")
 
-st.markdown("---")
-st.caption("🔒 Anskaffelsessjekk · AS North Advisory · Adrian Śliwa — 19 år i logistikk og innkjøp · Beslutningsstøtte, ikke juridisk rådgivning · Syntetiske data")
+footer()

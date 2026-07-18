@@ -4,10 +4,12 @@ import pandas as pd
 import altair as alt
 
 from db import get_session, nok
+from chrome import header, footer
 from core.models import Invoice, Supplier
 from core.reporting import check_invoice
 
 st.set_page_config(page_title="Styringsinformasjon", page_icon="📊", layout="wide")
+header()
 st.title("Styringsinformasjon")
 st.caption("Kontrollstatus for hele fakturaporteføljen — tall til controlling, "
            "internkontroll og ledelse. Gevinstrealisering: verdi funnet.")
@@ -128,5 +130,4 @@ with get_session() as session:
     st.caption("Hver kontroll er logget i revisjonssporet med regelversjon — "
                "fullt etterprøvbart ved revisjon.")
 
-st.markdown("---")
-st.caption("🔒 Anskaffelsessjekk · AS North Advisory · Adrian Śliwa — 19 år i logistikk og innkjøp · Beslutningsstøtte, ikke juridisk rådgivning · Syntetiske data")
+footer()

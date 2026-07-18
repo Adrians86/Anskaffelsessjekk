@@ -1,6 +1,9 @@
 import streamlit as st
 
+from chrome import header, footer
+
 st.set_page_config(page_title="Plattformen", page_icon="🧩", layout="wide")
+header()
 st.title("Plattformen")
 st.markdown("Én motor, ett forpliktelsesregister — modulene er visninger på samme grunnlag.")
 
@@ -49,4 +52,4 @@ for i, (title, desc, badge, link) in enumerate(MODULES):
 st.markdown("---")
 st.caption("Statusmerkene er sannferdige: Tilgjengelig = i drift i denne demoen · "
            "Under utvikling = påbegynt · Roadmap = planlagt. Ingen moduler uten merke.")
-st.caption("🔒 Anskaffelsessjekk · AS North Advisory · Adrian Śliwa — 19 år i logistikk og innkjøp · Beslutningsstøtte, ikke juridisk rådgivning · Syntetiske data")
+footer()

@@ -10,6 +10,9 @@ from core.matching.findings import Severity
 
 st.set_page_config(page_title="Arbeidsflate", page_icon="📊", layout="wide")
 
+from chrome import header, footer  # noqa: E402
+header()
+
 st.markdown("## Arbeidsflate")
 st.markdown('<span style="font-size:12px;color:#8A94A0">Demo · syntetiske data · regelverk per 01.07.2026</span>', unsafe_allow_html=True)
 st.markdown("Full oversikt over kontrollstatus — hva som krever deg, og hva som er i orden.")
@@ -201,6 +204,4 @@ st.markdown("---")
 
 st.caption("**SYNTETISKE DATA** — alle leverandører, avtaler og fakturaer er generert. Ingen reelle data inngår.")
 
-st.markdown("---")
-
-st.caption("🔒 Anskaffelsessjekk · AS North Advisory · Adrian Śliwa — 19 år i logistikk og innkjøp · Beslutningsstøtte, ikke juridisk rådgivning · Syntetiske data")
+footer()
