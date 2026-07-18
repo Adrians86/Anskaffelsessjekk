@@ -88,7 +88,7 @@ with cols[1]:
 
 with cols[2]:
     if st.button("⚖ Kjør terskelsjekk", use_container_width=True):
-        st.switch_page("pages/3_Terskelsjekk.py")
+        st.switch_page("pages/4_Terskelsjekk.py")
     st.caption("Riktig regime og prosedyre — med paragraf")
 
 st.markdown("---")

@@ -204,3 +204,28 @@ edit old entries — append only.
   All pages execute clean via AppTest; F-1003 email card + upload loop verified.
 - Decisions needed / questions: none.
 - Next planned step: T2 (Leverandører new page) per brief order.
+
+---
+
+### 2026-07-18 · claude-code (T2 — Leverandører page + page renumbering)
+- Done: **T2 complete**.
+  - New **app/pages/3_Leverandører.py**: per-supplier table — Navn · Org.nr · Avtaler ·
+    Fakturaer · Funn · Verdi funnet · Andel m/ funn (%), sorted by Verdi funnet desc, with
+    First-Time-Right caption. All figures engine-computed (cached).
+  - **Renumbered pages to the frozen sidebar order** (slot 6 reserved for Plattformen/T4):
+    3_Terskelsjekk→4, 4_Styringsinformasjon→5, 5_Sikkerhet→7. Updated Hjem.py Terskelsjekk
+    switch_page target (3→4).
+  - Verified figures: Hydraulikk Nord AS = 4 funn / 10 310 kr / 80 %; Konsulenthuset Øst AS =
+    3 funn / 12 000 kr / 67 %. Portfolio total **22 310 kr**.
+- Tests: 32 passed. All 7 pages execute clean via AppTest.
+- Decisions needed / questions for the partner:
+  **RECONCILIATION FLAG (needs your call).** The brief T0 states "Verdi funnet ... Expected on
+  demo data: 10 310 kr", but the demo DB seeds BOTH synthetic scenarios (deler + konsulent).
+  10 310 kr is the *deler-only* figure; summing ALL invoices (as T0 requires) gives **22 310 kr**
+  (deler 10 310 + konsulent 12 000). Arbeidsflate, Leverandører and Styringsinformasjon all
+  reconcile at 22 310 kr, so pages agree with each other — but that differs from the 10 310 kr
+  literal in the brief. Should the hero KPI read 22 310 (both scenarios, current behaviour) or
+  should the demo load only the deler scenario to hit 10 310? I did NOT change demo data or the
+  seed (product decision — your call). No blocker for the sprint; flagging per "zero new product
+  decisions in flight".
+- Next planned step: T4 (Plattformen new page).
