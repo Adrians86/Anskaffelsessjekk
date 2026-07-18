@@ -162,3 +162,21 @@ edit old entries — append only.
 - Tests: 26 passed (no logic changes)
 - Decisions needed / questions: none
 - Next planned step: T3 (Fakturakontroll upgrade + EHF upload tab with parser) if time allows; otherwise T2 (Leverandører) and full sequence resuming tomorrow
+
+---
+
+### 2026-07-18 · claude-code (T1-fix — partner review corrections)
+- Done: **T1 fixes from partner review** on Arbeidsflate (Hjem):
+  - Fixed `st.switch_page` paths to match real filenames: `pages/2_Avtaler.py`
+    → `pages/2_Avtaler_og_forpliktelser.py`, `pages/4_Terskelsjekk.py` → `pages/3_Terskelsjekk.py`.
+  - Changed `from app.db`/`from app.texts` → `from db`/`from texts` in all app/ files
+    (Hjem.py, pages/1_Fakturakontroll.py, pages/4_Styringsinformasjon.py). Streamlit Cloud
+    runs from app/ dir and has no `app` package — the old imports crashed on Cloud.
+  - Click-test via Streamlit AppTest harness caught two runtime bugs, both fixed:
+    duplicate button key `open_{invoice_id}` across Fakturakø tabs (now
+    `open_{tab_idx}_{invoice_id}`), and empty checkbox label in "Krever handling"
+    (now labelled + `label_visibility="collapsed"`).
+- Tests: 26 passed. All 6 pages execute clean through AppTest (0 exceptions); 3 action
+  tiles + "Åpne" navigation verified to resolve their target pages.
+- Decisions needed / questions: none.
+- Next planned step: T3 (Fakturakontroll upgrade + EHF parser/upload) per brief order.

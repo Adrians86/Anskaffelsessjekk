@@ -4,7 +4,7 @@ from sqlmodel import select
 import pandas as pd
 import altair as alt
 
-from app.db import get_session, nok
+from db import get_session, nok
 from core.models import Invoice, Supplier
 from core.reporting import check_invoice
 

@@ -1,8 +1,8 @@
 import streamlit as st
 from sqlmodel import select
 
-from app.db import get_session, nok
-from app.texts import RECOMMENDED_ACTIONS
+from db import get_session, nok
+from texts import RECOMMENDED_ACTIONS
 from core.matching.findings import Severity
 from core.models import Invoice, Supplier
 from core.reporting import check_invoice, build_protokoll
