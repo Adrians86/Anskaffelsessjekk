@@ -229,3 +229,15 @@ edit old entries — append only.
   seed (product decision — your call). No blocker for the sprint; flagging per "zero new product
   decisions in flight".
 - Next planned step: T4 (Plattformen new page).
+
+---
+
+### 2026-07-18 · claude-code (T4 — Plattformen page)
+- Done: **T4 complete**. New **app/pages/6_Plattformen.py** (fills the reserved slot 6): grid of
+  13 module cards, 3 per row, each with a truthful status badge — Tilgjengelig (green) ·
+  Under utvikling (yellow) · Roadmap (grey). SpareParts AI card carries the external link
+  (https://spareparts-asnorth.netlify.app). Intro line "Én motor, ett forpliktelsesregister —
+  modulene er visninger på samme grunnlag." No card without a badge, no fake clickable module.
+- Tests: 32 passed. All 8 pages execute clean via AppTest.
+- Decisions needed / questions: none (reconciliation flag from T2 still open).
+- Next planned step: T5 (Terskelsjekk visual path).
