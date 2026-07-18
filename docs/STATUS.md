@@ -327,3 +327,15 @@ edit old entries — append only.
   2. **Reconciliation (from T2):** hero "Verdi funnet" = 22 310 kr (both demo scenarios) vs the
      10 310 kr literal in brief T0 (deler only). Confirm which is intended.
 - Next planned step: awaiting partner review; no further work until "Current tasks" is updated.
+
+---
+
+### 2026-07-18 · partner (Adrian) — decision: Verdi funnet = 22 310 kr is correct
+- Decision: **Verdi funnet i demoporteføljen = 22 310 kr is CORRECT — do NOT revert to 10 310.**
+  Rationale: the demo now seeds BOTH synthetic scenarios (deler 10 310 + konsulent 12 000), so
+  "verdi funnet i demoporteføljen" rightly sums both = **22 310 kr**. Brief T0 said 10 310 because
+  it was written against a single scenario; 22 310 is the truth for the current demo. The
+  reconciliation flag from the T2/T9 entries is hereby **RESOLVED**.
+- **Expected demo value for future audits: 22 310 kr** (both scenarios). All pages/KPIs already
+  reconcile at this figure (Arbeidsflate hero, Leverandører total, Styringsinformasjon hero).
+- Action for claude-code: merge sprint branch to main, push origin/main, delete the branch.
