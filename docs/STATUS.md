@@ -430,3 +430,12 @@ edit old entries — append only.
   rule fires on F-1003 and K-2002 (both ≥ 100 000).
 - Tests: **40 passed** (32 + 8 reglement).
 - Next planned step: V4 (rename Leverandører file to ASCII).
+
+---
+
+### 2026-07-18 · claude-code (Verifisering v1 — V4 ASCII filename)
+- Done: **V4 complete**. `git mv app/pages/3_Leverandører.py → 3_Leverandorer.py` (ASCII filename,
+  avoids "works locally, breaks somewhere"). Page title inside stays "Leverandører". No
+  switch_page references pointed at the file. Sidebar order 1–7 preserved.
+- Tests: 40 passed. All 8 pages execute clean via AppTest.
+- Next planned step: V6 (Leverandører drill-down supplier card), then V5 wrap-up.
