@@ -254,3 +254,19 @@ edit old entries — append only.
 - Tests: 32 passed. Page executes clean via AppTest; 3-step path verified for FOA 750k.
 - Decisions needed / questions: none.
 - Next planned step: T6 (Styringsinformasjon upgrade).
+
+---
+
+### 2026-07-18 · claude-code (T6 — Styringsinformasjon upgrade)
+- Done: **T6 complete**.
+  - **Verdi funnet** now a gold, large hero block (first, biggest emphasis) with 0-value warning.
+  - Secondary metric relabelled **"Gjennomsnittlig avvik per kontrollert faktura"** (fixed the
+    earlier "Gjennomsnittlich" typo).
+  - New **"Avvik per leverandør"** per-supplier deviation table (Fakturaer · Funn · Verdi funnet,
+    sorted desc).
+  - **Eksporter funn (CSV)** now emits exactly the brief's columns, one row per finding:
+    invoice_number, supplier, code, severity, message, expected, actual, deviation_amount, citation.
+  - Portfolio Verdi funnet reconciles with Arbeidsflate and Leverandører (22 310 kr).
+- Tests: 32 passed. Page executes clean via AppTest.
+- Decisions needed / questions: none (T2 reconciliation flag still open).
+- Next planned step: T7 (chrome on every page).
