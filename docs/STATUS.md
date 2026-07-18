@@ -361,3 +361,17 @@ edit old entries — append only.
   (`git rm -r --cached .venv **/__pycache__` + a `.gitignore`) — flagging rather than doing it
   mid-merge since it is a large, separate change.
 - Tests: 32 passed. Decisions needed: none open (reconciliation resolved: 22 310 kr).
+
+---
+
+### 2026-07-18 · claude-code (build cleanup — remove venv + bytecode from tracking)
+- Done: Removed the committed Windows `.venv/` and all `__pycache__/` + `*.pyc` from the git
+  index (`git rm --cached`, index-only — files on disk are untouched and Adrian's local `.venv`
+  keeps working). Tracked file count dropped **16 016 → 73**. Added `.gitignore` (.venv/, venv/,
+  __pycache__/, *.pyc, *.db, .env, .streamlit/secrets.toml, .pytest_cache/, *.egg-info/).
+- **KNOWN ISSUE (deliberately not fixed):** the `.git` history still contains these files in old
+  commits, so the repo's `.git` size stays large. We are NOT rewriting history (no
+  filter-branch/BFG) without a separate decision — deferred to a possible future repo migration.
+- Remote sprint branch `claude/anskaffelsessjekk-sprint-t1-t9-32t69c` still awaits manual deletion
+  (GitHub → Branches → delete). Fully merged, harmless.
+- Tests: 32 passed (files intact on disk).
