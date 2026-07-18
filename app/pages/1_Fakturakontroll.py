@@ -9,7 +9,7 @@ from core.extraction.ehf import EHFParseError
 from core.matching.findings import Severity
 from core.models import Invoice, InvoiceLine, InvoiceSource, Order, Supplier
 from core.reporting import check_invoice, build_protokoll
-from core.rules.engine import Facts, RulesEngine
+from core.rules.engine import Facts, RulesEngine, ReglementEngine
 
 st.set_page_config(page_title="Fakturakontroll", page_icon="🧾", layout="wide")
 header()
@@ -17,10 +17,22 @@ st.title("Fakturakontroll")
 
 _SEV_ICON = {Severity.DEVIATION: "🔴", Severity.WARN: "🟡", Severity.INFO: "ℹ️"}
 
+# Source chips — the three control sources, visually distinguishable.
+_CHIP_FORPLIKTELSER = "#B08D2E"   # gold
+_CHIP_REGELVERK = "#2E7D32"       # green
+_CHIP_INTERNT = "#1F3A5F"         # navy
+
+
+def _source_chip(label: str, color: str) -> str:
+    return (f'<span style="border:1px solid {color};color:{color};font-size:10px;'
+            f'font-weight:600;padding:1px 8px;border-radius:10px;margin-left:6px;'
+            f'white-space:nowrap">{label}</span>')
+
 
 def render_audit_card(session, inv) -> None:
     """Render verdict block + finding cards + protokoll/booking CTAs for one invoice."""
     result = check_invoice(session, inv, actor="demo-bruker")
+    order = session.get(Order, inv.order_id) if inv.order_id else None
 
     if result.verdict.value == "SAMSVAR":
         st.success("SAMSVAR — fakturaen samsvarer med avtalt grunnlag")
@@ -43,7 +55,8 @@ def render_audit_card(session, inv) -> None:
             st.markdown(
                 '<div style="border-left:4px solid #B58900;background:#FBF7EC;'
                 'padding:10px 14px;border-radius:4px;margin:6px 0">'
-                f'<strong>📧 E-postavtale:</strong> {f.message}</div>',
+                f'<strong>📧 E-postavtale:</strong> {f.message}'
+                f'{_source_chip("Forpliktelser", _CHIP_FORPLIKTELSER)}</div>',
                 unsafe_allow_html=True,
             )
             with st.container(border=True):
@@ -58,7 +71,9 @@ def render_audit_card(session, inv) -> None:
             continue
 
         with st.container(border=True):
-            st.markdown(f"{_SEV_ICON[f.severity]} **{f.message}**")
+            st.markdown(f"{_SEV_ICON[f.severity]} **{f.message}**"
+                        f"{_source_chip('Forpliktelser', _CHIP_FORPLIKTELSER)}",
+                        unsafe_allow_html=True)
             col1, col2 = st.columns(2)
             with col1:
                 st.markdown(f"**Grunnlag:** {f.citation}")
@@ -70,10 +85,23 @@ def render_audit_card(session, inv) -> None:
             if f.deviation_amount:
                 st.markdown(f"**Avvik:** {nok(f.deviation_amount)}")
 
+    # V3 — Internt reglement: the THIRD source (organization's own rules, data-driven).
+    reglement_hits = ReglementEngine().evaluate({
+        "invoice_total": inv.total_ex_vat,
+        "estimated_value": order.estimated_value if order else inv.total_ex_vat,
+        "has_contract": 1 if (order and order.contract_id) else 0,
+    })
+    for h in reglement_hits:
+        with st.container(border=True):
+            st.markdown(f"🏛 **{h.message}**"
+                        f"{_source_chip('Internt reglement', _CHIP_INTERNT)}",
+                        unsafe_allow_html=True)
+            st.markdown(f"**Grunnlag:** {h.citation}")
+
     # V2 — Regelverkssjekk: the SECOND direction (own procedure, not the supplier's price).
-    st.markdown("#### Regelverkssjekk")
+    st.markdown(f"#### Regelverkssjekk{_source_chip('Regelverk', _CHIP_REGELVERK)}",
+                unsafe_allow_html=True)
     st.caption("Egenkontroll: prosedyre og terskel for denne anskaffelsen")
-    order = session.get(Order, inv.order_id) if inv.order_id else None
     if order is None:
         st.info("Ingen bestilling/avrop knyttet til fakturaen — terskel- og prosedyrekontroll "
                 "krever et avrop å vurdere.")

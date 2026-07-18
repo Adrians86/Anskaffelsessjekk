@@ -1,0 +1,24 @@
+# Internal procurement rules of the DEMO organization — NOT national law.
+# These are the organization's OWN reglement, rendered as the THIRD control source
+# (alongside forpliktelser and the national regelverk). Rules are DATA: thresholds and
+# citations live here, never hardcoded in code (hard rule #2). Every hit carries a citation.
+#
+# Loaded by ReglementEngine (core/rules/engine.py) from this profiles/ subdir only — the
+# national RulesEngine globs core/rules/data/*.yaml (non-recursive) and never sees these.
+
+- id: INTERN_ATTESTASJON_100K
+  source: INTERNT_REGLEMENT
+  when: {field: invoice_total, op: gte, value: 100000}
+  consequence: KREVER_ATTESTASJON_2_PERSONER
+  message: "Faktura på 100 000 kr eller mer krever attestasjon av to personer."
+  citation: "Internt reglement §4-2 (demo-organisasjon)"
+
+- id: INTERN_TERSKEL_ENKELTKJOP
+  source: INTERNT_REGLEMENT
+  when:
+    all:
+      - {field: estimated_value, op: gte, value: 50000}
+      - {field: has_contract, op: eq, value: 0}
+  consequence: KREVER_INNKJOPSORDRE
+  message: "Enkeltkjøp på 50 000 kr eller mer uten rammeavtale krever egen innkjøpsordre."
+  citation: "Internt reglement §3-1 (demo-organisasjon)"

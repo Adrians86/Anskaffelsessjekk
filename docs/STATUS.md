@@ -405,3 +405,28 @@ edit old entries — append only.
   prosedyre." Order-less invoices get an explanatory note. UI composition only — no core change.
 - Tests: 32 passed. Verified on F-1003 (order AVROP-03, FOSA).
 - Next planned step: V3 (Internt reglement — the third source).
+
+---
+
+### 2026-07-18 · claude-code (Verifisering v1 — V3 Internt reglement, the third source)
+- Done: **V3 complete**.
+  - New DATA file **core/rules/data/profiles/demo_reglement.yaml** — the demo organization's OWN
+    rules (clearly marked, with §-citations): INTERN_ATTESTASJON_100K (invoice ≥ 100 000 →
+    KREVER_ATTESTASJON_2_PERSONER, "Internt reglement §4-2"); INTERN_TERSKEL_ENKELTKJOP
+    (order ≥ 50 000 AND no contract → KREVER_INNKJOPSORDRE, "Internt reglement §3-1").
+  - New **ReglementEngine** in core/rules/engine.py loads the profiles/ subdir (the national
+    RulesEngine globs data/*.yaml non-recursively and never sees these). Dict-facts evaluator,
+    every hit carries a citation.
+  - Fakturakontroll renders internal reglement hits as finding cards with a navy "Internt
+    reglement" chip; existing findings get a gold "Forpliktelser" chip and the Regelverkssjekk
+    header a green "Regelverk" chip — **three sources visually distinguishable**.
+  - Packaged the new YAML (pyproject package-data now includes data/profiles/*.yaml — needed on
+    Streamlit Cloud).
+  - Tests: new **tests/test_reglement.py** (8 table-driven cases, both rules incl. combined-fire).
+- **Reconciliation (V3d):** internal reglement findings are PROCEDURAL (deviation_amount = 0) and
+  rendered UI-only — they do NOT enter check_invoice, so the e2e precision/recall test is intact
+  and **Verdi funnet stays 22 310 kr** across Arbeidsflate + Styringsinformasjon + Leverandører.
+  Expected demo total for future audits: **22 310 kr** (unchanged). On demo data the attestasjon
+  rule fires on F-1003 and K-2002 (both ≥ 100 000).
+- Tests: **40 passed** (32 + 8 reglement).
+- Next planned step: V4 (rename Leverandører file to ASCII).

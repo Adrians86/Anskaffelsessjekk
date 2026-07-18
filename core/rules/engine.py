@@ -27,6 +27,7 @@ _OPS = {
 }
 
 DATA_DIR = Path(__file__).parent / "data"
+PROFILES_DIR = DATA_DIR / "profiles"
 
 
 @dataclass(frozen=True)
@@ -81,6 +82,56 @@ class RulesEngine:
                 rule_id=rule["id"],
                 regime=rule["regime"],
                 consequence=rule["consequence"],
+                citation=rule["citation"],
+                citation_url=rule.get("citation_url"),
+            ))
+        return hits
+
+
+@dataclass(frozen=True)
+class ReglementHit:
+    """A hit from an organization's OWN internal reglement (the third control source)."""
+    rule_id: str
+    consequence: str
+    message: str
+    citation: str
+    citation_url: str | None = None
+
+
+def _dict_condition_holds(when: dict[str, Any], facts: dict[str, Any]) -> bool:
+    if "all" in when:
+        return all(_dict_condition_holds(c, facts) for c in when["all"])
+    field, op, value = when["field"], when["op"], when["value"]
+    actual = facts.get(field)
+    if actual is None:
+        return False
+    return _OPS[op](Decimal(str(actual)), Decimal(str(value)))
+
+
+class ReglementEngine:
+    """Evaluates internal reglement rules (DATA in data/profiles/*.yaml) against a facts dict.
+
+    Kept separate from RulesEngine so internal organization rules never mix with national law,
+    and so these findings stay out of the core check_invoice pipeline (they are procedural,
+    rendered at the UI level as a distinct third source).
+    """
+    def __init__(self, data_dir: Path = PROFILES_DIR) -> None:
+        self._rules: list[dict[str, Any]] = []
+        if data_dir.exists():
+            for path in sorted(data_dir.glob("*.yaml")):
+                loaded = yaml.safe_load(path.read_text(encoding="utf-8"))
+                if isinstance(loaded, list):
+                    self._rules.extend(loaded)
+
+    def evaluate(self, facts: dict[str, Any]) -> list[ReglementHit]:
+        hits: list[ReglementHit] = []
+        for rule in self._rules:
+            if not _dict_condition_holds(rule["when"], facts):
+                continue
+            hits.append(ReglementHit(
+                rule_id=rule["id"],
+                consequence=rule["consequence"],
+                message=rule.get("message", rule["consequence"]),
                 citation=rule["citation"],
                 citation_url=rule.get("citation_url"),
             ))
