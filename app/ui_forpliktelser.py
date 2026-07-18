@@ -56,6 +56,8 @@ def render_email_commitment(c) -> None:
         form_value, ("⚠ KREVER FORMALISERING", "#B58900", ""))
     value_txt = f"{nok(c.value)}" if c.value is not None else "—"
     unit_txt = f" {c.unit}" if c.unit else ""
+    # Defensive: a stale core package on Cloud may lack source_quote — degrade, don't crash.
+    quote = getattr(c, "source_quote", None)
 
     st.markdown(
         f'<div style="border-left:4px solid {GOLD};background:#FBF7EC;padding:12px 16px;'
@@ -67,7 +69,7 @@ def render_email_commitment(c) -> None:
         f'Kilde: {c.source_ref} · gjelder fra {c.valid_from}</div>'
         + (f'<div style="font-style:italic;color:#5A5140;background:#FFFDF6;'
            f'border-left:2px solid {GOLD};padding:6px 10px;margin-top:8px;font-size:13px">'
-           f'«{c.source_quote}»</div>' if c.source_quote else "")
+           f'«{quote}»</div>' if quote else "")
         + f'<div style="margin-top:8px;font-weight:600;color:{gyld_color}">'
           f'Gyldighetsvurdering: {gyld_label}</div>'
           f'<div style="font-size:12px;color:#6B7280">{gyld_note}</div>'

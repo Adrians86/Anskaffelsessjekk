@@ -482,3 +482,21 @@ edit old entries — append only.
 - Reminder: remote sprint branch claude/anskaffelsessjekk-sprint-t1-t9-32t69c still awaits manual
   deletion (GitHub UI). Known issue: .git history stays large (no rewrite without separate call).
 - Tests: 40 passed. Decisions needed: none open.
+
+---
+
+### 2026-07-18 · claude-code (HOTFIX — Avtaler crash on Cloud: stale core after source_quote)
+- Blocker: live Avtaler page crashed with AttributeError on `source_quote` — Streamlit Cloud kept
+  the old `core` package (version was unchanged at 0.1.0, so pip skipped reinstall after the
+  Commitment schema change in V1). Fix:
+  1. **pyproject version 0.1.0 → 0.2.0** — forces Cloud to reinstall core on next redeploy.
+  2. **Defensive access**: `source_quote` is read in the shared helper app/ui_forpliktelser.py
+     (used by BOTH Avtaler and Leverandører), not directly in the Avtaler page — so the getattr
+     guard went there: `quote = getattr(c, "source_quote", None)`. Page now degrades gracefully
+     (hides the quote block) instead of crashing even if a stale core is still deployed.
+  3. **New hard rule #10** in CLAUDE.md: any change to core/models or the core public API requires
+     a pyproject version bump (Cloud skips reinstall on unchanged version; stale core = live crash).
+- Tests: 40 passed. Avtaler + Leverandører render clean via AppTest; getattr fallback verified
+  against a core object lacking source_quote.
+- Note: applied the guard in ui_forpliktelser.py (the real access point) rather than the Avtaler
+  page literally — the page has no direct source_quote access; this also protects Leverandørkort.

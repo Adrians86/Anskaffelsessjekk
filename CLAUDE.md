@@ -28,6 +28,8 @@ and in `docs/ARCHITECTURE.md`. Your job: implement within this contract.
 7. Audit trail is append-only.
 8. `pytest` must be green (currently 26 passed) before every commit. Run it before and after changes.
 9. Conventional commit messages (feat/fix/test/docs/style/build).
+10. Every change to `core/models` or the `core` public API REQUIRES a version bump in
+    `pyproject.toml` — Streamlit Cloud skips reinstall on unchanged version; stale core = live crash.
 
 ## Definition of DONE (for Claude Code agents)
 A task is **done** only when ALL four are true:
