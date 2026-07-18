@@ -2,13 +2,16 @@ import streamlit as st
 from sqlmodel import select
 import pandas as pd
 
-from app.db import get_session, nok
-from app.texts import RECOMMENDED_ACTIONS
+from db import get_session, nok
+from texts import RECOMMENDED_ACTIONS
 from core.models import Invoice, Supplier, AuditLog
 from core.reporting import check_invoice
 from core.matching.findings import Severity
 
 st.set_page_config(page_title="Arbeidsflate", page_icon="📊", layout="wide")
+
+from chrome import header, footer  # noqa: E402
+header()
 
 st.markdown("## Arbeidsflate")
 st.markdown('<span style="font-size:12px;color:#8A94A0">Demo · syntetiske data · regelverk per 01.07.2026</span>', unsafe_allow_html=True)
@@ -83,7 +86,7 @@ with cols[0]:
 
 with cols[1]:
     if st.button("✎ Registrer forpliktelse", use_container_width=True):
-        st.switch_page("pages/2_Avtaler.py")
+        st.switch_page("pages/2_Avtaler_og_forpliktelser.py")
     st.caption("Avtale, e-postavtale eller annen betingelse")
 
 with cols[2]:
@@ -148,7 +151,7 @@ with get_session() as session:
                 with col5:
                     st.caption(row["finding"])
                 with col6:
-                    if st.button("Åpne →", key=f"open_{row['invoice_id']}", use_container_width=True):
+                    if st.button("Åpne →", key=f"open_{tab_idx}_{row['invoice_id']}", use_container_width=True):
                         st.session_state.preselect_invoice = row["invoice_id"]
                         st.switch_page("pages/1_Fakturakontroll.py")
 
@@ -175,7 +178,7 @@ with get_session() as session:
         for idx, item in enumerate(action_items[:10]):  # Show first 10
             col1, col2, col3 = st.columns([1, 2, 3])
             with col1:
-                st.checkbox("", key=f"action_{idx}")
+                st.checkbox("Kvitter", key=f"action_{idx}", label_visibility="collapsed")
             with col2:
                 st.text(f"{item['invoice']} — {item['message'][:40]}")
             with col3:
@@ -201,6 +204,4 @@ st.markdown("---")
 
 st.caption("**SYNTETISKE DATA** — alle leverandører, avtaler og fakturaer er generert. Ingen reelle data inngår.")
 
-st.markdown("---")
-
-st.caption("🔒 Anskaffelsessjekk · AS North Advisory · Adrian Śliwa — 19 år i logistikk og innkjøp · Beslutningsstøtte, ikke juridisk rådgivning · Syntetiske data")
+footer()

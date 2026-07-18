@@ -3,9 +3,11 @@ from decimal import Decimal
 
 import streamlit as st
 
+from chrome import header, footer
 from core.rules.engine import Facts, RulesEngine
 
 st.set_page_config(page_title="Terskelsjekk", page_icon="⚖️", layout="wide")
+header()
 st.title("Terskelsjekk")
 st.caption("Første steg er alltid valg av regime — beløpet avgjør aldri regimet. "
            "Reglene er versjonerte data med gyldighetsdatoer (per juli 2026).")
@@ -25,30 +27,57 @@ if regime == "FOSA":
     st.info("Merk: innslagspunktet på 500 000 kr gjelder IKKE for FOSA. "
             "Protokollplikt fra 100 000 kr.", icon="ℹ️")
 
+def _nok(v) -> str:
+    return f"{float(v):,.0f} kr".replace(",", " ")
+
+
+def _step(col, title, body):
+    with col:
+        with st.container(border=True):
+            st.markdown(f"**{title}**", unsafe_allow_html=True)
+            st.markdown(body, unsafe_allow_html=True)
+
+
+def _arrow(col):
+    with col:
+        st.markdown('<div style="text-align:center;font-size:28px;color:#8A94A0;'
+                    'padding-top:24px">→</div>', unsafe_allow_html=True)
+
+
 if st.button("Vurder", type="primary"):
     hits = RulesEngine().evaluate(
         Facts(regime=regime, estimated_value=Decimal(value), assessment_date=on)
     )
 
     st.markdown("---")
-    c1, c2, c3 = st.columns(3)
-    with c1:
-        with st.container(border=True):
-            st.markdown(f"**1. Regime**\n{_REGIMES[regime]}")
-    with c2:
-        st.markdown("→", help="Beløp avgjør aldri regime")
-    with c3:
-        with st.container(border=True):
-            threshold = "✓ Vilkår oppfylt" if value > 500000 else "✓ Under terskel"
-            st.markdown(f"**2. Terskel**\n{threshold}")
+    # Three bordered step-columns with arrows: Regime -> Terskel -> Konsekvens (§).
+    s1, a1, s2, a2, s3 = st.columns([3, 0.6, 3, 0.6, 3])
+
+    _step(s1, "1. Regime", _REGIMES[regime])
+    _arrow(a1)
+    _step(s2, "2. Terskel",
+          f"Anslått verdi <strong>{_nok(value)}</strong><br>"
+          f'<span style="color:#8A94A0;font-size:12px">vurdert mot regimets '
+          f"versjonerte terskelverdier (per {on.isoformat()})</span>")
+    _arrow(a2)
+    if hits:
+        consequence = hits[0].consequence.replace("_", " ")
+        para = hits[0].citation.split("§")
+        para_note = f"§{para[1].split('(')[0].strip()}" if len(para) > 1 else "se hjemmel"
+        _step(s3, "3. Konsekvens (§)",
+              f"<strong>{consequence}</strong><br>"
+              f'<span style="color:#8A94A0;font-size:12px">{para_note}</span>')
+    else:
+        _step(s3, "3. Konsekvens (§)",
+              '<span style="color:#B58900">Ingen regel slo til</span>')
 
     if not hits:
         st.warning("Ingen regler slo til for denne kombinasjonen — sjekk regime og dato.")
     else:
-        st.markdown("---")
+        st.markdown("")
         for h in hits:
-            st.markdown(f"### **3. Konsekvens: {h.consequence.replace('_', ' ')}**")
-            with st.expander("Hjemmel og begrunnelse", expanded=True):
+            with st.expander(f"Hjemmel og begrunnelse — {h.consequence.replace('_', ' ')}",
+                             expanded=True):
                 st.markdown(f"**Hjemmel:** {h.citation}")
                 if h.citation_url:
                     st.markdown(f"[Les kilden]({h.citation_url})")
@@ -58,5 +87,4 @@ if st.button("Vurder", type="primary"):
     st.caption("Veiledende vurdering basert på registrerte regler — "
                "beslutningsstøtte, ikke juridisk rådgivning.")
 
-st.markdown("---")
-st.caption("🔒 Anskaffelsessjekk · AS North Advisory · Syntetiske data")
+footer()

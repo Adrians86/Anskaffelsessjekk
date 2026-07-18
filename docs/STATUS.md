@@ -162,3 +162,180 @@ edit old entries — append only.
 - Tests: 26 passed (no logic changes)
 - Decisions needed / questions: none
 - Next planned step: T3 (Fakturakontroll upgrade + EHF upload tab with parser) if time allows; otherwise T2 (Leverandører) and full sequence resuming tomorrow
+
+---
+
+### 2026-07-18 · claude-code (T1-fix — partner review corrections)
+- Done: **T1 fixes from partner review** on Arbeidsflate (Hjem):
+  - Fixed `st.switch_page` paths to match real filenames: `pages/2_Avtaler.py`
+    → `pages/2_Avtaler_og_forpliktelser.py`, `pages/4_Terskelsjekk.py` → `pages/3_Terskelsjekk.py`.
+  - Changed `from app.db`/`from app.texts` → `from db`/`from texts` in all app/ files
+    (Hjem.py, pages/1_Fakturakontroll.py, pages/4_Styringsinformasjon.py). Streamlit Cloud
+    runs from app/ dir and has no `app` package — the old imports crashed on Cloud.
+  - Click-test via Streamlit AppTest harness caught two runtime bugs, both fixed:
+    duplicate button key `open_{invoice_id}` across Fakturakø tabs (now
+    `open_{tab_idx}_{invoice_id}`), and empty checkbox label in "Krever handling"
+    (now labelled + `label_visibility="collapsed"`).
+- Tests: 26 passed. All 6 pages execute clean through AppTest (0 exceptions); 3 action
+  tiles + "Åpne" navigation verified to resolve their target pages.
+- Decisions needed / questions: none.
+- Next planned step: T3 (Fakturakontroll upgrade + EHF parser/upload) per brief order.
+
+---
+
+### 2026-07-18 · claude-code (T3 — Fakturakontroll upgrade + EHF parser/upload)
+- Done: **T3 complete**.
+  - **core/extraction/ehf.py** (approved engine addition): namespace-tolerant UBL 2.1 / EHF
+    parser. Extracts invoice number, date, currency, supplier org.nr (digits-normalised) and
+    line items (item_ref from SellersItemIdentification, falling back to Item Name; quantity,
+    unit price, line total). `build_sample_ehf()` returns a valid EHF built from F-1003 data.
+    core/ imports no UI — pure read, caller persists.
+  - **Fakturakontroll page** refactored: shared `render_audit_card()` used by both flows.
+    Verdict as large colored block with amount ("AVVIK — X over avtalt" / "TIL VURDERING" /
+    "SAMSVAR"). E-mail grunnlag now gets a **gold left-border card** + "📧 E-postavtale:" prefix.
+    Every finding shows its Anbefalt handling line. Primary "Last ned protokoll (PDF)" + mailto
+    booking button retained.
+  - **New "Last opp faktura (EHF)" tab**: download sample EHF → upload → parse → match/create
+    supplier by org.nr → persist (idempotent on invoice_number) → check → render audit card.
+    Uploading the sample reuses F-1003 → INFORMAL_BASIS (the confirmed e-mail-agreement scene).
+  - **tests/test_ehf.py** (6 tests): header fields, line items, namespace-tolerance, non-invoice
+    rejection, e2e upload → INFORMAL_BASIS + MISSING_ORDER, unknown org → NO_AGREED_BASIS.
+- Tests: **32 passed** (26 + 6 new). No new third-party dependency (stdlib xml.etree only).
+  All pages execute clean via AppTest; F-1003 email card + upload loop verified.
+- Decisions needed / questions: none.
+- Next planned step: T2 (Leverandører new page) per brief order.
+
+---
+
+### 2026-07-18 · claude-code (T2 — Leverandører page + page renumbering)
+- Done: **T2 complete**.
+  - New **app/pages/3_Leverandører.py**: per-supplier table — Navn · Org.nr · Avtaler ·
+    Fakturaer · Funn · Verdi funnet · Andel m/ funn (%), sorted by Verdi funnet desc, with
+    First-Time-Right caption. All figures engine-computed (cached).
+  - **Renumbered pages to the frozen sidebar order** (slot 6 reserved for Plattformen/T4):
+    3_Terskelsjekk→4, 4_Styringsinformasjon→5, 5_Sikkerhet→7. Updated Hjem.py Terskelsjekk
+    switch_page target (3→4).
+  - Verified figures: Hydraulikk Nord AS = 4 funn / 10 310 kr / 80 %; Konsulenthuset Øst AS =
+    3 funn / 12 000 kr / 67 %. Portfolio total **22 310 kr**.
+- Tests: 32 passed. All 7 pages execute clean via AppTest.
+- Decisions needed / questions for the partner:
+  **RECONCILIATION FLAG (needs your call).** The brief T0 states "Verdi funnet ... Expected on
+  demo data: 10 310 kr", but the demo DB seeds BOTH synthetic scenarios (deler + konsulent).
+  10 310 kr is the *deler-only* figure; summing ALL invoices (as T0 requires) gives **22 310 kr**
+  (deler 10 310 + konsulent 12 000). Arbeidsflate, Leverandører and Styringsinformasjon all
+  reconcile at 22 310 kr, so pages agree with each other — but that differs from the 10 310 kr
+  literal in the brief. Should the hero KPI read 22 310 (both scenarios, current behaviour) or
+  should the demo load only the deler scenario to hit 10 310? I did NOT change demo data or the
+  seed (product decision — your call). No blocker for the sprint; flagging per "zero new product
+  decisions in flight".
+- Next planned step: T4 (Plattformen new page).
+
+---
+
+### 2026-07-18 · claude-code (T4 — Plattformen page)
+- Done: **T4 complete**. New **app/pages/6_Plattformen.py** (fills the reserved slot 6): grid of
+  13 module cards, 3 per row, each with a truthful status badge — Tilgjengelig (green) ·
+  Under utvikling (yellow) · Roadmap (grey). SpareParts AI card carries the external link
+  (https://spareparts-asnorth.netlify.app). Intro line "Én motor, ett forpliktelsesregister —
+  modulene er visninger på samme grunnlag." No card without a badge, no fake clickable module.
+- Tests: 32 passed. All 8 pages execute clean via AppTest.
+- Decisions needed / questions: none (reconciliation flag from T2 still open).
+- Next planned step: T5 (Terskelsjekk visual path).
+
+---
+
+### 2026-07-18 · claude-code (T5 — Terskelsjekk visual path)
+- Done: **T5 complete**. Result now renders as three bordered step-columns with arrows between:
+  **1. Regime → 2. Terskel → 3. Konsekvens (§)**. Step 2 shows the assessed value and states it
+  is evaluated against the regime's *versioned* terskelverdier (no hardcoded threshold in the UI —
+  removed the previous `value > 500000` literal, respecting hard rule #2). Step 3 shows the
+  consequence + paragraph hint derived from the winning rule hit. Full citation expanders remain
+  below. Caption retained: "Regimet vurderes ALLTID før beløpet — beløp avgjør aldri regime."
+- Tests: 32 passed. Page executes clean via AppTest; 3-step path verified for FOA 750k.
+- Decisions needed / questions: none.
+- Next planned step: T6 (Styringsinformasjon upgrade).
+
+---
+
+### 2026-07-18 · claude-code (T6 — Styringsinformasjon upgrade)
+- Done: **T6 complete**.
+  - **Verdi funnet** now a gold, large hero block (first, biggest emphasis) with 0-value warning.
+  - Secondary metric relabelled **"Gjennomsnittlig avvik per kontrollert faktura"** (fixed the
+    earlier "Gjennomsnittlich" typo).
+  - New **"Avvik per leverandør"** per-supplier deviation table (Fakturaer · Funn · Verdi funnet,
+    sorted desc).
+  - **Eksporter funn (CSV)** now emits exactly the brief's columns, one row per finding:
+    invoice_number, supplier, code, severity, message, expected, actual, deviation_amount, citation.
+  - Portfolio Verdi funnet reconciles with Arbeidsflate and Leverandører (22 310 kr).
+- Tests: 32 passed. Page executes clean via AppTest.
+- Decisions needed / questions: none (T2 reconciliation flag still open).
+- Next planned step: T7 (chrome on every page).
+
+---
+
+### 2026-07-18 · claude-code (T7 — consistent chrome on every page)
+- Done: **T7 complete**. New **app/chrome.py** (UI layer) with `header()` (navy #1F3A5F product
+  band) and `footer()` (single consistent footer text from T1). Wired into all 8 pages
+  (Arbeidsflate + 7): header right after set_page_config, footer at the end; removed the eight
+  divergent ad-hoc footers (some previously read only "AS North Advisory · Syntetiske data").
+  Inter font already set in .streamlit/config.toml; verdict semantic colors untouched
+  (#2E7D32 / #B58900 / #C62828). No emoji in page H1 titles (kept in sidebar page_icon only).
+- Tests: 32 passed. Header band verified present on all 8 pages via AppTest.
+- Decisions needed / questions: none.
+- Next planned step: T8 (Sikkerhet page content — rewrite with correct bokmål).
+
+---
+
+### 2026-07-18 · claude-code (T8 — Sikkerhet page content)
+- Done: **T8 complete**. Rewrote app/pages/7_Sikkerhet.py content in correct bokmål (previous
+  version had multiple typos: "konfigurasi", "datasiskerhet", "Turforsikrer", "produksjonsjavn",
+  "verdikter"). Sections now cover exactly the brief: syntetiske data i demoen · append-only
+  revisjonsspor med regelversjon · hemmeligheter via miljøvariabler · containeriserbar → on-prem
+  (forsvarssektoren) · veikart: data residency Norge/EØS, DPIA før behandling av reelle e-poster
+  (personopplysninger, dataminimering), SSO (Entra ID) på veikartet · juridisk ansvar
+  (beslutningsstøtte, ikke juridisk rådgivning; mennesket bekrefter alltid).
+- Tests: 32 passed. Page executes clean via AppTest.
+- Decisions needed / questions: none.
+- Next planned step: T9 (contract update + full DoD).
+
+---
+
+### 2026-07-18 · claude-code (T9 — contract update + full DoD)
+- Done: **T9 complete — Arbeidsflate v2 delivered.**
+  - **CLAUDE.md** "Current tasks" replaced with "Arbeidsflate v2 delivered — awaiting partner
+    review"; noted the two approved additions (core/extraction/ehf.py parser; CSV export at UI
+    level) and carried the T2 reconciliation question forward.
+  - Full brief delivered in the pasted order: T1-fix, T3, T2, T4, T5, T6, T7, T8, T9. Frozen
+    sidebar order in place: Arbeidsflate · Fakturakontroll · Avtaler og forpliktelser ·
+    Leverandører · Terskelsjekk · Styringsinformasjon · Plattformen · Sikkerhet.
+- **DoD status:**
+  - (a) pytest **32 passed** (26 baseline + 6 new EHF tests). ✅
+  - (b) Every page executed: all 8 pages run clean via Streamlit AppTest (0 exceptions), AND a
+    real `streamlit run` boot returns HTTP 200 with no errors in the log. Action tiles + Åpne
+    navigation, F-1003 email card, and the EHF upload→check loop all exercised. ✅ (local)
+    NOTE: I cannot reach the live Streamlit Cloud URL from this environment — Adrian/partner to
+    confirm on the auto-redeployed Cloud URL (open every page; test PDF, CSV, EHF sample download
+    and EHF upload).
+  - (c) All work committed AND pushed to origin/claude/anskaffelsessjekk-sprint-t1-t9-32t69c
+    (per this session's designated branch). ✅
+  - (d) STATUS.md entry per task, pushed. ✅
+  - (e) No new third-party dependency introduced (EHF parser is stdlib xml.etree; CSV via the
+    already-present pandas). requirements.txt / pyproject.toml unchanged — nothing to add. ✅
+- Decisions needed / questions for the partner:
+  1. **Branch/PR:** work landed on branch `claude/anskaffelsessjekk-sprint-t1-t9-32t69c` (session
+     policy), not directly on main. Please review and merge to main (or tell me to open a PR).
+  2. **Reconciliation (from T2):** hero "Verdi funnet" = 22 310 kr (both demo scenarios) vs the
+     10 310 kr literal in brief T0 (deler only). Confirm which is intended.
+- Next planned step: awaiting partner review; no further work until "Current tasks" is updated.
+
+---
+
+### 2026-07-18 · partner (Adrian) — decision: Verdi funnet = 22 310 kr is correct
+- Decision: **Verdi funnet i demoporteføljen = 22 310 kr is CORRECT — do NOT revert to 10 310.**
+  Rationale: the demo now seeds BOTH synthetic scenarios (deler 10 310 + konsulent 12 000), so
+  "verdi funnet i demoporteføljen" rightly sums both = **22 310 kr**. Brief T0 said 10 310 because
+  it was written against a single scenario; 22 310 is the truth for the current demo. The
+  reconciliation flag from the T2/T9 entries is hereby **RESOLVED**.
+- **Expected demo value for future audits: 22 310 kr** (both scenarios). All pages/KPIs already
+  reconcile at this figure (Arbeidsflate hero, Leverandører total, Styringsinformasjon hero).
+- Action for claude-code: merge sprint branch to main, push origin/main, delete the branch.

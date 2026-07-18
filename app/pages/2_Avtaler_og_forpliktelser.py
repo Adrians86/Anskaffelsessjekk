@@ -2,9 +2,11 @@ import streamlit as st
 from sqlmodel import select
 
 from db import get_session, nok
+from chrome import header, footer
 from core.models import Commitment, Contract, ContractLine, Supplier
 
 st.set_page_config(page_title="Avtaler og forpliktelser", page_icon="📋", layout="wide")
+header()
 st.title("Avtaler og forpliktelser")
 st.caption("Alle avtalte betingelser i ett register — formelle kontrakter OG bekreftede "
            "e-postavtaler. Dette er kontrollgrunnlaget for fakturakontrollen.")
@@ -44,5 +46,4 @@ with get_session() as session:
                 )
         st.divider()
 
-st.markdown("---")
-st.caption("🔒 Anskaffelsessjekk · AS North Advisory · Syntetiske data")
+footer()
