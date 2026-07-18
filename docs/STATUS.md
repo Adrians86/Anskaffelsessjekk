@@ -375,3 +375,21 @@ edit old entries — append only.
 - Remote sprint branch `claude/anskaffelsessjekk-sprint-t1-t9-32t69c` still awaits manual deletion
   (GitHub → Branches → delete). Fully merged, harmless.
 - Tests: 32 passed (files intact on disk).
+
+---
+
+### 2026-07-18 · claude-code (Verifisering v1 — V1 Avtaler differentiator)
+- Done: **V1 complete**. Saved docs/BRIEF_VERIFISERING_V1.md. Rebuilt Avtaler page as the
+  forpliktelsesregister showcase:
+  - New "📧 E-postavtaler i kontrollgrunnlaget" section — each EMAIL commitment as a gold-border
+    (#B08D2E) card with condition, source line, and a SOURCE QUOTE block.
+  - Added nullable `source_quote` to Commitment model; filled the deler e-mail commitment with a
+    realistic Norwegian one-liner ("Vi bekrefter herved redusert pris 11 800 kr per stk for
+    HYD-1001 …").
+  - Formalization chips (FORMALISERT/VENTER PÅ TILLEGG/UFORMELL) + UI-level Gyldighetsvurdering
+    (✓ GYLDIG / ⚠ KREVER FORMALISERING / ✗ UGYLDIG legend rendered).
+  - Caption "En e-postavtale kontrolleres alltid mot avtalen og regelverket — den er aldri et
+    selvstendig bevis." Contract lines table retained below.
+  - New shared renderer app/ui_forpliktelser.py (reused by V6).
+- Tests: 32 passed (source_quote is nullable — no migration break).
+- Next planned step: V2 (Fakturakontroll Regelverkssjekk section).

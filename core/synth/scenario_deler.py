@@ -43,6 +43,8 @@ def generate(session: Session) -> dict[str, Any]:
     session.add(Commitment(
         supplier_id=sup.id, contract_id=contract.id,
         source_type=SourceType.EMAIL, source_ref="e-post 2026-06-12, J. Hansen",
+        source_quote=("Vi bekrefter herved redusert pris 11 800 kr per stk for HYD-1001, "
+                      "gjeldende fra 12. juni. Formelt tillegg ettersendes."),
         condition_type=ConditionType.PRICE, item_ref="HYD-1001",
         value=Decimal("11800"), unit="NOK", valid_from=date(2026, 6, 12),
         formalization=Formalization.PENDING_ANNEX,

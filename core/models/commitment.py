@@ -43,6 +43,7 @@ class Commitment(SQLModel, table=True):
     source_type: SourceType
     source_ref: str                      # e.g. "e-mail 2026-06-12, J. Hansen"
     source_file: str | None = None       # path to attached evidence (.eml / .pdf)
+    source_quote: str | None = None      # the excerpt the extraction rests on (shown in UI)
 
     condition_type: ConditionType
     item_ref: str | None = Field(default=None, index=True)  # article no. / service category
