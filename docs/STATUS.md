@@ -439,3 +439,19 @@ edit old entries — append only.
   switch_page references pointed at the file. Sidebar order 1–7 preserved.
 - Tests: 40 passed. All 8 pages execute clean via AppTest.
 - Next planned step: V6 (Leverandører drill-down supplier card), then V5 wrap-up.
+
+---
+
+### 2026-07-18 · claude-code (Verifisering v1 — V6 Leverandørkort drill-down)
+- Done: **V6 complete**. Leverandører overview table stays; added a "Leverandørkort" drill-down
+  (st.selectbox pattern — cleaner than per-row buttons over a table). Detail view shows, from
+  existing data only: (a) header navn/org.nr + SYNTETISK badge; (b) Avtaler with period, ramme,
+  line count; (c) Forpliktelser reusing the V1 e-mail-commitment renderer (source quote +
+  formalization/gyldighet chips); (d) Fakturaer table number·dato·beløp·verdict-pill·verdi funnet
+  with per-row "Åpne →" → Fakturakontroll via session_state preselect (same mechanism as the
+  Arbeidsflate queue); (e) Nøkkeltall (fakturaer, andel m/ funn, verdi funnet, First Time Right);
+  (f) Siste hendelser filtered to the supplier's invoices.
+- **Reconciliation:** Hydraulikk Nord = 5 fakturaer / 80 % / 10 310 kr; Konsulenthuset Øst =
+  3 / 67 % / 12 000 kr — matches the overview table and Arbeidsflate KPIs. Portfolio 22 310 kr.
+- Tests: 40 passed. Verified both supplier cards via AppTest incl. e-mail source quote and Åpne→.
+- Next planned step: V5 (wrap-up — CLAUDE.md + full DoD).
