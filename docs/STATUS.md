@@ -241,3 +241,16 @@ edit old entries — append only.
 - Tests: 32 passed. All 8 pages execute clean via AppTest.
 - Decisions needed / questions: none (reconciliation flag from T2 still open).
 - Next planned step: T5 (Terskelsjekk visual path).
+
+---
+
+### 2026-07-18 · claude-code (T5 — Terskelsjekk visual path)
+- Done: **T5 complete**. Result now renders as three bordered step-columns with arrows between:
+  **1. Regime → 2. Terskel → 3. Konsekvens (§)**. Step 2 shows the assessed value and states it
+  is evaluated against the regime's *versioned* terskelverdier (no hardcoded threshold in the UI —
+  removed the previous `value > 500000` literal, respecting hard rule #2). Step 3 shows the
+  consequence + paragraph hint derived from the winning rule hit. Full citation expanders remain
+  below. Caption retained: "Regimet vurderes ALLTID før beløpet — beløp avgjør aldri regime."
+- Tests: 32 passed. Page executes clean via AppTest; 3-step path verified for FOA 750k.
+- Decisions needed / questions: none.
+- Next planned step: T6 (Styringsinformasjon upgrade).
