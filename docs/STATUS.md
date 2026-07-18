@@ -180,3 +180,27 @@ edit old entries — append only.
   tiles + "Åpne" navigation verified to resolve their target pages.
 - Decisions needed / questions: none.
 - Next planned step: T3 (Fakturakontroll upgrade + EHF parser/upload) per brief order.
+
+---
+
+### 2026-07-18 · claude-code (T3 — Fakturakontroll upgrade + EHF parser/upload)
+- Done: **T3 complete**.
+  - **core/extraction/ehf.py** (approved engine addition): namespace-tolerant UBL 2.1 / EHF
+    parser. Extracts invoice number, date, currency, supplier org.nr (digits-normalised) and
+    line items (item_ref from SellersItemIdentification, falling back to Item Name; quantity,
+    unit price, line total). `build_sample_ehf()` returns a valid EHF built from F-1003 data.
+    core/ imports no UI — pure read, caller persists.
+  - **Fakturakontroll page** refactored: shared `render_audit_card()` used by both flows.
+    Verdict as large colored block with amount ("AVVIK — X over avtalt" / "TIL VURDERING" /
+    "SAMSVAR"). E-mail grunnlag now gets a **gold left-border card** + "📧 E-postavtale:" prefix.
+    Every finding shows its Anbefalt handling line. Primary "Last ned protokoll (PDF)" + mailto
+    booking button retained.
+  - **New "Last opp faktura (EHF)" tab**: download sample EHF → upload → parse → match/create
+    supplier by org.nr → persist (idempotent on invoice_number) → check → render audit card.
+    Uploading the sample reuses F-1003 → INFORMAL_BASIS (the confirmed e-mail-agreement scene).
+  - **tests/test_ehf.py** (6 tests): header fields, line items, namespace-tolerance, non-invoice
+    rejection, e2e upload → INFORMAL_BASIS + MISSING_ORDER, unknown org → NO_AGREED_BASIS.
+- Tests: **32 passed** (26 + 6 new). No new third-party dependency (stdlib xml.etree only).
+  All pages execute clean via AppTest; F-1003 email card + upload loop verified.
+- Decisions needed / questions: none.
+- Next planned step: T2 (Leverandører new page) per brief order.
