@@ -339,3 +339,25 @@ edit old entries — append only.
 - **Expected demo value for future audits: 22 310 kr** (both scenarios). All pages/KPIs already
   reconcile at this figure (Arbeidsflate hero, Leverandører total, Styringsinformasjon hero).
 - Action for claude-code: merge sprint branch to main, push origin/main, delete the branch.
+
+---
+
+### 2026-07-18 · claude-code (merge to main + environment limits)
+- Done: Sprint branch **merged to `main`** (no-ff merge a9f82b5f) and **pushed to origin/main**.
+  Local sprint branch deleted.
+- **Two environment limitations (reporting, not failures of the work):**
+  1. **Remote branch delete blocked.** `git push origin --delete` (and the `:ref` form) are
+     rejected by the session's git relay ("remote end hung up"); normal pushes work, only ref
+     deletion is refused, and no delete-branch API tool is available. The remote branch
+     `claude/anskaffelsessjekk-sprint-t1-t9-32t69c` is fully merged into main and harmless —
+     please delete it from the GitHub UI (one click).
+  2. **Live Cloud URL not reachable from this sandbox.** anskaffelsessjekk.streamlit.app is
+     blocked by the egress policy (proxy 403). I verified locally instead: real `streamlit run`
+     boots HTTP 200 with no errors, and all 8 pages (Arbeidsflate + 7) render clean via AppTest.
+     Adrian to confirm on the live URL after Cloud auto-redeploys from main.
+- **Tech-debt flag (pre-existing, not touched):** the whole Windows `.venv/` and compiled
+  `__pycache__/*.pyc` are committed and there is no `.gitignore`. Harmless for Cloud deploy
+  (Cloud installs from requirements.txt) but bloats the repo. Suggest a cleanup commit
+  (`git rm -r --cached .venv **/__pycache__` + a `.gitignore`) — flagging rather than doing it
+  mid-merge since it is a large, separate change.
+- Tests: 32 passed. Decisions needed: none open (reconciliation resolved: 22 310 kr).
