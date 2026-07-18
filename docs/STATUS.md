@@ -455,3 +455,30 @@ edit old entries — append only.
   3 / 67 % / 12 000 kr — matches the overview table and Arbeidsflate KPIs. Portfolio 22 310 kr.
 - Tests: 40 passed. Verified both supplier cards via AppTest incl. e-mail source quote and Åpne→.
 - Next planned step: V5 (wrap-up — CLAUDE.md + full DoD).
+
+---
+
+### 2026-07-18 · claude-code (Verifisering v1 — V5 wrap-up + full DoD)
+- Done: **V5 complete — Verifisering v1 delivered.**
+  - CLAUDE.md "Current tasks" updated to "Verifisering v1 delivered — demo shows full idea
+    (3 sources, 2 directions, e-mail validity hierarchy)"; reconciliation recorded as settled at
+    22 310 kr; engine additions listed (ehf.py, ReglementEngine + profiles YAML, CSV helper).
+  - Executed V1→V6 in order, commit+push after each V.
+- **DoD:**
+  - (a) pytest **40 passed** (was 32 → +8 reglement table-driven cases). ✅
+  - (b) Every page click-tested: all 8 pages clean via AppTest (0 exceptions) AND real
+    `streamlit run` boot returns HTTP 200 with no errors. F-1003 verified to show all three
+    sources (Forpliktelser 📧 + Regelverk + Internt reglement); both Leverandørkort drill-downs
+    verified with e-mail source quote and Åpne→; numbers reconcile at 22 310 kr. ✅ (local)
+    NOTE: live Streamlit Cloud URL is unreachable from this sandbox (egress policy blocks
+    streamlit.app) — Adrian to confirm on the auto-redeployed URL.
+  - (c) All work committed AND pushed to origin/main. ✅
+  - (d) STATUS.md entries per V, pushed. ✅
+- Acceptance check (partner will test): 1. Avtaler e-mail card shows source quote + formalization
+  chip + gyldighetsstatus + "aldri et selvstendig bevis" ✅. 2. Fakturakontroll one card shows
+  findings AND Regelverkssjekk ✅. 3. F-1003/K-2002 carry "Internt reglement §4-2" with its chip
+  ✅. 4. Numbers reconcile across all pages (22 310 kr documented) ✅. 5. Leverandørkort drill-down
+  works end-to-end ✅. 6. No page crashes locally; 8-second test — Adrian to confirm on live URL.
+- Reminder: remote sprint branch claude/anskaffelsessjekk-sprint-t1-t9-32t69c still awaits manual
+  deletion (GitHub UI). Known issue: .git history stays large (no rewrite without separate call).
+- Tests: 40 passed. Decisions needed: none open.

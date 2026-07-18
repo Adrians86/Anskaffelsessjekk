@@ -50,23 +50,26 @@ external integrations, changes to core data model.
 
 ## Current tasks
 
-**Arbeidsflate v2 delivered — awaiting partner review.**
+**Verifisering v1 delivered — demo shows full idea (3 sources, 2 directions, e-mail validity hierarchy).**
 
-Implementation Brief "Arbeidsflate v2" (docs/BRIEF_ARBEIDSFLATE_V2.md) delivered in full:
-T1-fix (switch_page paths + `from db`/`from texts` imports for Streamlit Cloud), T3
-(Fakturakontroll audit card + EHF upload/parser), T2 (Leverandører page), T4 (Plattformen page),
-T5 (Terskelsjekk visual path), T6 (Styringsinformasjon upgrade), T7 (consistent chrome),
-T8 (Sikkerhet content), T9 (this wrap-up). Frozen sidebar order in place.
+Mini-brief "Verifisering v1" (docs/BRIEF_VERIFISERING_V1.md) delivered in full on main:
+- **V1** — Avtaler rebuilt as the differentiator: e-mail commitments as gold-border cards with
+  source quote, formalization chips and a UI-level Gyldighetsvurdering (✓ GYLDIG / ⚠ KREVER
+  FORMALISERING / ✗ UGYLDIG). Added nullable `source_quote` to Commitment.
+- **V2** — Fakturakontroll shows Regelverkssjekk (the second direction: own procedure/terskel via
+  the rules engine on the invoice's order), under the findings.
+- **V3** — Internt reglement as the third source: core/rules/data/profiles/demo_reglement.yaml +
+  ReglementEngine; findings carry a navy "Internt reglement" chip (Forpliktelser · Regelverk ·
+  Internt reglement visually distinct). Procedural (deviation 0) — verdi funnet unchanged.
+- **V4** — Leverandører page file renamed to ASCII (3_Leverandorer.py); title stays "Leverandører".
+- **V6** — Leverandørkort drill-down (contracts, commitments, invoices with Åpne→, nøkkeltall,
+  events). **V5** — this wrap-up.
 
-Two partner-approved additions beyond visual polish:
-- **core/extraction/ehf.py** — namespace-tolerant EHF/UBL 2.1 invoice parser (completes the
-  original MVP scope; stdlib only, `core/` imports no UI). Covered by tests/test_ehf.py.
-- **CSV export at UI level** — one-row-per-finding export in Styringsinformasjon (no core change).
+Reconciliation (settled): **Verdi funnet = 22 310 kr** (both demo scenarios: deler 10 310 +
+konsulent 12 000) — partner-confirmed as correct. This is the expected demo total for audits.
 
-Open question for the partner (see STATUS.md 2026-07-18 T2 entry): the demo seeds BOTH synthetic
-scenarios, so portfolio "Verdi funnet" reconciles at **22 310 kr** across all pages, not the
-10 310 kr literal in brief T0 (which is the deler-only figure). Awaiting decision on whether the
-hero should show 22 310 (both scenarios) or the demo should load only the deler scenario.
+Engine additions to date (partner-approved): core/extraction/ehf.py (EHF/UBL parser),
+core/rules ReglementEngine + profiles YAML, CSV export at UI level. `core/` still imports no UI.
 
-Verify on the live Streamlit Cloud URL (auto-redeploy after push) — open every page and test the
-PDF, CSV and EHF sample downloads and the EHF upload loop.
+Verify on the live Streamlit Cloud URL (auto-redeploy after push): all pages open, EHF upload loop
+works (sample → upload → verdict), F-1003 shows all three sources, numbers reconcile at 22 310.
