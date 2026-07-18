@@ -393,3 +393,15 @@ edit old entries — append only.
   - New shared renderer app/ui_forpliktelser.py (reused by V6).
 - Tests: 32 passed (source_quote is nullable — no migration break).
 - Next planned step: V2 (Fakturakontroll Regelverkssjekk section).
+
+---
+
+### 2026-07-18 · claude-code (Verifisering v1 — V2 Regelverkssjekk)
+- Done: **V2 complete**. Fakturakontroll audit card now shows a "Regelverkssjekk" section UNDER
+  the findings: fetches the invoice's linked order and runs the existing RulesEngine
+  (Facts = order.regime + order.estimated_value + order.order_date), rendering compact
+  Regime → Terskel → Konsekvens (§) with citation expanders, prefixed "Egenkontroll: prosedyre og
+  terskel for denne anskaffelsen". Caption "Kontroll i to retninger — leverandørens faktura og egen
+  prosedyre." Order-less invoices get an explanatory note. UI composition only — no core change.
+- Tests: 32 passed. Verified on F-1003 (order AVROP-03, FOSA).
+- Next planned step: V3 (Internt reglement — the third source).

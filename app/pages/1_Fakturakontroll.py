@@ -7,8 +7,9 @@ from texts import RECOMMENDED_ACTIONS
 from core.extraction import build_sample_ehf, parse_ehf
 from core.extraction.ehf import EHFParseError
 from core.matching.findings import Severity
-from core.models import Invoice, InvoiceLine, InvoiceSource, Supplier
+from core.models import Invoice, InvoiceLine, InvoiceSource, Order, Supplier
 from core.reporting import check_invoice, build_protokoll
+from core.rules.engine import Facts, RulesEngine
 
 st.set_page_config(page_title="Fakturakontroll", page_icon="🧾", layout="wide")
 header()
@@ -68,6 +69,38 @@ def render_audit_card(session, inv) -> None:
                 st.markdown(f"**Avtalt:** {f.expected} · **Fakturert:** {f.actual}")
             if f.deviation_amount:
                 st.markdown(f"**Avvik:** {nok(f.deviation_amount)}")
+
+    # V2 — Regelverkssjekk: the SECOND direction (own procedure, not the supplier's price).
+    st.markdown("#### Regelverkssjekk")
+    st.caption("Egenkontroll: prosedyre og terskel for denne anskaffelsen")
+    order = session.get(Order, inv.order_id) if inv.order_id else None
+    if order is None:
+        st.info("Ingen bestilling/avrop knyttet til fakturaen — terskel- og prosedyrekontroll "
+                "krever et avrop å vurdere.")
+    else:
+        hits = RulesEngine().evaluate(Facts(
+            regime=order.regime.value,
+            estimated_value=order.estimated_value,
+            assessment_date=order.order_date,
+        ))
+        c1, c2, c3 = st.columns(3)
+        with c1:
+            with st.container(border=True):
+                st.markdown(f"**Regime**\n\n{order.regime.value}")
+        with c2:
+            with st.container(border=True):
+                st.markdown(f"**Terskel**\n\nAnslått {nok(order.estimated_value)}")
+        with c3:
+            with st.container(border=True):
+                consequence = hits[0].consequence.replace("_", " ") if hits else "Ingen regel slo til"
+                st.markdown(f"**Konsekvens (§)**\n\n{consequence}")
+        for h in hits:
+            with st.expander(f"Hjemmel — {h.consequence.replace('_', ' ')}"):
+                st.markdown(f"**Hjemmel:** {h.citation}")
+                if h.citation_url:
+                    st.markdown(f"[Les kilden]({h.citation_url})")
+                st.caption(f"Regel-ID: {h.rule_id} · Regime: {h.regime}")
+    st.caption("Kontroll i to retninger — leverandørens faktura og egen prosedyre.")
 
     st.markdown("---")
 
