@@ -283,3 +283,17 @@ edit old entries — append only.
 - Tests: 32 passed. Header band verified present on all 8 pages via AppTest.
 - Decisions needed / questions: none.
 - Next planned step: T8 (Sikkerhet page content — rewrite with correct bokmål).
+
+---
+
+### 2026-07-18 · claude-code (T8 — Sikkerhet page content)
+- Done: **T8 complete**. Rewrote app/pages/7_Sikkerhet.py content in correct bokmål (previous
+  version had multiple typos: "konfigurasi", "datasiskerhet", "Turforsikrer", "produksjonsjavn",
+  "verdikter"). Sections now cover exactly the brief: syntetiske data i demoen · append-only
+  revisjonsspor med regelversjon · hemmeligheter via miljøvariabler · containeriserbar → on-prem
+  (forsvarssektoren) · veikart: data residency Norge/EØS, DPIA før behandling av reelle e-poster
+  (personopplysninger, dataminimering), SSO (Entra ID) på veikartet · juridisk ansvar
+  (beslutningsstøtte, ikke juridisk rådgivning; mennesket bekrefter alltid).
+- Tests: 32 passed. Page executes clean via AppTest.
+- Decisions needed / questions: none.
+- Next planned step: T9 (contract update + full DoD).

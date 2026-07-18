@@ -8,53 +8,58 @@ header()
 st.title("Sikkerhet og databehandling")
 
 st.markdown("""
-## Datakvalitet og transparens
+## Syntetiske data i demoen
 
-**Anskaffelsessjekk** kjører på syntetiske data — alle leverandører, avtaler, fakturaer og
-e-poster i demoen er algorithmisk generert. Ingen reelle persondata eller virksomhetsdata inngår.
+**Anskaffelsessjekk** kjører utelukkende på syntetiske data. Alle leverandører, avtaler,
+fakturaer og e-postavtaler i demoen er generert og tydelig merket som syntetiske. Ingen
+reelle person- eller virksomhetsdata inngår.
 
-## Sporbarhet
+## Append-only revisjonsspor
 
-Hver kontroll logges append-only i revisjonssporet med:
-- **Actor**: hvem som kjørte kontrollen
-- **Verdict**: SAMSVAR / TIL_VURDERING / AVVIK
-- **Rules version**: hvilken regelversjon som ble brukt
-- **Timestamp**: når kontrollen ble kjørt
+Hver kontroll logges i et append-only revisjonsspor. Loggen kan ikke endres eller slettes i
+etterkant, og hver hendelse bærer:
 
-Dette sikrer full etterprøvbarhet ved revisjon.
+- **Aktør** — hvem som kjørte kontrollen
+- **Anbefaling** — SAMSVAR / TIL_VURDERING / AVVIK (avledet av funn, aldri fastsatt direkte)
+- **Regelversjon** — hvilket regelsett kontrollen ble kjørt mot
+- **Tidspunkt** — når kontrollen ble utført
 
-## Hemmeligheter og konfigurasi
+Dette gir full etterprøvbarhet ved revisjon: enhver anbefaling kan spores tilbake til
+regelgrunnlaget og dataene den bygger på.
 
-- Systemkonfigurasi (API-nøkler, database-tilkoblinger) styres via miljøvariabler.
-- Hemmeligheter lagres **aldri** i koden.
-- Kodebasen er kryptert i git (med `.gitignore` for `.env`-filer).
+## Hemmeligheter og konfigurasjon
 
-## Arkitektur — containeriserbar design
+- All konfigurasjon (eventuelle API-nøkler, databasetilkoblinger) styres via **miljøvariabler**.
+- Hemmeligheter lagres **aldri** i kildekoden. `.env`-filer holdes utenfor versjonskontroll.
+- Regelverket er data (YAML med gyldighetsdatoer og hjemler), ikke hardkodede terskler.
 
-Systemet er designet for **on-premises** distribusjon:
-- Uavhengig av skyplattform (Streamlit Community Cloud eller lokalt Docker)
-- SQLite-database (kan migreres til PostgreSQL ved produksjon)
-- **Ingen eksterne integrasjoner** som påvirkEr dataflyt (planlagt for Phase 2)
+## Containeriserbar — on-premises mulig
 
-Dette er spesielt relevant for **forsvarssektoren**, hvor datasiskerhet og datasouverenitet
-er ikke-forhandlingsbare.
+Systemet er designet for **on-premises**-drift:
 
-## Veikartet fram til produksjon
+- Uavhengig av skyplattform — kan kjøres i Docker lokalt eller på egen infrastruktur.
+- SQLite i demoen; kan migreres til PostgreSQL i produksjon.
+- Kjernen (`core/`) er adskilt fra brukergrensesnittet og har ingen eksterne avhengigheter i
+  kontrollflyten.
 
-- **Data residency**: Turforsikrer data lagres i Norge/EØS
-- **DPIA** (Data Protection Impact Assessment): før real e-post-prosessering
-  (e-poster inneholder persondata → databehandlingsavtale påkrevd)
-- **SSO** (Entra ID): authentication ved produksjonsjavn
-- **Audit logging**: utvidet for compliance og forsvarssektoren
+Dette er særlig relevant for **forsvarssektoren**, der datasikkerhet og datasuverenitet er
+ikke-forhandlbare krav.
+
+## Veikart fram mot produksjon
+
+- **Datalagring i Norge/EØS** — data residency innenfor EØS.
+- **DPIA** (personvernkonsekvensvurdering) gjennomføres **før** behandling av reelle e-poster.
+  E-poster kan inneholde personopplysninger; prinsippet om dataminimering legges til grunn, og
+  databehandleravtale inngås.
+- **SSO med Entra ID** — enkel pålogging på veikartet for produksjon.
+- **Utvidet revisjonslogging** tilpasset compliance og forsvarssektoren.
 
 ## Juridisk ansvar
 
-**Anskaffelsessjekk gir anbefalinger, ikke juridiske råd.** Systemet støtter beslutningstagere
-men kan ikke erstatte menneskelig fagdømmekraft eller juridisk rådgivning.
-
-Alle verdikter er grunnlaget i siterte regler og avtaledata; ingen beslutning er fullstendig
-automatisert.
-
+**Anskaffelsessjekk gir beslutningsstøtte, ikke juridisk rådgivning.** Systemet støtter
+saksbehandleren, men erstatter ikke faglig skjønn eller juridisk rådgivning. Alle anbefalinger
+bygger på siterte regler og avtaledata, og ingen beslutning er fullautomatisert — mennesket
+bekrefter alltid.
 """)
 
 footer()
