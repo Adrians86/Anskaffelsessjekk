@@ -1,9 +1,9 @@
 import streamlit as st
-from sqlmodel import select
-
+from chrome import footer, header
 from db import get_session, nok
-from chrome import header, footer
-from ui_forpliktelser import render_email_commitment, gyldighet_legend
+from sqlmodel import select
+from ui_forpliktelser import gyldighet_legend, render_email_commitment
+
 from core.models import Commitment, Contract, ContractLine, Supplier
 
 st.set_page_config(page_title="Avtaler og forpliktelser", page_icon="📋", layout="wide")
@@ -46,10 +46,10 @@ with get_session() as session:
             select(ContractLine).where(ContractLine.contract_id == contract.id)
         ).all()
         st.dataframe(
-            [{"Artikkel": l.item_ref, "Beskrivelse": l.description,
-              "Avtalt pris": nok(l.unit_price), "Enhet": l.unit,
-              "Maks mengde": str(l.max_quantity) if l.max_quantity else "—"}
-             for l in lines],
+            [{"Artikkel": line.item_ref, "Beskrivelse": line.description,
+              "Avtalt pris": nok(line.unit_price), "Enhet": line.unit,
+              "Maks mengde": str(line.max_quantity) if line.max_quantity else "—"}
+             for line in lines],
             hide_index=True, use_container_width=True,
         )
         st.divider()

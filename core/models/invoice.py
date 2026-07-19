@@ -1,7 +1,7 @@
 """Invoice header and lines; raw source is always retained."""
 from __future__ import annotations
 
-from datetime import date, datetime, timezone
+from datetime import UTC, date, datetime
 from decimal import Decimal
 from enum import Enum
 
@@ -24,7 +24,7 @@ class Invoice(SQLModel, table=True):
     currency: str = "NOK"
     source: InvoiceSource = InvoiceSource.MANUAL
     raw_source_path: str | None = None           # original EHF XML / PDF, retained
-    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
 
 class InvoiceLine(SQLModel, table=True):

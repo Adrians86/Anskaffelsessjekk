@@ -7,6 +7,7 @@ dependencies = [
     "sqlmodel>=0.0.16",
     "pyyaml>=6.0",
     "fpdf2>=2.8",
+    "defusedxml>=0.7",
 ]
 
 [project.optional-dependencies]
@@ -28,3 +29,15 @@ testpaths = ["tests"]
 
 [tool.ruff]
 line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B"]
+ignore = [
+    "E501",   # line length is enforced by the formatter; long data/citation strings are fine
+    "UP042",  # (str, Enum) is intentional — str(enum) and rule_hits_json serialization depend on it
+]
+
+[tool.ruff.lint.per-file-ignores]
+# Streamlit pages import chrome/db after set_page_config by design (must run first).
+"app/**" = ["E402"]

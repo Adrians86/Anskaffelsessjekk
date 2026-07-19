@@ -17,7 +17,12 @@ from sqlmodel import Session, select
 
 from core.matching.findings import Code, Finding, Severity
 from core.models import (
-    Commitment, ConditionType, ContractLine, Formalization, Invoice, InvoiceLine,
+    Commitment,
+    ConditionType,
+    ContractLine,
+    Formalization,
+    Invoice,
+    InvoiceLine,
 )
 
 _PRICE_TOLERANCE = Decimal("0.01")

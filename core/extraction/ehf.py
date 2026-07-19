@@ -15,6 +15,9 @@ from dataclasses import dataclass, field
 from datetime import date
 from decimal import Decimal, InvalidOperation
 
+import defusedxml.ElementTree as DET
+from defusedxml.common import DefusedXmlException
+
 
 @dataclass(frozen=True)
 class ParsedLine:
@@ -103,8 +106,11 @@ def parse_ehf(source: str | bytes) -> ParsedInvoice:
     (item_ref from SellersItemIdentification or, failing that, the item Name;
     quantity, unit price and line total).
     """
+    # defusedxml rejects DTD entity/external-reference attacks (XXE) on untrusted uploads.
     try:
-        root = ET.fromstring(source.encode() if isinstance(source, str) else source)
+        root = DET.fromstring(source.encode() if isinstance(source, str) else source)
+    except DefusedXmlException as exc:
+        raise EHFParseError("XML avvist av sikkerhetsgrunner (DTD/entitet ikke tillatt).") from exc
     except ET.ParseError as exc:
         raise EHFParseError(f"Kunne ikke lese XML: {exc}") from exc
 

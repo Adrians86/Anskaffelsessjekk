@@ -1,10 +1,12 @@
-import streamlit as st
-from sqlmodel import select
-import pandas as pd
+from html import escape
 
+import pandas as pd
+import streamlit as st
+from chrome import footer, header
 from db import get_session, nok
-from chrome import header, footer
+from sqlmodel import select
 from ui_forpliktelser import render_email_commitment
+
 from core.models import AuditLog, Commitment, Contract, ContractLine, Invoice, Supplier
 from core.reporting import check_invoice
 
@@ -82,12 +84,12 @@ else:
 
         # (a) header
         st.markdown(
-            f'### {sup.name} '
+            f'### {escape(sup.name)} '
             '<span style="background:#F1F3F5;color:#6B7280;font-size:11px;font-weight:600;'
             'padding:2px 10px;border-radius:10px;vertical-align:middle">SYNTETISK</span>',
             unsafe_allow_html=True,
         )
-        st.caption(f"Org.nr {sup.org_number}")
+        st.caption(f"Org.nr {escape(sup.org_number)}")
 
         # (b) Avtaler
         st.markdown("**Avtaler**")

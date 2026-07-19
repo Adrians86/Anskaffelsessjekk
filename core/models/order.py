@@ -1,7 +1,7 @@
 """Requisition / order / avrop on a rammeavtale."""
 from __future__ import annotations
 
-from datetime import date, datetime, timezone
+from datetime import UTC, date, datetime
 from decimal import Decimal
 from enum import Enum
 
@@ -25,4 +25,4 @@ class Order(SQLModel, table=True):
     regime: Regime = Regime.FOA
     order_date: date
     regime_assessment_id: int | None = None      # CheckResult id of terskelsjekk at order time
-    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))

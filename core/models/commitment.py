@@ -6,7 +6,7 @@ verified against the full set of commitments, not only the contract.
 """
 from __future__ import annotations
 
-from datetime import date, datetime, timezone
+from datetime import UTC, date, datetime
 from decimal import Decimal
 from enum import Enum
 
@@ -57,7 +57,7 @@ class Commitment(SQLModel, table=True):
     extracted_by: str = "manual"         # "manual" | "llm:<model>"
     confirmed_by_user: bool = False      # human-in-the-loop gate: unconfirmed
                                          # LLM extractions never participate in control
-    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
     def is_active_on(self, on: date) -> bool:
         """A commitment participates in control only when confirmed and valid."""

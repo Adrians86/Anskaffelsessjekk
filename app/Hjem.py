@@ -1,16 +1,15 @@
 import streamlit as st
-from sqlmodel import select
-import pandas as pd
-
 from db import get_session, nok
+from sqlmodel import select
 from texts import RECOMMENDED_ACTIONS
-from core.models import Invoice, Supplier, AuditLog
+
+from core.models import AuditLog, Invoice, Supplier
 from core.reporting import check_invoice
-from core.matching.findings import Severity
 
 st.set_page_config(page_title="Arbeidsflate", page_icon="📊", layout="wide")
 
-from chrome import header, footer  # noqa: E402
+from chrome import footer, header  # noqa: E402
+
 header()
 
 st.markdown("## Arbeidsflate")
@@ -127,9 +126,10 @@ with get_session() as session:
     tab_names = ["Alle", "Avvik", "Til vurdering", "Samsvar"]
     tab_filters = [None, "AVVIK", "TIL_VURDERING", "SAMSVAR"]
 
-    tabs = st.tabs([f"{name} ({sum(1 for r in rows if r['status'] == f or f is None)})" for name, f in zip(tab_names, tab_filters)])
+    tabs = st.tabs([f"{name} ({sum(1 for r in rows if r['status'] == f or f is None)})"
+                    for name, f in zip(tab_names, tab_filters, strict=True)])
 
-    for tab_idx, (tab, filter_status) in enumerate(zip(tabs, tab_filters)):
+    for tab_idx, (tab, filter_status) in enumerate(zip(tabs, tab_filters, strict=True)):
         with tab:
             filtered_rows = [r for r in rows if filter_status is None or r["status"] == filter_status]
 

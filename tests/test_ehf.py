@@ -61,6 +61,17 @@ def test_parse_rejects_non_invoice():
         parse_ehf("<Order><ID>1</ID></Order>")
 
 
+def test_parse_rejects_xxe_external_entity():
+    """XXE: a DTD with an external entity must be rejected, never resolved."""
+    malicious = (
+        '<?xml version="1.0"?>'
+        '<!DOCTYPE foo [<!ENTITY xxe SYSTEM "file:///etc/passwd">]>'
+        '<Invoice><ID>&xxe;</ID><IssueDate>2026-07-10</IssueDate></Invoice>'
+    )
+    with pytest.raises(EHFParseError):
+        parse_ehf(malicious)
+
+
 @pytest.fixture()
 def session():
     engine = create_engine("sqlite://")
@@ -87,7 +98,9 @@ def test_uploaded_invoice_produces_expected_findings(session):
         total_ex_vat=parsed.total_ex_vat, currency=parsed.currency,
         source=InvoiceSource.EHF,
     )
-    session.add(inv); session.commit(); session.refresh(inv)
+    session.add(inv)
+    session.commit()
+    session.refresh(inv)
     for ln in parsed.lines:
         session.add(InvoiceLine(
             invoice_id=inv.id, item_ref=ln.item_ref, description=ln.description,
@@ -125,13 +138,17 @@ def test_unknown_org_number_yields_no_agreed_basis(session):
     ).first() is None
 
     supplier = Supplier(org_number=parsed.supplier_org, name=parsed.supplier_name)
-    session.add(supplier); session.commit(); session.refresh(supplier)
+    session.add(supplier)
+    session.commit()
+    session.refresh(supplier)
     inv = Invoice(
         supplier_id=supplier.id, order_id=None, invoice_number=parsed.invoice_number,
         invoice_date=parsed.invoice_date, total_ex_vat=parsed.total_ex_vat,
         currency=parsed.currency, source=InvoiceSource.EHF,
     )
-    session.add(inv); session.commit(); session.refresh(inv)
+    session.add(inv)
+    session.commit()
+    session.refresh(inv)
     for ln in parsed.lines:
         session.add(InvoiceLine(
             invoice_id=inv.id, item_ref=ln.item_ref, description=ln.description,

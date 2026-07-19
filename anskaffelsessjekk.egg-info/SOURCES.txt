@@ -9,9 +9,9 @@ app/Hjem.py
 app/db.py
 app/pages/1_Fakturakontroll.py
 app/pages/2_Avtaler_og_forpliktelser.py
-app/pages/3_Terskelsjekk.py
-app/pages/4_Styringsinformasjon.py
 core/__init__.py
+core/extraction/__init__.py
+core/extraction/ehf.py
 core/matching/__init__.py
 core/matching/commitments.py
 core/matching/findings.py
@@ -31,10 +31,13 @@ core/rules/__init__.py
 core/rules/engine.py
 core/rules/data/regimes.yaml
 core/rules/data/thresholds_2026.yaml
+core/rules/data/profiles/demo_reglement.yaml
 core/synth/__init__.py
 core/synth/scenario_deler.py
 core/synth/scenario_konsulent.py
+tests/test_ehf.py
 tests/test_matcher_e2e.py
 tests/test_models.py
 tests/test_protokoll.py
+tests/test_reglement.py
 tests/test_rules_thresholds.py

@@ -520,3 +520,27 @@ edit old entries — append only.
 - Manual action for Adrian if auto-deploy still lags: Streamlit Cloud → Manage app → ⋮ →
   "Reboot app" forces a full pull + rebuild.
 - Tests: 40 passed.
+
+---
+
+### 2026-07-18 · claude-code (Security & quality pass — partner audit findings)
+- Done: security + quality hardening (no schema change → no version bump needed):
+  - **XXE**: added `defusedxml` (deps in pyproject + requirements + rebuild marker). core/extraction/ehf.py
+    now parses via `defusedxml.ElementTree.fromstring`; DTD/entity/external-ref attacks raise
+    EHFParseError. New test `test_parse_rejects_xxe_external_entity` (malicious `<!ENTITY … SYSTEM
+    "file:///etc/passwd">` rejected, not resolved).
+  - **XSS-proofing**: every dynamic value interpolated into `unsafe_allow_html` now passes through
+    `html.escape()` — app/ui_forpliktelser.py (source_quote, source_ref, item_ref, condition, unit,
+    value), Fakturakontroll (finding/reglement messages + citation), Leverandører (supplier name/org),
+    Terskelsjekk (consequence, paragraf), Styringsinformasjon (hero), Plattformen (card title).
+    New CLAUDE.md **hard rule #11** codifies it.
+  - **texts.py**: dropped `subprocess`/`get_build_info`; VERSION now from
+    `importlib.metadata.version("anskaffelsessjekk")` (single source of truth = pyproject); removed
+    duplicate `VERSION = "MVP 0.1.0"` and dead duplicated FOOTER; fixed typo "engeltkjøp" → "enkeltkjøp".
+  - **Lint**: added `[tool.ruff.lint]` config (E,F,W,I,UP,B; ignore E501, UP042 with reasons; app/**
+    E402 exempt). ruff --fix applied (import sort, unused imports, UP017 datetime.UTC); manually:
+    all 34 E702 semicolons split (synth generators + tests + upload flow), E741 `l`→`line`, 3 B905
+    zips given `strict=True`. No bare `except`/`except: pass` in the codebase. **ruff: all checks pass.**
+- Tests: **41 passed** (40 + 1 XXE). All 8 pages render clean via AppTest. VERSION resolves to 0.2.0;
+  XXE blocked; html.escape verified.
+- Next: self-audit for quality/security/best practices (findings appended below).

@@ -1,7 +1,6 @@
 """Security and data handling — Sikkerhet og databehandling."""
 import streamlit as st
-
-from chrome import header, footer
+from chrome import footer, header
 
 st.set_page_config(page_title="Sikkerhet og databehandling", page_icon="🔒", layout="wide")
 header()

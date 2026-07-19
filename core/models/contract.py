@@ -1,7 +1,7 @@
 """Contracts (rammeavtale / enkeltkjøp) and their lines."""
 from __future__ import annotations
 
-from datetime import date, datetime, timezone
+from datetime import UTC, date, datetime
 from decimal import Decimal
 from enum import Enum
 
@@ -22,7 +22,7 @@ class Contract(SQLModel, table=True):
     total_value: Decimal | None = None          # estimated total value (NOK, ex. VAT)
     valid_from: date
     valid_to: date | None = None
-    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
 
 class ContractLine(SQLModel, table=True):

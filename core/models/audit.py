@@ -2,7 +2,7 @@
 who, when, what, on which rules version. Rows are never updated or deleted."""
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from decimal import Decimal
 from enum import Enum
 
@@ -24,7 +24,7 @@ class CheckResult(SQLModel, table=True):
     rule_hits_json: str = "[]"                   # serialized RuleHit list (explainability)
     deviation_amount: Decimal = Decimal("0")     # sum -> 'verdi funnet' (gap G2)
     rules_version: str                           # e.g. "thresholds_2026@528bbae"
-    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
 
 class AuditLog(SQLModel, table=True):
@@ -34,4 +34,4 @@ class AuditLog(SQLModel, table=True):
     entity: str                                   # e.g. "invoice:42"
     detail: str | None = None
     rules_version: str | None = None
-    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))

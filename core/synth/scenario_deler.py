@@ -6,22 +6,35 @@ ALL DATA IS SYNTHETIC.
 """
 from __future__ import annotations
 
-from datetime import date, datetime, timezone
+from datetime import UTC, date, datetime
 from decimal import Decimal
 from typing import Any
 
 from sqlmodel import Session
 
 from core.models import (
-    Commitment, ConditionType, Contract, ContractLine, ContractType,
-    Formalization, Invoice, InvoiceLine, InvoiceSource, Order, Receipt,
-    Regime, SourceType, Supplier,
+    Commitment,
+    ConditionType,
+    Contract,
+    ContractLine,
+    ContractType,
+    Formalization,
+    Invoice,
+    InvoiceLine,
+    InvoiceSource,
+    Order,
+    Receipt,
+    Regime,
+    SourceType,
+    Supplier,
 )
 
 
 def generate(session: Session) -> dict[str, Any]:
     sup = Supplier(org_number="998877665", name="Hydraulikk Nord AS (SYNTETISK)")
-    session.add(sup); session.commit(); session.refresh(sup)
+    session.add(sup)
+    session.commit()
+    session.refresh(sup)
 
     contract = Contract(
         supplier_id=sup.id, contract_type=ContractType.RAMMEAVTALE,
@@ -29,7 +42,9 @@ def generate(session: Session) -> dict[str, Any]:
         total_value=Decimal("2400000"),
         valid_from=date(2026, 1, 1), valid_to=date(2027, 12, 31),
     )
-    session.add(contract); session.commit(); session.refresh(contract)
+    session.add(contract)
+    session.commit()
+    session.refresh(contract)
 
     prices = {"HYD-1001": "12500", "HYD-2002": "8300", "HYD-3003": "450"}
     for ref, price in prices.items():
@@ -58,10 +73,12 @@ def generate(session: Session) -> dict[str, Any]:
         o = Order(supplier_id=sup.id, contract_id=contract.id, reference=ref,
                   requested_by="bestiller.synt", estimated_value=Decimal(value),
                   regime=Regime.FOSA, order_date=date(2026, 7, 1))
-        session.add(o); session.commit(); session.refresh(o)
+        session.add(o)
+        session.commit()
+        session.refresh(o)
         if with_receipt:
             session.add(Receipt(order_id=o.id, confirmed_by="verksted",
-                                confirmed_at=datetime(2026, 7, 5, tzinfo=timezone.utc)))
+                                confirmed_at=datetime(2026, 7, 5, tzinfo=UTC)))
             session.commit()
         return o
 
@@ -71,7 +88,9 @@ def generate(session: Session) -> dict[str, Any]:
         inv = Invoice(supplier_id=sup.id, order_id=order.id if order else None,
                       invoice_number=number, invoice_date=date(2026, 7, 10),
                       total_ex_vat=total, source=InvoiceSource.EHF)
-        session.add(inv); session.commit(); session.refresh(inv)
+        session.add(inv)
+        session.commit()
+        session.refresh(inv)
         for ref, qty, price in lines:
             session.add(InvoiceLine(invoice_id=inv.id, item_ref=ref,
                                     description=f"Del {ref}", quantity=Decimal(qty),

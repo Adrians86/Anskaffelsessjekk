@@ -1,6 +1,7 @@
-import streamlit as st
+from html import escape
 
-from chrome import header, footer
+import streamlit as st
+from chrome import footer, header
 
 st.set_page_config(page_title="Plattformen", page_icon="🧩", layout="wide")
 header()
@@ -42,7 +43,7 @@ for i, (title, desc, badge, link) in enumerate(MODULES):
         with st.container(border=True):
             st.markdown(
                 f'<div style="display:flex;justify-content:space-between;align-items:center;gap:8px">'
-                f'<strong>{title}</strong>{badge_html(badge)}</div>',
+                f'<strong>{escape(title)}</strong>{badge_html(badge)}</div>',
                 unsafe_allow_html=True,
             )
             st.caption(desc)

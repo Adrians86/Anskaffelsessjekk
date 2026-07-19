@@ -4,8 +4,9 @@ UI-only helper (app/ layer). Renders an e-mail commitment as a gold-border card 
 quote, formalization chip and a UI-level gyldighetsvurdering. The gyldighet derivation is a
 demo-level heuristic on existing data (no full rules pass yet) — see BRIEF_VERIFISERING_V1 V1(b).
 """
-import streamlit as st
+from html import escape
 
+import streamlit as st
 from db import nok
 
 GOLD = "#B08D2E"
@@ -54,22 +55,28 @@ def render_email_commitment(c) -> None:
     form_value = c.formalization.value
     gyld_label, gyld_color, gyld_note = _GYLDIGHET.get(
         form_value, ("⚠ KREVER FORMALISERING", "#B58900", ""))
-    value_txt = f"{nok(c.value)}" if c.value is not None else "—"
-    unit_txt = f" {c.unit}" if c.unit else ""
+    value_txt = escape(f"{nok(c.value)}" if c.value is not None else "—")
+    unit_txt = f" {escape(c.unit)}" if c.unit else ""
     # Defensive: a stale core package on Cloud may lack source_quote — degrade, don't crash.
     quote = getattr(c, "source_quote", None)
+    # XSS: every dynamic value (commitment fields originate from data / future e-mail imports)
+    # is HTML-escaped before interpolation into unsafe_allow_html markup.
+    item_ref = escape(c.item_ref) if c.item_ref else "—"
+    condition = escape(c.condition_type.value)
+    source_ref = escape(c.source_ref)
+    valid_from = escape(str(c.valid_from))
 
     st.markdown(
         f'<div style="border-left:4px solid {GOLD};background:#FBF7EC;padding:12px 16px;'
         'border-radius:4px;margin:8px 0">'
         f'<div style="display:flex;justify-content:space-between;align-items:center;gap:8px">'
-        f'<strong>📧 {c.item_ref or "—"} · {c.condition_type.value} = {value_txt}{unit_txt}</strong>'
+        f'<strong>📧 {item_ref} · {condition} = {value_txt}{unit_txt}</strong>'
         f'{formalization_chip_html(form_value)}</div>'
         f'<div style="font-size:12px;color:#6B7280;margin-top:4px">'
-        f'Kilde: {c.source_ref} · gjelder fra {c.valid_from}</div>'
+        f'Kilde: {source_ref} · gjelder fra {valid_from}</div>'
         + (f'<div style="font-style:italic;color:#5A5140;background:#FFFDF6;'
            f'border-left:2px solid {GOLD};padding:6px 10px;margin-top:8px;font-size:13px">'
-           f'«{quote}»</div>' if quote else "")
+           f'«{escape(quote)}»</div>' if quote else "")
         + f'<div style="margin-top:8px;font-weight:600;color:{gyld_color}">'
           f'Gyldighetsvurdering: {gyld_label}</div>'
           f'<div style="font-size:12px;color:#6B7280">{gyld_note}</div>'

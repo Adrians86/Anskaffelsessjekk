@@ -1,11 +1,12 @@
 # Streamlit Community Cloud deployment dependencies
-# Rebuild marker: core 0.2.0 (source_quote schema) — bump this line to force a
+# Rebuild marker: core 0.2.0 + defusedxml (security pass) — bump this line to force a
 # fresh pip environment on Cloud whenever core/models or the core API changes.
 # Cloud only reinstalls dependencies when a dependency file changes; a version
 # bump in pyproject.toml alone is NOT seen unless this file also changes.
 sqlmodel>=0.0.16
 pyyaml>=6.0
 fpdf2>=2.8
+defusedxml>=0.7
 streamlit>=1.35
 # install this repo as a package (core) - required on Streamlit Cloud
 .

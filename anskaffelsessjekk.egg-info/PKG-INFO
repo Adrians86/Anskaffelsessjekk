@@ -1,11 +1,12 @@
 Metadata-Version: 2.4
 Name: anskaffelsessjekk
-Version: 0.1.0
+Version: 0.2.0
 Summary: KI-drevet kontroll av fakturaer, avtaler og anskaffelsesregelverk for offentlig sektor
 Requires-Python: >=3.11
 Requires-Dist: sqlmodel>=0.0.16
 Requires-Dist: pyyaml>=6.0
 Requires-Dist: fpdf2>=2.8
+Requires-Dist: defusedxml>=0.7
 Provides-Extra: dev
 Requires-Dist: pytest>=8.0; extra == "dev"
 Requires-Dist: pytest-cov>=5.0; extra == "dev"

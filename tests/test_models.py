@@ -1,15 +1,26 @@
 """Smoke test: the full domain chain persists and reads back on SQLite."""
 from __future__ import annotations
 
-from datetime import date, datetime, timezone
+from datetime import UTC, date, datetime
 from decimal import Decimal
 
 from sqlmodel import Session, SQLModel, create_engine, select
 
 from core.models import (
-    Commitment, ConditionType, Contract, ContractLine, ContractType,
-    Formalization, Invoice, InvoiceLine, InvoiceSource, Order, Receipt,
-    Regime, SourceType, Supplier,
+    Commitment,
+    ConditionType,
+    Contract,
+    ContractLine,
+    ContractType,
+    Formalization,
+    Invoice,
+    InvoiceLine,
+    InvoiceSource,
+    Order,
+    Receipt,
+    Regime,
+    SourceType,
+    Supplier,
 )
 
 
@@ -19,7 +30,9 @@ def test_full_chain_roundtrip():
 
     with Session(engine) as s:
         sup = Supplier(org_number="912345678", name="Hydraulikk Nord AS")
-        s.add(sup); s.commit(); s.refresh(sup)
+        s.add(sup)
+        s.commit()
+        s.refresh(sup)
 
         c = Contract(
             supplier_id=sup.id, contract_type=ContractType.RAMMEAVTALE,
@@ -27,7 +40,9 @@ def test_full_chain_roundtrip():
             total_value=Decimal("2400000"),
             valid_from=date(2026, 1, 1), valid_to=date(2027, 12, 31),
         )
-        s.add(c); s.commit(); s.refresh(c)
+        s.add(c)
+        s.commit()
+        s.refresh(c)
         s.add(ContractLine(
             contract_id=c.id, item_ref="HYD-1001",
             description="Hydraulikkpumpe A4VG", unit_price=Decimal("12500"),
@@ -51,16 +66,20 @@ def test_full_chain_roundtrip():
             requested_by="a.sliwa", estimated_value=Decimal("118000"),
             regime=Regime.FOSA, order_date=date(2026, 7, 1),
         )
-        s.add(o); s.commit(); s.refresh(o)
+        s.add(o)
+        s.commit()
+        s.refresh(o)
         s.add(Receipt(order_id=o.id, confirmed_by="verksted",
-                      confirmed_at=datetime(2026, 7, 6, 12, 0, tzinfo=timezone.utc)))
+                      confirmed_at=datetime(2026, 7, 6, 12, 0, tzinfo=UTC)))
 
         inv = Invoice(
             supplier_id=sup.id, order_id=o.id, invoice_number="F-88991",
             invoice_date=date(2026, 7, 7), total_ex_vat=Decimal("118000"),
             source=InvoiceSource.EHF,
         )
-        s.add(inv); s.commit(); s.refresh(inv)
+        s.add(inv)
+        s.commit()
+        s.refresh(inv)
         s.add(InvoiceLine(
             invoice_id=inv.id, item_ref="HYD-1001",
             description="Hydraulikkpumpe A4VG", quantity=Decimal("10"),

@@ -1,15 +1,17 @@
-import streamlit as st
-from sqlmodel import select
+from html import escape
 
+import streamlit as st
+from chrome import footer, header
 from db import get_session, nok
-from chrome import header, footer
+from sqlmodel import select
 from texts import RECOMMENDED_ACTIONS
+
 from core.extraction import build_sample_ehf, parse_ehf
 from core.extraction.ehf import EHFParseError
 from core.matching.findings import Severity
 from core.models import Invoice, InvoiceLine, InvoiceSource, Order, Supplier
-from core.reporting import check_invoice, build_protokoll
-from core.rules.engine import Facts, RulesEngine, ReglementEngine
+from core.reporting import build_protokoll, check_invoice
+from core.rules.engine import Facts, ReglementEngine, RulesEngine
 
 st.set_page_config(page_title="Fakturakontroll", page_icon="🧾", layout="wide")
 header()
@@ -55,7 +57,7 @@ def render_audit_card(session, inv) -> None:
             st.markdown(
                 '<div style="border-left:4px solid #B58900;background:#FBF7EC;'
                 'padding:10px 14px;border-radius:4px;margin:6px 0">'
-                f'<strong>📧 E-postavtale:</strong> {f.message}'
+                f'<strong>📧 E-postavtale:</strong> {escape(f.message)}'
                 f'{_source_chip("Forpliktelser", _CHIP_FORPLIKTELSER)}</div>',
                 unsafe_allow_html=True,
             )
@@ -71,7 +73,7 @@ def render_audit_card(session, inv) -> None:
             continue
 
         with st.container(border=True):
-            st.markdown(f"{_SEV_ICON[f.severity]} **{f.message}**"
+            st.markdown(f"{_SEV_ICON[f.severity]} **{escape(f.message)}**"
                         f"{_source_chip('Forpliktelser', _CHIP_FORPLIKTELSER)}",
                         unsafe_allow_html=True)
             col1, col2 = st.columns(2)
@@ -93,10 +95,10 @@ def render_audit_card(session, inv) -> None:
     })
     for h in reglement_hits:
         with st.container(border=True):
-            st.markdown(f"🏛 **{h.message}**"
+            st.markdown(f"🏛 **{escape(h.message)}**"
                         f"{_source_chip('Internt reglement', _CHIP_INTERNT)}",
                         unsafe_allow_html=True)
-            st.markdown(f"**Grunnlag:** {h.citation}")
+            st.markdown(f"**Grunnlag:** {escape(h.citation)}")
 
     # V2 — Regelverkssjekk: the SECOND direction (own procedure, not the supplier's price).
     st.markdown(f"#### Regelverkssjekk{_source_chip('Regelverk', _CHIP_REGELVERK)}",
@@ -219,7 +221,9 @@ with tab_upload:
                         org_number=parsed.supplier_org or f"UKJENT-{parsed.invoice_number}",
                         name=(parsed.supplier_name or "Ukjent leverandør") + " (OPPLASTET)",
                     )
-                    session.add(supplier); session.commit(); session.refresh(supplier)
+                    session.add(supplier)
+                    session.commit()
+                    session.refresh(supplier)
                     st.info("Ukjent organisasjonsnummer — leverandør opprettet. "
                             "Fakturaen mangler avtalegrunnlag, som kontrollen vil vise.")
 
@@ -236,7 +240,9 @@ with tab_upload:
                         total_ex_vat=parsed.total_ex_vat, currency=parsed.currency,
                         source=InvoiceSource.EHF,
                     )
-                    session.add(inv); session.commit(); session.refresh(inv)
+                    session.add(inv)
+                    session.commit()
+                    session.refresh(inv)
                     for ln in parsed.lines:
                         session.add(InvoiceLine(
                             invoice_id=inv.id, item_ref=ln.item_ref, description=ln.description,

@@ -1,14 +1,13 @@
 """PDF protocol (protokoll) generation for invoice checks — Norwegian language."""
 from __future__ import annotations
 
-from datetime import datetime, timezone
-from io import BytesIO
+from datetime import UTC, datetime
 
 from fpdf import FPDF
-from sqlmodel import Session, select
+from sqlmodel import Session
 
 from core.models import Invoice, Order, Supplier
-from core.reporting.classify import check_invoice, RULES_VERSION
+from core.reporting.classify import RULES_VERSION, check_invoice
 
 
 def build_protokoll(session: Session, invoice: Invoice) -> bytes:
@@ -86,7 +85,7 @@ def build_protokoll(session: Session, invoice: Invoice) -> bytes:
         pdf.set_fill_color(240, 240, 240)
         col_widths = [20, 80, 50]
         headers = ["Alvorlighet", "Beskrivelse", "Grunnlag"]
-        for h, w in zip(headers, col_widths):
+        for h, w in zip(headers, col_widths, strict=True):
             pdf.cell(w, 6, h, border=1, fill=True)
         pdf.ln()
 
@@ -103,7 +102,7 @@ def build_protokoll(session: Session, invoice: Invoice) -> bytes:
     pdf.ln(5)
     pdf.set_font("Helvetica", "", 9)
     pdf.set_text_color(100, 100, 100)
-    timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
+    timestamp = datetime.now(UTC).strftime("%Y-%m-%d %H:%M:%S UTC")
     pdf.multi_cell(
         0, 4,
         f"Beslutningsstotte - utkast generert av Anskaffelsessjekk {timestamp}. "

@@ -1,10 +1,12 @@
-import streamlit as st
-from sqlmodel import select
-import pandas as pd
-import altair as alt
+from html import escape
 
+import altair as alt
+import pandas as pd
+import streamlit as st
+from chrome import footer, header
 from db import get_session, nok
-from chrome import header, footer
+from sqlmodel import select
+
 from core.models import Invoice, Supplier
 from core.reporting import check_invoice
 
@@ -58,7 +60,7 @@ with get_session() as session:
             '<div style="font-size:13px;color:#8A7A3A;font-weight:600;text-transform:uppercase;'
             'letter-spacing:.5px">Verdi funnet i demoporteføljen</div>'
             f'<div style="font-size:40px;font-weight:700;color:#B58900;line-height:1.1">'
-            f'{nok(total_verdi)}</div>'
+            f'{escape(nok(total_verdi))}</div>'
             '<div style="font-size:12px;color:#8A94A0">Sum av alle avvik funnet av kontrollen — '
             'gevinstpotensial ved oppfølging.</div>'
             '</div>',

@@ -34,6 +34,8 @@ and in `docs/ARCHITECTURE.md`. Your job: implement within this contract.
     pyproject version bump alone is invisible to Cloud, so `core` stays stale = live crash.
     Also read `source_quote`-style new fields defensively in UI (`getattr(obj, "field", None)`)
     so a page degrades gracefully instead of crashing while a stale env is still live.
+11. Any dynamic value interpolated into HTML rendered with `unsafe_allow_html` MUST pass through
+    `html.escape()` — user-originated content (e-mails, uploads) will flow here in future features.
 
 ## Definition of DONE (for Claude Code agents)
 A task is **done** only when ALL four are true:

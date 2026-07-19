@@ -1,9 +1,10 @@
 from datetime import date
 from decimal import Decimal
+from html import escape
 
 import streamlit as st
+from chrome import footer, header
 
-from chrome import header, footer
 from core.rules.engine import Facts, RulesEngine
 
 st.set_page_config(page_title="Terskelsjekk", page_icon="⚖️", layout="wide")
@@ -61,9 +62,9 @@ if st.button("Vurder", type="primary"):
           f"versjonerte terskelverdier (per {on.isoformat()})</span>")
     _arrow(a2)
     if hits:
-        consequence = hits[0].consequence.replace("_", " ")
+        consequence = escape(hits[0].consequence.replace("_", " "))
         para = hits[0].citation.split("§")
-        para_note = f"§{para[1].split('(')[0].strip()}" if len(para) > 1 else "se hjemmel"
+        para_note = escape(f"§{para[1].split('(')[0].strip()}" if len(para) > 1 else "se hjemmel")
         _step(s3, "3. Konsekvens (§)",
               f"<strong>{consequence}</strong><br>"
               f'<span style="color:#8A94A0;font-size:12px">{para_note}</span>')
