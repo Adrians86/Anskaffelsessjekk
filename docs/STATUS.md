@@ -544,3 +544,55 @@ edit old entries — append only.
 - Tests: **41 passed** (40 + 1 XXE). All 8 pages render clean via AppTest. VERSION resolves to 0.2.0;
   XXE blocked; html.escape verified.
 - Next: self-audit for quality/security/best practices (findings appended below).
+
+---
+
+### 2026-07-18 · claude-code (SELF-AUDIT — quality, security, best practices)
+Post-fix audit of the codebase. Fixes already landed this session: XXE (defusedxml), XSS
+(html.escape), texts.py cleanup, ruff-clean lint. Remaining findings, by severity:
+
+**H1 [HIGH · correctness / audit integrity] — display code calls the side-effecting
+`check_invoice`, polluting the append-only audit trail.**
+Arbeidsflate, Styringsinformasjon and Leverandører iterate ALL invoices calling
+`core.reporting.check_invoice`, which persists a CheckResult + AuditLog row on every call
+(display actors "cache"/"worklist"/"dashboard"/"leverandoroversikt"). Measured: ONE Arbeidsflate
+load writes 24 AuditLog rows; a Styringsinformasjon load adds 8 more. A demo session inflates the
+trail with hundreds of display-driven "invoice.checked" entries and makes "Siste hendelser"
+meaningless; the in-memory DB also grows unbounded per session. This undercuts the point of the
+append-only audit trail (hard rule #7). Proper fix = a read-only evaluation path (no persistence)
+for display/aggregation, separate from user-initiated controls that SHOULD be logged. That is a
+`core` public-API change → **needs partner approval under the scope freeze.** Flagging, not
+implementing. (Interim UI-only palliative possible but hacky; recommend the core split.)
+
+**M1 [MEDIUM · robustness] — PDF protokoll uses core font "Helvetica" (latin-1 only).**
+`core/reporting/protokoll.py` renders with Helvetica. Norwegian æ/ø/å are latin-1-safe, but an
+uploaded EHF supplier with a name outside latin-1 (e.g. Polish/other scripts) makes fpdf2 raise on
+"Last ned protokoll (PDF)". Safe on demo data; for production uploads embed a Unicode TTF (DejaVu)
+and set_font to it.
+
+**L1 [LOW · DoS surface] — EHF upload has no explicit size/complexity cap** beyond Streamlit's
+200 MB default. defusedxml already blocks billion-laughs/XXE; a large well-formed XML could still
+be slow. Consider a size guard. Low for demo.
+
+**L2 [LOW · best practice] — no CI.** pytest + ruff are not run automatically. Recommend a GitHub
+Actions workflow (pytest + `ruff check`) so lint/test regressions and the "stale core" class of
+issue are caught pre-deploy. Also fold a few AppTest page-smoke checks into pytest so page crashes
+(like the source_quote one) are caught in CI, not only in the browser. (Not added unilaterally —
+dev-infra decision for the partner; happy to implement on your go.)
+
+**L3 [LOW · quality] — verdict-pill / chip HTML duplicated** across Hjem, Leverandører and
+Fakturakontroll. Consolidate into a shared UI helper (like app/ui_forpliktelser.py) to keep the
+BRAND.md verdict colors and markup consistent in one place.
+
+**L4 [LOW · quality] — `nok()` casts Decimal→float for display.** Fine visually; money stays
+Decimal in the engine. Note only.
+
+**I1 [INFO · known] — .git history still carries the old committed `.venv`** (repo `.git` size).
+No history rewrite without a separate decision (deferred to a possible repo migration).
+
+**Positives (holding):** core/UI separation intact (`core/` imports no UI); legal rules are DATA
+with citations; human-in-the-loop preserved; DB access parameterized (no SQLi); secrets via env;
+XXE + XSS now closed; ruff clean; 41 tests green; numbers reconcile at 22 310 kr.
+
+Recommended next action for the partner: decide on **H1** (read-only check path) — it is the one
+finding with real product impact; the rest are low-risk hardening I can batch on approval.
