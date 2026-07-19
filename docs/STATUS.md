@@ -500,3 +500,23 @@ edit old entries — append only.
   against a core object lacking source_quote.
 - Note: applied the guard in ui_forpliktelser.py (the real access point) rather than the Avtaler
   page literally — the page has no direct source_quote access; this also protects Leverandørkort.
+
+---
+
+### 2026-07-18 · claude-code (HOTFIX 2 — force Cloud env rebuild via requirements.txt)
+- Evidence (Adrian's screenshot of the live /Leverandorer page): AttributeError in
+  render_email_commitment — Cloud is running PRE-hotfix code (V6 Leverandørkort UI is deployed but
+  the getattr guard from 4b3633df is not) against a stale core 0.1.0 (no source_quote).
+- Root cause: bumping pyproject version 0.2.0 alone does NOT trigger a Streamlit Cloud env
+  rebuild — Cloud only reinstalls deps when a dependency FILE changes, and requirements.txt was
+  byte-identical, so the cached env kept core 0.1.0.
+- Fix: added a "Rebuild marker: core 0.2.0" comment block to requirements.txt so Cloud detects a
+  dependency change → rebuilds env → `pip install .` reinstalls core 0.2.0 (with source_quote).
+  Also gives Cloud a fresh commit to deploy (nudges the poller). The getattr guard already makes
+  the page crash-proof regardless of env state, so once ANY commit ≥ 4b3633df deploys, the crash
+  stops even if the env is still stale.
+- Hard rule #10 tightened: a core schema/API change requires bumping BOTH pyproject version AND
+  the requirements.txt rebuild marker, plus defensive getattr on new fields in the UI.
+- Manual action for Adrian if auto-deploy still lags: Streamlit Cloud → Manage app → ⋮ →
+  "Reboot app" forces a full pull + rebuild.
+- Tests: 40 passed.

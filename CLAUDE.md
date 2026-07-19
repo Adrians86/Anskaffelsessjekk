@@ -29,7 +29,11 @@ and in `docs/ARCHITECTURE.md`. Your job: implement within this contract.
 8. `pytest` must be green (currently 26 passed) before every commit. Run it before and after changes.
 9. Conventional commit messages (feat/fix/test/docs/style/build).
 10. Every change to `core/models` or the `core` public API REQUIRES a version bump in
-    `pyproject.toml` — Streamlit Cloud skips reinstall on unchanged version; stale core = live crash.
+    `pyproject.toml` AND a bump of the "Rebuild marker" comment in `requirements.txt` —
+    Streamlit Cloud only rebuilds the pip environment when a dependency FILE changes; a
+    pyproject version bump alone is invisible to Cloud, so `core` stays stale = live crash.
+    Also read `source_quote`-style new fields defensively in UI (`getattr(obj, "field", None)`)
+    so a page degrades gracefully instead of crashing while a stale env is still live.
 
 ## Definition of DONE (for Claude Code agents)
 A task is **done** only when ALL four are true:
