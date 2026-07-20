@@ -5,6 +5,7 @@ import streamlit as st
 from chrome import footer, header
 from db import get_session, nok
 from sqlmodel import select
+from ui_common import verdict_pill
 from ui_forpliktelser import render_email_commitment
 
 from core.models import AuditLog, Commitment, Contract, ContractLine, Invoice, Supplier
@@ -94,12 +95,6 @@ else:
     st.subheader("Leverandørkort")
     chosen_name = st.selectbox("Åpne leverandørkort", options=[r["Navn"] for r in rows])
 
-    def _verdict_pill(v: str) -> str:
-        colors = {"AVVIK": "#C62828", "TIL_VURDERING": "#B58900", "SAMSVAR": "#2E7D32"}
-        label = {"AVVIK": "🔴 AVVIK", "TIL_VURDERING": "🟡 TIL VURDERING",
-                 "SAMSVAR": "✓ SAMSVAR"}[v]
-        return f'<span style="color:{colors[v]};font-weight:600">{label}</span>'
-
     with get_session() as session:
         sup = session.exec(select(Supplier).where(Supplier.name == chosen_name)).first()
 
@@ -152,7 +147,7 @@ else:
             col1.text(r["number"])
             col2.text(r["date"])
             col3.text(r["amount"])
-            col4.markdown(_verdict_pill(r["verdict"]), unsafe_allow_html=True)
+            col4.markdown(verdict_pill(r["verdict"]), unsafe_allow_html=True)
             col5.text(r["verdi_display"])
             if col6.button("Åpne →", key=f"levopen_{r['id']}"):
                 st.session_state.preselect_invoice = r["id"]

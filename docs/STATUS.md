@@ -622,3 +622,25 @@ finding with real product impact; the rest are low-risk hardening I can batch on
   "demo-bruker"); "Siste hendelser" shows only real controls. Reconciliation unchanged: **22 310 kr**.
 - Tests: **44 passed** (41 + 3 H1). ruff clean. All 8 pages render clean via AppTest.
 - Next: batch — CI (L2) → upload cap (L1) → dedup+Decimal (L3/L4) → M1 STATUS note.
+
+---
+
+### 2026-07-18 · claude-code (batch — CI, upload cap, dedup, Decimal, M1 note)
+- Done (partner-approved batch, in order):
+  - **L2 · CI**: new `.github/workflows/ci.yml` — on every push/PR installs `.[dev,ui]` then runs
+    `ruff check core/ app/ tests/` and `pytest -q`. From now the source_quote / lint / import class
+    of bug is caught in CI, not in the browser.
+  - **L1 · upload cap**: EHF upload now rejects files > 5 MB with a readable Norwegian message
+    (an EHF invoice is a few kB; caps abuse/DoS on top of the XXE defusing already in place).
+  - **L3 · dedup**: verdict pill consolidated into `app/ui_common.py::verdict_pill()` (BRAND.md
+    verdict colors in one place); Arbeidsflate Fakturakø and Leverandørkort both use it (removed the
+    duplicated inline/`_verdict_pill` variants).
+  - **L4 · Decimal**: `nok()` no longer round-trips through `float()` — it formats the value
+    directly, so a Decimal stays exact; still accepts float/int for aggregated display values.
+  - **M1 · note only (font untouched)**: KNOWN LIMITATION — the protokoll PDF uses the core font
+    Helvetica (latin-1). Norwegian æ/ø/å are fine; a supplier name outside latin-1 from a real
+    upload would break the PDF. Embed a Unicode TTF (DejaVu) BEFORE production with real data.
+  - **I1 · noted, no action**: `.git` history still carries the old committed `.venv` (repo size);
+    no history rewrite without a separate decision.
+- Tests: **44 passed**. ruff clean. All 8 pages render clean via AppTest. nok() verified for
+  Decimal/float/int. Reconciliation holds at 22 310 kr.

@@ -2,6 +2,7 @@ import streamlit as st
 from db import get_session, nok
 from sqlmodel import select
 from texts import RECOMMENDED_ACTIONS
+from ui_common import verdict_pill
 
 from core.models import AuditLog, Invoice, Supplier
 from core.reporting import evaluate_invoice
@@ -161,12 +162,7 @@ for tab_idx, (tab, filter_status) in enumerate(zip(tabs, tab_filters, strict=Tru
             with col3:
                 st.text(row["amount"])
             with col4:
-                if row["status"] == "AVVIK":
-                    st.markdown('<span style="color:#C62828;font-weight:600">🔴 AVVIK</span>', unsafe_allow_html=True)
-                elif row["status"] == "TIL_VURDERING":
-                    st.markdown('<span style="color:#B58900;font-weight:600">🟡 TIL VURDERING</span>', unsafe_allow_html=True)
-                else:
-                    st.markdown('<span style="color:#2E7D32;font-weight:600">✓ SAMSVAR</span>', unsafe_allow_html=True)
+                st.markdown(verdict_pill(row["status"]), unsafe_allow_html=True)
             with col5:
                 st.caption(row["finding"])
             with col6:

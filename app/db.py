@@ -33,5 +33,9 @@ def get_session() -> Session:
 
 
 def nok(amount) -> str:
-    """Format a Decimal as Norwegian kroner for the UI."""
-    return f"{float(amount):,.2f} kr".replace(",", " ").replace(".", ",")
+    """Format an amount as Norwegian kroner for the UI.
+
+    Formats the value directly (Decimal stays exact — no float round-trip); also accepts
+    float/int for already-aggregated display values.
+    """
+    return f"{amount:,.2f} kr".replace(",", " ").replace(".", ",")

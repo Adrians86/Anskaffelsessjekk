@@ -195,7 +195,13 @@ with tab_upload:
         help="Syntetisk EHF bygget fra F-1003 — last ned, last opp igjen, og se kontrollen.",
     )
 
+    _MAX_UPLOAD_BYTES = 5 * 1024 * 1024  # 5 MB — an EHF invoice is a few KB; cap abuse/DoS.
+
     uploaded = st.file_uploader("EHF-fil (.xml)", type=["xml"], key="ehf_upload")
+    if uploaded is not None and uploaded.size > _MAX_UPLOAD_BYTES:
+        st.error(f"Filen er for stor ({uploaded.size / 1_048_576:.1f} MB). "
+                 "Maksimal størrelse er 5 MB — en EHF-faktura er normalt noen få kB.")
+        uploaded = None
     if uploaded is not None:
         try:
             parsed = parse_ehf(uploaded.getvalue())
