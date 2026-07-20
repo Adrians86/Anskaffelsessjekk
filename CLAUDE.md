@@ -58,6 +58,22 @@ external integrations, changes to core data model.
 
 ## Current tasks
 
+**E-post-flyt v1 delivered — human-in-the-loop for e-mail commitment extraction.**
+
+Mini-brief "E-post-flyt v1" (docs/BRIEF_EPOST_FLYT.md) delivered on main: a "Registrer fra e-post"
+tab on Avtaler where a pasted e-mail is parsed (NO LLM — regex/keyword `core/extraction/epost.py`,
+"KI-uttrekk: Under utvikling") into a NON-binding proposal; only after the human clicks "Bekreft"
+does the Commitment enter the control basis (confirmed_by_user=True) with one AuditLog entry.
+3 synthetic example e-mails (core/synth/epost_examples.py) showcase the three gyldighet outcomes:
+KREVER FORMALISERING / GYLDIG / UGYLDIG (vesentlig endring >15 % / utvidet omfang → UGYLDIG,
+"Bekreft" disabled). Pasted content is html.escape()-d (hard rule #11). Tests in tests/test_epost.py.
+
+Also on main since Verifisering v1: **security & quality pass** (XXE via defusedxml, XSS escaping
+of every unsafe_allow_html interpolation, texts.py cleanup, ruff config + CI), the **H1 core split**
+(`evaluate_invoice` pure/read-only vs `check_invoice` persists — reads never write, ARCHITECTURE §5),
+and a batch (EHF upload cap, verdict-pill dedup, Decimal-safe nok). CI (GitHub Actions: ruff+pytest)
+runs on every push.
+
 **Verifisering v1 delivered — demo shows full idea (3 sources, 2 directions, e-mail validity hierarchy).**
 
 Mini-brief "Verifisering v1" (docs/BRIEF_VERIFISERING_V1.md) delivered in full on main:

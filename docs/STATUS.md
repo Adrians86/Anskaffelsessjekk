@@ -682,3 +682,24 @@ finding with real product impact; the rest are low-risk hardening I can batch on
 - Verified via AppTest: the three examples render the three distinct gyldighet outcomes.
 - Tests: 44 passed. ruff clean. All 8 pages render.
 - Next: E3 (tests for parser/gate/UGYLDIG + wrap-up).
+
+---
+
+### 2026-07-20 · claude-code (E-post-flyt v1 — E3: tests + wrap-up)
+- Done: **E3 complete — E-post-flyt v1 delivered.**
+  - **tests/test_epost.py** (5 tests): parser extracts amount+item_ref from mail 1 (kr 11 800 →
+    Decimal, HYD-1001, PRICE, KREVER FORMALISERING); "fra kr 520 til kr 495" → 495/RATE/GYLDIG;
+    mail 3 → UGYLDIG (vesentlig endring); **confirmed_by_user gate** (unconfirmed e-mail extraction
+    is_active_on → False, i.e. does NOT participate in control; confirmed → True); empty e-mail safe.
+  - **CLAUDE.md Current tasks** updated to "E-post-flyt v1 delivered — human-in-the-loop for e-mail
+    commitment extraction" (+ recap of the security pass, H1 split and CI landed since Verifisering v1).
+- **DoD:** (a) pytest **49 passed** (44 + 5). (b) all 8 pages clean via AppTest AND real
+  `streamlit run` → HTTP 200, no errors. (c) committed + pushed to origin/main. (d) STATUS per step.
+  ruff clean; CI (ruff+pytest) will gate this push too.
+- Acceptance (met locally): paste e-mail → proposal → Bekreft → commitment enters control with an
+  audit entry ("commitment.confirmed_from_email"); mail 3 flagged UGYLDIG (Bekreft disabled); an
+  unconfirmed e-mail does NOT participate in control (unit-tested gate).
+- Note: LLM extraction stays "Under utvikling" — no API key in the public demo (risk/cost); the demo
+  uses transparent regex/keyword recognition, human confirms before anything enters control.
+- Live verification (egress blocks streamlit.app from the sandbox — Adrian to confirm on the
+  redeployed URL): open Avtaler → "Registrer fra e-post" → Last inn eksempel → Foreslå → Bekreft.
