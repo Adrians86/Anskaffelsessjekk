@@ -86,6 +86,15 @@ def _assess_gyldighet(text: str) -> tuple[str, str]:
             "Avtalen krever skriftlig tillegg — e-posten er varsel, ikke dokumentasjon.")
 
 
+def confirm_audit_detail(avsender: str | None, gyldighet: str) -> str:
+    """Audit detail for an e-mail confirmation. A confirm despite UGYLDIG is recorded explicitly
+    (full sporbarhet: who, when — via created_at — and against which warning)."""
+    who = avsender or "ukjent avsender"
+    if gyldighet == UGYLDIG:
+        return f"forpliktelse bekreftet TROSS UGYLDIG-vurdering fra e-post ({who})"
+    return f"forpliktelse bekreftet fra e-post ({who})"
+
+
 def parse_email(text: str) -> ProposedCommitment:
     """Parse a pasted e-mail body into a proposed (non-binding) commitment."""
     text = text or ""

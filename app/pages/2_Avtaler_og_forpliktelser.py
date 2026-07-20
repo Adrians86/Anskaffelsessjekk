@@ -7,7 +7,7 @@ from db import get_session, nok
 from sqlmodel import select
 from ui_forpliktelser import gyldighet_badge_html, gyldighet_legend, render_email_commitment
 
-from core.extraction.epost import parse_email
+from core.extraction.epost import confirm_audit_detail, parse_email
 from core.models import (
     AuditLog,
     Commitment,
@@ -125,9 +125,15 @@ with tab_epost:
                         unsafe_allow_html=True)
             st.caption(proposal.gyldighet_reason)
 
-        can_confirm = proposal.gyldighet != "UGYLDIG"
+        # Human-in-the-loop (hard rule #3): the system recommends, it never blocks. For a
+        # vesentlig endring we warn strongly, but the saksbehandler may still register it.
+        if proposal.gyldighet == "UGYLDIG":
+            st.error("⚠ Vesentlig endring: denne endringen krever sannsynligvis ny konkurranse "
+                     "og kan ikke gyldig avtales per e-post. Vurder formell anskaffelsesprosess "
+                     "før du bekrefter.")
+
         b1, b2 = st.columns(2)
-        if b1.button("Bekreft og legg til", type="primary", disabled=not can_confirm):
+        if b1.button("Bekreft og legg til", type="primary"):
             with get_session() as session:
                 sup = session.exec(
                     select(Supplier).where(Supplier.name == leverandor)
@@ -144,6 +150,7 @@ with tab_epost:
                     source_type=SourceType.EMAIL,
                     source_ref=f"e-post {dato.isoformat()}, {avsender}",
                     source_quote=text.strip()[:500],
+                    gyldighet=proposal.gyldighet,
                     condition_type=cond,
                     item_ref=proposal.item_ref,
                     value=proposal.value,
@@ -156,18 +163,21 @@ with tab_epost:
                 session.add(commitment)
                 session.commit()
                 session.refresh(commitment)
-                # Real action → append-only audit trail (reads never write; this IS a write).
+                # Real action → append-only audit trail. A confirm despite UGYLDIG is recorded
+                # explicitly (who, when via created_at, against which warning).
                 session.add(AuditLog(
                     actor="demo-bruker", action="commitment.confirmed_from_email",
                     entity=f"commitment:{commitment.id}",
-                    detail=f"forpliktelse bekreftet fra e-post ({avsender or 'ukjent avsender'})",
+                    detail=confirm_audit_detail(avsender, proposal.gyldighet),
                 ))
                 session.commit()
             st.session_state.epost_proposed = False
-            st.success("Forpliktelsen er bekreftet og lagt til i kontrollgrunnlaget "
-                       "(logget i revisjonssporet).")
-        if not can_confirm:
-            b1.caption("Kan ikke bekreftes — vesentlig endring kan ikke avtales per e-post.")
+            if proposal.gyldighet == "UGYLDIG":
+                st.warning("Registrert TROSS UGYLDIG-vurdering. Handlingen er logget i "
+                           "revisjonssporet med saksbehandlers ansvar.")
+            else:
+                st.success("Forpliktelsen er bekreftet og lagt til i kontrollgrunnlaget "
+                           "(logget i revisjonssporet).")
         if b2.button("Avvis"):
             st.session_state.epost_proposed = False
             st.info("Forslaget er avvist. Ingenting er lagt til.")

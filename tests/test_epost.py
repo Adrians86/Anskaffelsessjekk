@@ -8,6 +8,7 @@ from core.extraction.epost import (
     GYLDIG,
     KREVER_FORMALISERING,
     UGYLDIG,
+    confirm_audit_detail,
     parse_email,
 )
 from core.models import Commitment, ConditionType, SourceType
@@ -54,3 +55,23 @@ def test_empty_email_is_safe():
     assert p.value is None
     assert p.item_ref is None
     assert p.condition_type == "UNKNOWN"
+
+
+def test_ugyldig_can_be_confirmed_and_is_flagged_in_audit():
+    """Hard rule #3: no auto-blocking. An UGYLDIG e-mail CAN be registered by a human, but the
+    audit entry marks it explicitly, and the confirmed commitment carries the UGYLDIG status."""
+    # The confirm is not blocked — it produces a distinguished audit detail.
+    detail = confirm_audit_detail("T. Olsen", UGYLDIG)
+    assert "TROSS UGYLDIG-vurdering" in detail
+    # A normal confirm has the plain detail (no override marker).
+    assert "TROSS" not in confirm_audit_detail("J. Hansen", KREVER_FORMALISERING)
+
+    # A confirmed UGYLDIG commitment still participates in control (human took responsibility),
+    # and carries the recorded gyldighet for a red status in the register.
+    c = Commitment(
+        supplier_id=1, source_type=SourceType.EMAIL, source_ref="e-post",
+        condition_type=ConditionType.SCOPE, valid_from=date(2026, 6, 12),
+        gyldighet=UGYLDIG, extracted_by="regel:epost-parser-v1", confirmed_by_user=True,
+    )
+    assert c.gyldighet == "UGYLDIG"
+    assert c.is_active_on(date(2026, 7, 1)) is True

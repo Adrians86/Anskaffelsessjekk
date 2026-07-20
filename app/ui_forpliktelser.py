@@ -36,6 +36,14 @@ _GYLDIGHET_STATUS = {
     "UGYLDIG": ("✗ UGYLDIG", "#C62828"),
 }
 
+_GYLDIGHET_NOTE = {
+    "GYLDIG": "I samsvar med avtalens endringsbestemmelser.",
+    "KREVER_FORMALISERING": "Avtalen krever skriftlig tillegg — e-posten er varsel, "
+                            "ikke dokumentasjon.",
+    "UGYLDIG": "Vesentlig endring — kan ikke gyldig avtales per e-post; "
+               "registrert på saksbehandlers ansvar.",
+}
+
 
 def _chip(label: str, fg: str, bg: str) -> str:
     return (f'<span style="background:{bg};color:{fg};font-size:11px;font-weight:600;'
@@ -67,8 +75,15 @@ def render_email_commitment(c) -> None:
     """Render one EMAIL-source commitment as a gold-border card with source quote,
     formalization chip and gyldighetsvurdering."""
     form_value = c.formalization.value
-    gyld_label, gyld_color, gyld_note = _GYLDIGHET.get(
-        form_value, ("⚠ KREVER FORMALISERING", "#B58900", ""))
+    # Prefer a gyldighet recorded at confirm time (e.g. an UGYLDIG the human registered anyway);
+    # fall back to the formalization-derived heuristic for older/manual commitments.
+    stored_gyldighet = getattr(c, "gyldighet", None)
+    if stored_gyldighet:
+        label, color = _GYLDIGHET_STATUS.get(stored_gyldighet, (stored_gyldighet, "#6B7280"))
+        gyld_label, gyld_color, gyld_note = label, color, _GYLDIGHET_NOTE.get(stored_gyldighet, "")
+    else:
+        gyld_label, gyld_color, gyld_note = _GYLDIGHET.get(
+            form_value, ("⚠ KREVER FORMALISERING", "#B58900", ""))
     value_txt = escape(f"{nok(c.value)}" if c.value is not None else "—")
     unit_txt = f" {escape(c.unit)}" if c.unit else ""
     # Defensive: a stale core package on Cloud may lack source_quote — degrade, don't crash.

@@ -703,3 +703,28 @@ finding with real product impact; the rest are low-risk hardening I can batch on
   uses transparent regex/keyword recognition, human confirms before anything enters control.
 - Live verification (egress blocks streamlit.app from the sandbox — Adrian to confirm on the
   redeployed URL): open Avtaler → "Registrer fra e-post" → Last inn eksempel → Foreslå → Bekreft.
+
+---
+
+### 2026-07-20 · claude-code (E-post-flyt v1 — UGYLDIG decision: inform, don't block)
+- Partner correction (supersedes the previous "disable Bekreft for UGYLDIG"): **hard rule #3 —
+  the system recommends, the human decides; no auto-blocking.** Implemented:
+  - "Bekreft og legg til" is now **active for all three statuses** (removed the disabled gate).
+  - For UGYLDIG a strong **st.error** warning is shown ABOVE the button ("Vesentlig endring …
+    kan ikke gyldig avtales per e-post. Vurder formell anskaffelsesprosess før du bekrefter.").
+  - If the saksbehandler confirms anyway, the **AuditLog records it explicitly**:
+    detail = "forpliktelse bekreftet TROSS UGYLDIG-vurdering fra e-post (avsender)" (+ actor +
+    created_at timestamp = full sporbarhet), and a post-confirm st.warning states it was registered
+    on the saksbehandler's responsibility.
+  - The confirmed commitment now carries its **gyldighet** so the register shows it with the right
+    (red) status — new nullable `Commitment.gyldighet` field; render_email_commitment prefers the
+    stored gyldighet (incl. ✗ UGYLDIG red), falling back to the formalization heuristic.
+- **Core model change → hard rule #10**: bumped pyproject **0.2.0 → 0.3.0** AND the requirements.txt
+  rebuild marker (forces Cloud to reinstall core with the new field). UI reads the field defensively
+  (`getattr(c, "gyldighet", None)`).
+- **Flag RESOLVED:** inform, not block (hard rule #3). UGYLDIG is registrable with a distinguished,
+  fully traceable audit entry.
+- Tests: **50 passed** (added test_ugyldig_can_be_confirmed_and_is_flagged_in_audit — confirm is
+  possible, audit detail is distinguished, confirmed UGYLDIG still participates). ruff clean; all 8
+  pages render; e2e AppTest: UGYLDIG example → warning → Bekreft → commitment persisted with UGYLDIG
+  status + 1 "TROSS UGYLDIG" audit entry. VERSION resolves to 0.3.0.
