@@ -8,7 +8,7 @@ from sqlmodel import select
 from ui_forpliktelser import render_email_commitment
 
 from core.models import AuditLog, Commitment, Contract, ContractLine, Invoice, Supplier
-from core.reporting import check_invoice
+from core.reporting import evaluate_invoice
 
 st.set_page_config(page_title="Leverandører", page_icon="🏢", layout="wide")
 header()
@@ -34,7 +34,7 @@ def supplier_stats():
             verdi = 0.0
             invoices_with_findings = 0
             for inv in invoices:
-                result = check_invoice(session, inv, actor="leverandoroversikt")
+                result = evaluate_invoice(session, inv)
                 if result.findings:
                     invoices_with_findings += 1
                 n_findings += len(result.findings)
@@ -53,6 +53,27 @@ def supplier_stats():
             })
     rows.sort(key=lambda r: r["_verdi"], reverse=True)
     return rows
+
+
+@st.cache_data
+def supplier_invoice_rows(supplier_id: int):
+    """Per-supplier invoice evaluations (cached, read-only). evaluate_invoice never writes."""
+    with get_session() as session:
+        invoices = session.exec(
+            select(Invoice).where(Invoice.supplier_id == supplier_id)
+            .order_by(Invoice.invoice_number)
+        ).all()
+        out = []
+        for inv in invoices:
+            r = evaluate_invoice(session, inv)
+            out.append({
+                "id": inv.id, "number": inv.invoice_number,
+                "date": str(inv.invoice_date), "amount": nok(inv.total_ex_vat),
+                "verdict": r.verdict.value,
+                "verdi_display": nok(r.verdi_funnet) if r.verdi_funnet else "—",
+                "verdi_num": float(r.verdi_funnet), "has_findings": bool(r.findings),
+            })
+        return out
 
 
 rows = supplier_stats()
@@ -121,41 +142,36 @@ else:
         else:
             st.caption("Ingen registrerte tilleggsforpliktelser.")
 
-        # (d) Fakturaer
+        # (d) Fakturaer (cached, read-only)
         st.markdown("**Fakturaer**")
-        invoices = session.exec(
-            select(Invoice).where(Invoice.supplier_id == sup.id).order_by(Invoice.invoice_number)
-        ).all()
-        sup_verdi = 0.0
-        n_with_findings = 0
-        for inv in invoices:
-            r = check_invoice(session, inv, actor="leverandorkort")
-            sup_verdi += float(r.verdi_funnet)
-            if r.findings:
-                n_with_findings += 1
+        inv_rows = supplier_invoice_rows(sup.id)
+        sup_verdi = sum(r["verdi_num"] for r in inv_rows)
+        n_with_findings = sum(1 for r in inv_rows if r["has_findings"])
+        for r in inv_rows:
             col1, col2, col3, col4, col5, col6 = st.columns([1.4, 1.4, 1.5, 2, 1.5, 1])
-            col1.text(inv.invoice_number)
-            col2.text(str(inv.invoice_date))
-            col3.text(nok(inv.total_ex_vat))
-            col4.markdown(_verdict_pill(r.verdict.value), unsafe_allow_html=True)
-            col5.text(nok(r.verdi_funnet) if r.verdi_funnet else "—")
-            if col6.button("Åpne →", key=f"levopen_{inv.id}"):
-                st.session_state.preselect_invoice = inv.id
+            col1.text(r["number"])
+            col2.text(r["date"])
+            col3.text(r["amount"])
+            col4.markdown(_verdict_pill(r["verdict"]), unsafe_allow_html=True)
+            col5.text(r["verdi_display"])
+            if col6.button("Åpne →", key=f"levopen_{r['id']}"):
+                st.session_state.preselect_invoice = r["id"]
                 st.switch_page("pages/1_Fakturakontroll.py")
 
         # (e) Nøkkeltall
         st.markdown("**Nøkkeltall**")
-        andel = (n_with_findings / len(invoices) * 100) if invoices else 0.0
-        ftr = (1 - n_with_findings / len(invoices)) * 100 if invoices else 100.0
+        n_inv = len(inv_rows)
+        andel = (n_with_findings / n_inv * 100) if n_inv else 0.0
+        ftr = (1 - n_with_findings / n_inv) * 100 if n_inv else 100.0
         k1, k2, k3, k4 = st.columns(4)
-        k1.metric("Fakturaer", len(invoices))
+        k1.metric("Fakturaer", n_inv)
         k2.metric("Andel m/ funn", f"{andel:.0f} %")
         k3.metric("Verdi funnet", nok(sup_verdi))
         k4.metric("First Time Right", f"{ftr:.0f} %")
 
-        # (f) Siste hendelser for this supplier
+        # (f) Siste hendelser for this supplier (live — reflects real controls)
         st.markdown("**Siste hendelser**")
-        inv_entities = {f"invoice:{inv.id}" for inv in invoices}
+        inv_entities = {f"invoice:{r['id']}" for r in inv_rows}
         events = [e for e in session.exec(
             select(AuditLog).order_by(AuditLog.created_at.desc())
         ).all() if e.entity in inv_entities][:8]

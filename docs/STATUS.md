@@ -596,3 +596,29 @@ XXE + XSS now closed; ruff clean; 41 tests green; numbers reconcile at 22 310 kr
 
 Recommended next action for the partner: decide on **H1** (read-only check path) — it is the one
 finding with real product impact; the rest are low-risk hardening I can batch on approval.
+
+---
+
+### 2026-07-18 · claude-code (H1 APPROVED — reads never write; evaluate/check split)
+- Done: **H1 complete** (partner-approved scope exception).
+  - **core/reporting/classify.py**: new `evaluate_invoice(session, invoice) -> InvoiceCheck` — PURE
+    evaluation, ZERO persistence (no CheckResult, no AuditLog). `check_invoice(..., actor)` now =
+    `evaluate_invoice` + persist CheckResult + one AuditLog, called ONLY on real user actions.
+    Exported `evaluate_invoice` from core.reporting.
+  - **All views switched to `evaluate_invoice`** (Arbeidsflate KPIs/kø/krever-handling,
+    Styringsinformasjon, Leverandøroversikt + Leverandørkort), wrapped in `st.cache_data`
+    providers (compute_portfolio_stats, queue_rows, action_items, dashboard_data,
+    supplier_stats, supplier_invoice_rows). `check_invoice` remains ONLY in Fakturakontroll
+    (the "Kontroller faktura" button / EHF upload).
+  - **build_protokoll** was silently re-running `check_invoice(actor="protokoll-export")` on every
+    audit-card render (a second persisted control just to draw the PDF). Switched to
+    `evaluate_invoice` — the PDF is a pure read now.
+  - **ARCHITECTURE.md §5**: added the hard principle *"Reads never write — the audit trail records
+    controls, not page views."*
+  - **Tests** (tests/test_evaluate_vs_check.py): (a) evaluate writes no AuditLog/CheckResult rows,
+    (b) check writes exactly one of each, (c) both paths give identical verdict/findings/verdi.
+- **Measured impact:** loading Arbeidsflate + Styringsinformasjon + Leverandører now writes **0**
+  audit rows (was 24 + 8 + … before). Opening one invoice control writes **exactly 1** (actor
+  "demo-bruker"); "Siste hendelser" shows only real controls. Reconciliation unchanged: **22 310 kr**.
+- Tests: **44 passed** (41 + 3 H1). ruff clean. All 8 pages render clean via AppTest.
+- Next: batch — CI (L2) → upload cap (L1) → dedup+Decimal (L3/L4) → M1 STATUS note.

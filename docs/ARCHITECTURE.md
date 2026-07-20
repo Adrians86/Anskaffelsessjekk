@@ -154,6 +154,13 @@ Hard principles:
 - **Human-in-the-loop:** the system never blocks a payment; the verdict is a justified recommendation
 - **E-mail extraction:** the LLM proposes a `Commitment`, a human approves it (`confirmed_by_user`) — only then does it participate in control
 - **Explainability:** no verdict without `rule_hits` — a result without a citation is a bug, not a feature
+- **Reads never write — the audit trail records controls, not page views.** Two entry points:
+  `evaluate_invoice(session, invoice)` is a PURE evaluation (no persistence, no AuditLog) used by
+  every read-only surface — dashboards, the work queue, portfolio aggregation, per-supplier cards,
+  the protokoll renderer, `st.cache_data` providers. `check_invoice(session, invoice, actor)` =
+  `evaluate_invoice` + persist a `CheckResult` + append one `AuditLog` entry, and is called ONLY on
+  a real user action (the "Kontroller faktura" button, an EHF upload). A page view must never
+  append to the audit trail; if it does, "Siste hendelser" and the append-only trail lose meaning.
 
 ---
 

@@ -7,15 +7,17 @@ from fpdf import FPDF
 from sqlmodel import Session
 
 from core.models import Invoice, Order, Supplier
-from core.reporting.classify import RULES_VERSION, check_invoice
+from core.reporting.classify import RULES_VERSION, evaluate_invoice
 
 
 def build_protokoll(session: Session, invoice: Invoice) -> bytes:
     """Generate a PDF protokoll (draft) for an invoice check.
 
     Returns bytes ready for download. Norwegian language, no Streamlit imports.
+    Pure read: rendering the document uses `evaluate_invoice` and never writes to the
+    audit trail (reads never write — ARCHITECTURE.md §5).
     """
-    check = check_invoice(session, invoice, actor="protokoll-export")
+    check = evaluate_invoice(session, invoice)
     supplier = session.get(Supplier, invoice.supplier_id)
     order = session.get(Order, invoice.order_id) if invoice.order_id else None
 
