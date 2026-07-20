@@ -18,6 +18,7 @@ from core.models import (
     SourceType,
     Supplier,
 )
+from core.synth.epost_examples import EXAMPLE_EMAILS
 
 st.set_page_config(page_title="Avtaler og forpliktelser", page_icon="📋", layout="wide")
 header()
@@ -76,6 +77,19 @@ with tab_epost:
 
     with get_session() as session:
         supplier_names = [s.name for s in session.exec(select(Supplier)).all()]
+
+    # E2: load one of three synthetic example e-mails (the three gyldighet outcomes).
+    def _load_example():
+        ex = next(e for e in EXAMPLE_EMAILS if e["label"] == st.session_state.epost_ex_choice)
+        st.session_state.epost_text = ex["body"]
+        st.session_state.epost_avsender = ex["avsender"]
+        st.session_state.epost_proposed = False
+
+    colx1, colx2 = st.columns([3, 1])
+    colx1.selectbox("Eksempelmail (syntetisk)", [e["label"] for e in EXAMPLE_EMAILS],
+                    key="epost_ex_choice")
+    colx2.markdown("<div style='height:28px'></div>", unsafe_allow_html=True)
+    colx2.button("Last inn eksempel", on_click=_load_example)
 
     text = st.text_area("Lim inn e-postinnhold", key="epost_text", height=150,
                         placeholder="Lim inn teksten fra e-posten her …")

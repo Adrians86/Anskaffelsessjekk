@@ -665,3 +665,20 @@ finding with real product impact; the rest are low-risk hardening I can batch on
 - Verified via AppTest: Foreslå→preview→Bekreft adds a 2nd EMAIL commitment and writes exactly 1
   audit entry (1→2 commitments, 0→1 audit). Tests: 44 passed. ruff clean. All 8 pages render.
 - Next: E2/E2b (3 example e-mails + "Last inn eksempel" + showcase the three gyldighet outcomes).
+
+---
+
+### 2026-07-20 · claude-code (E-post-flyt v1 — E2/E2b: examples + gyldighet showcase)
+- Done: **E2/E2b complete**.
+  - **core/synth/epost_examples.py**: 3 synthetic example e-mails, each exercising one gyldighet
+    outcome — Mail 1 "Prisreduksjon" → KREVER FORMALISERING; Mail 2 "Mindre justering" (kr 520→495,
+    iht. klausul om mindre justeringer) → GYLDIG; Mail 3 "Utvidelse av omfang" (+45 % / nye
+    maskintyper) → UGYLDIG.
+  - **"Last inn eksempel"** button + example selectbox in the tab fills the text_area (via on_click
+    callback) so a visitor can run Foreslå → Bekreft/Avvis without typing.
+  - E2b threshold (in core/extraction/epost.py from E1): value increase > 15 % OR scope expansion →
+    UGYLDIG with reason "Vesentlig endring (>15 % / utvidet omfang) — krever ny konkurranse, kan
+    ikke avtales per e-post". UGYLDIG disables "Bekreft" (cannot be agreed by e-mail).
+- Verified via AppTest: the three examples render the three distinct gyldighet outcomes.
+- Tests: 44 passed. ruff clean. All 8 pages render.
+- Next: E3 (tests for parser/gate/UGYLDIG + wrap-up).
