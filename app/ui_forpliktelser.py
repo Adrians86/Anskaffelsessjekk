@@ -29,9 +29,23 @@ _GYLDIGHET = {
 }
 
 
+# Gyldighet by explicit status (used by the e-mail proposal preview, incl. UGYLDIG).
+_GYLDIGHET_STATUS = {
+    "GYLDIG": ("✓ GYLDIG", "#2E7D32"),
+    "KREVER_FORMALISERING": ("⚠ KREVER FORMALISERING", "#B58900"),
+    "UGYLDIG": ("✗ UGYLDIG", "#C62828"),
+}
+
+
 def _chip(label: str, fg: str, bg: str) -> str:
     return (f'<span style="background:{bg};color:{fg};font-size:11px;font-weight:600;'
             f'padding:2px 10px;border-radius:10px;white-space:nowrap">{label}</span>')
+
+
+def gyldighet_badge_html(status: str) -> str:
+    """Inline colored badge for an explicit gyldighet status (GYLDIG/KREVER.../UGYLDIG)."""
+    label, color = _GYLDIGHET_STATUS.get(status, (status, "#6B7280"))
+    return f'<span style="color:{color};font-weight:700">{label}</span>'
 
 
 def formalization_chip_html(formalization_value: str) -> str:

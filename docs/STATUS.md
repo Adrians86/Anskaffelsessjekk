@@ -644,3 +644,24 @@ finding with real product impact; the rest are low-risk hardening I can batch on
     no history rewrite without a separate decision.
 - Tests: **44 passed**. ruff clean. All 8 pages render clean via AppTest. nok() verified for
   Decimal/float/int. Reconciliation holds at 22 310 kr.
+
+---
+
+### 2026-07-20 · claude-code (E-post-flyt v1 — E1: Registrer fra e-post + human-in-the-loop)
+- Done: **E1 complete**. Saved docs/BRIEF_EPOST_FLYT.md.
+  - **core/extraction/epost.py** (no LLM — regex/keyword text recognition, core imports no UI):
+    `parse_email(text) -> ProposedCommitment` extracts amount (kr regex; "fra kr X til kr Y" → Y),
+    item_ref (e.g. HYD-1001), condition type (PRICE/RATE/DEADLINE/SCOPE) and a demo
+    gyldighetsvurdering (GYLDIG / KREVER FORMALISERING / UGYLDIG, threshold >15 % / utvidet omfang).
+  - **Avtaler page** now has two tabs. New **"Registrer fra e-post"**: paste e-mail + leverandør
+    (selectbox) / avsender / dato → "Foreslå forpliktelse" → non-editable PROPOSAL preview
+    (item_ref, betingelse, verdi, escaped source quote, gyldighetsvurdering badge) →
+    "Bekreft og legg til" / "Avvis". Under-utvikling annotation shown.
+  - **Human-in-the-loop:** only "Bekreft" persists the Commitment (confirmed_by_user=True,
+    extracted_by="regel:epost-parser-v1") and appends ONE AuditLog "commitment.confirmed_from_email"
+    by demo-bruker. An UGYLDIG proposal disables "Bekreft" (vesentlig endring kan ikke avtales per
+    e-post) — flagging this small judgment call; override if you'd rather allow it.
+  - **XSS:** pasted content is `html.escape()`-d before the preview quote (hard rule #11).
+- Verified via AppTest: Foreslå→preview→Bekreft adds a 2nd EMAIL commitment and writes exactly 1
+  audit entry (1→2 commitments, 0→1 audit). Tests: 44 passed. ruff clean. All 8 pages render.
+- Next: E2/E2b (3 example e-mails + "Last inn eksempel" + showcase the three gyldighet outcomes).
