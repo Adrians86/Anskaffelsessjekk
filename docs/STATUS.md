@@ -741,3 +741,16 @@ finding with real product impact; the rest are low-risk hardening I can batch on
     (UTLØPT)**. Hydraulikk Nord has an expired "Sikkerhetsklarering — leverandør" (2026-03-31).
 - Tests: 50 passed. ruff clean. Leverandørkort renders; expired qualification shown red via AppTest.
 - Next: L2 (kvalitetsvurdering + KOFA disclaimer).
+
+---
+
+### 2026-07-20 · claude-code (Leverandørkort v2 — L2: kvalitetsvurdering + KOFA-vern)
+- Done: **L2 complete**. New "Kvalitetsvurdering" section in the Leverandørkort: Andel m/ funn +
+  First Time Right + a verdict-share kvalitetsprofil bar (red/yellow/green). **Hard legal
+  annotation (KOFA risk):** st.info "Dette er innsikt i samarbeidet, ikke en
+  kvalifikasjonsrangering … skal ikke brukes som kvalifikasjons- eller tildelingskriterium."
+  Trend is honestly deferred ("Trend over tid vises når flere kontrollperioder foreligger") rather
+  than faking a time series from single-period demo data. Nøkkeltall slimmed to the transactional
+  facts (fakturaer, verdi funnet).
+- Tests: 50 passed. ruff clean. Section + disclaimer verified via AppTest.
+- Next: L3 (fakturerte objekter, på/utenfor avtale).

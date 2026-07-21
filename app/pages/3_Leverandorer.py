@@ -172,16 +172,40 @@ else:
                 st.session_state.preselect_invoice = r["id"]
                 st.switch_page("pages/1_Fakturakontroll.py")
 
-        # (e) Nøkkeltall
+        # (e) Nøkkeltall — transactional facts
         st.markdown("**Nøkkeltall**")
         n_inv = len(inv_rows)
         andel = (n_with_findings / n_inv * 100) if n_inv else 0.0
         ftr = (1 - n_with_findings / n_inv) * 100 if n_inv else 100.0
-        k1, k2, k3, k4 = st.columns(4)
+        k1, k2 = st.columns(2)
         k1.metric("Fakturaer", n_inv)
-        k2.metric("Andel m/ funn", f"{andel:.0f} %")
-        k3.metric("Verdi funnet", nok(sup_verdi))
-        k4.metric("First Time Right", f"{ftr:.0f} %")
+        k2.metric("Verdi funnet", nok(sup_verdi))
+
+        # (L2) Kvalitetsvurdering fra våre kontrolldata — insight, NOT a ranking (KOFA)
+        st.markdown("**Kvalitetsvurdering**")
+        st.info("Dette er innsikt i samarbeidet, **ikke en kvalifikasjonsrangering**. Tallene "
+                "beskriver historikk i vår egen fakturakontroll og skal ikke brukes som "
+                "kvalifikasjons- eller tildelingskriterium.")
+        q1, q2 = st.columns(2)
+        q1.metric("Andel m/ funn", f"{andel:.0f} %")
+        q2.metric("First Time Right", f"{ftr:.0f} %")
+        # Kvalitetsprofil: share of verdicts (not a time trend — demo has one kontrollperiode).
+        vc = {"AVVIK": 0, "TIL_VURDERING": 0, "SAMSVAR": 0}
+        for r in inv_rows:
+            vc[r["verdict"]] = vc.get(r["verdict"], 0) + 1
+        if n_inv:
+            pe, pw, po = (vc["AVVIK"] / n_inv * 100, vc["TIL_VURDERING"] / n_inv * 100,
+                         vc["SAMSVAR"] / n_inv * 100)
+            st.markdown(
+                '<div style="display:flex;height:10px;border-radius:5px;overflow:hidden;margin:4px 0">'
+                f'<div style="width:{pe}%;background:#C62828"></div>'
+                f'<div style="width:{pw}%;background:#B58900"></div>'
+                f'<div style="width:{po}%;background:#2E7D32"></div></div>',
+                unsafe_allow_html=True,
+            )
+            st.caption(f"● {vc['AVVIK']} avvik · {vc['TIL_VURDERING']} til vurdering · "
+                       f"{vc['SAMSVAR']} samsvar. Trend over tid vises når flere "
+                       "kontrollperioder foreligger.")
 
         # (f) Siste hendelser for this supplier (live — reflects real controls)
         st.markdown("**Siste hendelser**")
