@@ -263,6 +263,14 @@ else:
         else:
             st.caption("Ingen fakturerte objekter registrert.")
 
+        # (L4) Leveranseoppfølging — honestly marked as a future module, not a quarter-product
+        st.markdown("**Leveranseoppfølging** "
+                    '<span style="background:#F1F3F5;color:#6B7280;font-size:11px;font-weight:600;'
+                    'padding:2px 10px;border-radius:10px">Roadmap</span>',
+                    unsafe_allow_html=True)
+        st.caption("Planlagt område: oppfølging av leveranser og frister mot avtale. Ikke en del "
+                   "av demoen ennå — vist her for å vise retningen, ikke som halvferdig funksjon.")
+
         # (f) Siste hendelser for this supplier (live — reflects real controls)
         st.markdown("**Siste hendelser**")
         inv_entities = {f"invoice:{r['id']}" for r in inv_rows}

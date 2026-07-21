@@ -766,3 +766,13 @@ finding with real product impact; the rest are low-risk hardening I can batch on
   so the demo shows "på avtale"; "utenfor avtale" surfaces for off-contract items (e.g. uploads).
 - Tests: 50 passed. ruff clean. Section + flags verified via AppTest.
 - Next: L4 (Leveranseoppfølging roadmap marker).
+
+---
+
+### 2026-07-20 · claude-code (Leverandørkort v2 — L4: Leveranseoppfølging roadmap marker)
+- Done: **L4 complete**. Added a "Leveranseoppfølging" section with a grey **Roadmap** badge and an
+  honest caption: planned area (delivery/deadline follow-up against contracts), explicitly "ikke en
+  del av demoen ennå — vist for å vise retningen, ikke som halvferdig funksjon". No calendar UI
+  built (OUT of scope) — just the truthful marker.
+- Tests: 50 passed. ruff clean. Marker verified via AppTest.
+- Next: L5 (tests + wrap-up).
