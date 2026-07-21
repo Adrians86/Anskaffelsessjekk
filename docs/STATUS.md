@@ -776,3 +776,22 @@ finding with real product impact; the rest are low-risk hardening I can batch on
   built (OUT of scope) — just the truthful marker.
 - Tests: 50 passed. ruff clean. Marker verified via AppTest.
 - Next: L5 (tests + wrap-up).
+
+---
+
+### 2026-07-20 · claude-code (Leverandørkort v2 — L5: tests + wrap-up)
+- Done: **L5 complete — Leverandørkort v2 delivered.**
+  - **tests/test_leverandorkort.py** (4 tests): profiles load for demo suppliers (unknown → None);
+    expired qualification flagged (Hydraulikk sikkerhetsklarering) while Konsulenthuset all valid;
+    is_expired boundary; på/utenfor avtale classification.
+  - **CLAUDE.md Current tasks** updated to "Leverandørkort v2 delivered", incl. the explicit
+    OUT-of-scope list (no machine register, no delivery calendar, no star ranking).
+- **DoD:** (a) pytest **54 passed** (50 + 4). (b) all 8 pages clean via AppTest AND real
+  `streamlit run` → HTTP 200. (c) committed + pushed to origin/main. (d) STATUS per L step. ruff
+  clean; CI gates the push.
+- Acceptance (met locally): Leverandørkort shows categories + qualifications (expired red),
+  Kvalitetsvurdering with the "innsikt, ikke rangering" disclaimer, fakturerte objekter flagged
+  på/utenfor avtale, and a truthful Leveranseoppfølging roadmap marker. None of the OUT-of-scope
+  items were built. Reconciliation unchanged (no scenario data touched).
+- Live verification (egress blocks streamlit.app from sandbox — Adrian to confirm on redeploy):
+  open a Leverandørkort and check the four sections + OUT-of-scope discipline.

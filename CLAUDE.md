@@ -58,6 +58,20 @@ external integrations, changes to core data model.
 
 ## Current tasks
 
+**Leverandørkort v2 delivered — supplier card as a scoped, honest cooperation view.**
+
+Mini-brief "Leverandørkort v2" (docs/BRIEF_LEVERANDORKORT_V2.md) delivered on main. The
+Leverandørkort (Leverandører page) now shows, from synthetic/existing data only:
+- **L1** Kategorier + kvalifikasjoner (core/synth/leverandor_profiler.py) — what the supplier may
+  deliver, with validity; expired qualifications in red (UTLØPT).
+- **L2** Kvalitetsvurdering (andel m/ funn, FTR, verdict-share bar) with a HARD legal annotation
+  "innsikt i samarbeidet, IKKE en kvalifikasjonsrangering" (KOFA-vern); trend honestly deferred.
+- **L3** Fakturerte objekter — invoice lines flagged på/utenfor avtale (context, not a machine
+  register). Pure helper `avtale_status()`.
+- **L4** "Leveranseoppfølging" roadmap marker (grey badge) — honest future area, no calendar built.
+- **OUT of scope (deliberately NOT built):** machine/asset register, delivery calendar, star
+  ranking. Tests in tests/test_leverandorkort.py.
+
 **E-post-flyt v1 delivered — human-in-the-loop for e-mail commitment extraction.**
 
 Mini-brief "E-post-flyt v1" (docs/BRIEF_EPOST_FLYT.md) delivered on main: a "Registrer fra e-post"
