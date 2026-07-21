@@ -10,6 +10,7 @@ from ui_forpliktelser import render_email_commitment
 
 from core.models import AuditLog, Commitment, Contract, ContractLine, Invoice, Supplier
 from core.reporting import evaluate_invoice
+from core.synth.leverandor_profiler import is_expired, profile_for
 
 st.set_page_config(page_title="Leverandører", page_icon="🏢", layout="wide")
 header()
@@ -106,6 +107,24 @@ else:
             unsafe_allow_html=True,
         )
         st.caption(f"Org.nr {escape(sup.org_number)}")
+
+        # (L1) Kategorier + kvalifikasjoner (what the supplier may deliver; expired in red)
+        st.markdown("**Kategorier og kvalifikasjoner**")
+        profile = profile_for(sup.org_number)
+        if profile:
+            st.markdown("Kategorier: " + ", ".join(escape(k) for k in profile["kategorier"]))
+            for q in profile["kvalifikasjoner"]:
+                expired = is_expired(q["gyldig_til"])
+                color = "#C62828" if expired else "#2E7D32"
+                status = "UTLØPT" if expired else "Gyldig"
+                st.markdown(
+                    f'<span style="color:{color};font-weight:600">●</span> '
+                    f'{escape(q["navn"])} — <span style="color:{color}">{status}</span> '
+                    f'<span style="color:#8A94A0;font-size:12px">(t.o.m. {q["gyldig_til"]})</span>',
+                    unsafe_allow_html=True,
+                )
+        else:
+            st.caption("Ingen registrerte kategorier/kvalifikasjoner (syntetisk profil mangler).")
 
         # (b) Avtaler
         st.markdown("**Avtaler**")

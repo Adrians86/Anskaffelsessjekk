@@ -728,3 +728,16 @@ finding with real product impact; the rest are low-risk hardening I can batch on
   possible, audit detail is distinguished, confirmed UGYLDIG still participates). ruff clean; all 8
   pages render; e2e AppTest: UGYLDIG example → warning → Bekreft → commitment persisted with UGYLDIG
   status + 1 "TROSS UGYLDIG" audit entry. VERSION resolves to 0.3.0.
+
+---
+
+### 2026-07-20 · claude-code (Leverandørkort v2 — L1: kategorier + kvalifikasjoner)
+- Done: **L1 complete**. Saved docs/BRIEF_LEVERANDORKORT_V2.md (incl. explicit OUT-of-scope list:
+  no machine register, no delivery calendar, no star ranking).
+  - New **core/synth/leverandor_profiler.py**: synthetic supplier profiles (kategorier +
+    kvalifikasjoner with gyldig-til), `profile_for(org)`, `is_expired(date)` vs a fixed DEMO_TODAY.
+  - Leverandørkort now shows a "Kategorier og kvalifikasjoner" block right under the header — the
+    "printer or tank" view: categories + each qualification with validity; **expired ones in red
+    (UTLØPT)**. Hydraulikk Nord has an expired "Sikkerhetsklarering — leverandør" (2026-03-31).
+- Tests: 50 passed. ruff clean. Leverandørkort renders; expired qualification shown red via AppTest.
+- Next: L2 (kvalitetsvurdering + KOFA disclaimer).
