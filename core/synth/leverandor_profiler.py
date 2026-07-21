@@ -37,3 +37,8 @@ def profile_for(org_number: str) -> dict | None:
 def is_expired(gyldig_til: date, on: date = DEMO_TODAY) -> bool:
     """True when a qualification's validity has passed (rendered in red)."""
     return gyldig_til < on
+
+
+def avtale_status(item_ref: str, contract_item_refs: set[str]) -> str:
+    """Classify an invoiced item as on/off contract (context only — not a machine register)."""
+    return "på avtale" if item_ref in contract_item_refs else "utenfor avtale"

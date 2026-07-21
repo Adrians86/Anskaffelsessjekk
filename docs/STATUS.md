@@ -754,3 +754,15 @@ finding with real product impact; the rest are low-risk hardening I can batch on
   facts (fakturaer, verdi funnet).
 - Tests: 50 passed. ruff clean. Section + disclaimer verified via AppTest.
 - Next: L3 (fakturerte objekter, på/utenfor avtale).
+
+---
+
+### 2026-07-20 · claude-code (Leverandørkort v2 — L3: fakturerte objekter, på/utenfor avtale)
+- Done: **L3 complete**. New "Fakturerte objekter" section: aggregates the supplier's invoice lines
+  by item and flags each **på avtale** (item on a contract line, green) / **utenfor avtale**
+  (not on any contract line, yellow). Caption: "Hva vi faktisk har betalt for — kontekst, ikke et
+  maskinregister." New pure helper `avtale_status()` + cached `supplier_invoiced_objects()`
+  (read-only). No asset/machine register (OUT of scope). NB: all base-demo items are on-contract,
+  so the demo shows "på avtale"; "utenfor avtale" surfaces for off-contract items (e.g. uploads).
+- Tests: 50 passed. ruff clean. Section + flags verified via AppTest.
+- Next: L4 (Leveranseoppfølging roadmap marker).

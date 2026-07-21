@@ -8,9 +8,17 @@ from sqlmodel import select
 from ui_common import verdict_pill
 from ui_forpliktelser import render_email_commitment
 
-from core.models import AuditLog, Commitment, Contract, ContractLine, Invoice, Supplier
+from core.models import (
+    AuditLog,
+    Commitment,
+    Contract,
+    ContractLine,
+    Invoice,
+    InvoiceLine,
+    Supplier,
+)
 from core.reporting import evaluate_invoice
-from core.synth.leverandor_profiler import is_expired, profile_for
+from core.synth.leverandor_profiler import avtale_status, is_expired, profile_for
 
 st.set_page_config(page_title="Leverandører", page_icon="🏢", layout="wide")
 header()
@@ -75,6 +83,37 @@ def supplier_invoice_rows(supplier_id: int):
                 "verdi_display": nok(r.verdi_funnet) if r.verdi_funnet else "—",
                 "verdi_num": float(r.verdi_funnet), "has_findings": bool(r.findings),
             })
+        return out
+
+
+@st.cache_data
+def supplier_invoiced_objects(supplier_id: int):
+    """What we actually paid a supplier for (invoice lines), each flagged på/utenfor avtale.
+    Context only — NOT a machine register. Cached, read-only."""
+    with get_session() as session:
+        contract_refs: set[str] = set()
+        for c in session.exec(select(Contract).where(Contract.supplier_id == supplier_id)).all():
+            for cl in session.exec(
+                select(ContractLine).where(ContractLine.contract_id == c.id)
+            ).all():
+                if cl.item_ref:
+                    contract_refs.add(cl.item_ref)
+
+        agg: dict[str, dict] = {}
+        for inv in session.exec(select(Invoice).where(Invoice.supplier_id == supplier_id)).all():
+            for ln in session.exec(
+                select(InvoiceLine).where(InvoiceLine.invoice_id == inv.id)
+            ).all():
+                key = ln.item_ref or "(uten artikkel)"
+                a = agg.setdefault(key, {"item_ref": key, "description": ln.description,
+                                         "antall": 0, "sum": 0.0})
+                a["antall"] += 1
+                a["sum"] += float(ln.line_total)
+        out = []
+        for key, a in agg.items():
+            a["status"] = avtale_status(key, contract_refs)
+            out.append(a)
+        out.sort(key=lambda x: x["sum"], reverse=True)
         return out
 
 
@@ -206,6 +245,23 @@ else:
             st.caption(f"● {vc['AVVIK']} avvik · {vc['TIL_VURDERING']} til vurdering · "
                        f"{vc['SAMSVAR']} samsvar. Trend over tid vises når flere "
                        "kontrollperioder foreligger.")
+
+        # (L3) Fakturerte objekter — what we paid for, flagged på/utenfor avtale (context only)
+        st.markdown("**Fakturerte objekter**")
+        st.caption("Hva vi faktisk har betalt for — kontekst, ikke et maskinregister.")
+        objs = supplier_invoiced_objects(sup.id)
+        if objs:
+            for o in objs:
+                on = o["status"] == "på avtale"
+                flag_color = "#2E7D32" if on else "#B58900"
+                o1, o2, o3, o4 = st.columns([1.6, 3, 1.6, 1.6])
+                o1.text(o["item_ref"])
+                o2.text(o["description"])
+                o3.text(nok(o["sum"]))
+                o4.markdown(f'<span style="color:{flag_color};font-weight:600">{o["status"]}</span>',
+                            unsafe_allow_html=True)
+        else:
+            st.caption("Ingen fakturerte objekter registrert.")
 
         # (f) Siste hendelser for this supplier (live — reflects real controls)
         st.markdown("**Siste hendelser**")
