@@ -795,3 +795,19 @@ finding with real product impact; the rest are low-risk hardening I can batch on
   items were built. Reconciliation unchanged (no scenario data touched).
 - Live verification (egress blocks streamlit.app from sandbox — Adrian to confirm on redeploy):
   open a Leverandørkort and check the four sections + OUT-of-scope discipline.
+
+---
+
+### 2026-07-21 · claude-code (Valuta v1 — W1: currency detection in the engine)
+- Done: **W1 complete**. Saved docs/BRIEF_VALUTA_V1.md. Principle: DETECT + FLAG, zero automatic
+  rate conversion (hard rule #3; "better a flag than a silent guess").
+  - New finding code **CURRENCY_MISMATCH** (severity WARN → TIL_VURDERING).
+  - New **core/matching/currency.py**: `check()` emits CURRENCY_MISMATCH when invoice.currency ≠ NOK
+    (message + citation per brief); `is_foreign()` helper. Wired into evaluate_invoice's pipeline.
+  - **commitments.check suspends price comparison for foreign currency** (returns early) — so a raw
+    EUR↔NOK amount difference is NEVER turned into a NOK deviation. deviation_amount stays 0.
+  - Invoice.currency already existed (parser fills it); still bumped **0.3.0 → 0.4.0** + requirements
+    rebuild marker (core matching behavior change — Cloud must reinstall).
+- Verified: an EUR invoice → verdict TIL_VURDERING, CURRENCY_MISMATCH present, verdi_funnet = 0.
+  NOK invoices unaffected — 54 passed, ruff clean.
+- Next: W2 (UI — currency chip, currency rendering, separate from verdi funnet).

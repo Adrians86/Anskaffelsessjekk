@@ -15,6 +15,7 @@ core/extraction/ehf.py
 core/extraction/epost.py
 core/matching/__init__.py
 core/matching/commitments.py
+core/matching/currency.py
 core/matching/findings.py
 core/matching/three_way.py
 core/models/__init__.py
@@ -35,11 +36,13 @@ core/rules/data/thresholds_2026.yaml
 core/rules/data/profiles/demo_reglement.yaml
 core/synth/__init__.py
 core/synth/epost_examples.py
+core/synth/leverandor_profiler.py
 core/synth/scenario_deler.py
 core/synth/scenario_konsulent.py
 tests/test_ehf.py
 tests/test_epost.py
 tests/test_evaluate_vs_check.py
+tests/test_leverandorkort.py
 tests/test_matcher_e2e.py
 tests/test_models.py
 tests/test_protokoll.py

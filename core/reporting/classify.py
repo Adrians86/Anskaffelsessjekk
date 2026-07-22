@@ -14,7 +14,7 @@ from decimal import Decimal
 
 from sqlmodel import Session
 
-from core.matching import commitments, three_way
+from core.matching import commitments, currency, three_way
 from core.matching.findings import Finding, Severity
 from core.models import AuditLog, CheckResult, Invoice, Verdict
 
@@ -45,7 +45,9 @@ def evaluate_invoice(session: Session, invoice: Invoice) -> InvoiceCheck:
     dashboards, the work queue, portfolio aggregation, caches. It leaves the audit trail
     and the database untouched, so a page view is never recorded as a control.
     """
-    findings = three_way.check(session, invoice) + commitments.check(session, invoice)
+    findings = (three_way.check(session, invoice)
+                + commitments.check(session, invoice)
+                + currency.check(session, invoice))
     verdict = _verdict(findings)
     verdi = sum((f.deviation_amount for f in findings), Decimal("0"))
     return InvoiceCheck(invoice_id=invoice.id, verdict=verdict,

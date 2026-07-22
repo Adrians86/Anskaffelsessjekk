@@ -24,6 +24,8 @@ class Code(str, Enum):
                                                  # pending formalization (demo scene!)
     MISSING_ORDER = "MISSING_ORDER"              # invoice not linked to any order
     MISSING_RECEIPT = "MISSING_RECEIPT"          # order has no confirmed mottak
+    CURRENCY_MISMATCH = "CURRENCY_MISMATCH"      # invoice currency != NOK: price checks suspended,
+                                                 # rate is a manual decision (detect + flag only)
 
 
 @dataclass(frozen=True)

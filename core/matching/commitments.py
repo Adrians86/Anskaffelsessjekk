@@ -57,6 +57,10 @@ def _contract_line(session: Session, invoice: Invoice, item_ref: str) -> Contrac
 
 def check(session: Session, invoice: Invoice) -> list[Finding]:
     findings: list[Finding] = []
+    # Foreign currency: price/amount comparisons are suspended (a raw EUR↔NOK difference is not a
+    # deviation). The currency matcher flags it for manual rate assessment instead.
+    if invoice.currency and invoice.currency.upper() != "NOK":
+        return findings
     lines = session.exec(
         select(InvoiceLine).where(InvoiceLine.invoice_id == invoice.id)
     ).all()
