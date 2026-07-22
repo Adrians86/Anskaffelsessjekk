@@ -3,7 +3,7 @@ from html import escape
 import pandas as pd
 import streamlit as st
 from chrome import footer, header
-from db import get_session, nok
+from db import get_session, money, nok
 from sqlmodel import select
 from ui_common import verdict_pill
 from ui_forpliktelser import render_email_commitment
@@ -78,7 +78,7 @@ def supplier_invoice_rows(supplier_id: int):
             r = evaluate_invoice(session, inv)
             out.append({
                 "id": inv.id, "number": inv.invoice_number,
-                "date": str(inv.invoice_date), "amount": nok(inv.total_ex_vat),
+                "date": str(inv.invoice_date), "amount": money(inv.total_ex_vat, inv.currency),
                 "verdict": r.verdict.value,
                 "verdi_display": nok(r.verdi_funnet) if r.verdi_funnet else "—",
                 "verdi_num": float(r.verdi_funnet), "has_findings": bool(r.findings),
@@ -106,12 +106,13 @@ def supplier_invoiced_objects(supplier_id: int):
             ).all():
                 key = ln.item_ref or "(uten artikkel)"
                 a = agg.setdefault(key, {"item_ref": key, "description": ln.description,
-                                         "antall": 0, "sum": 0.0})
+                                         "antall": 0, "sum": 0.0, "currency": inv.currency})
                 a["antall"] += 1
                 a["sum"] += float(ln.line_total)
         out = []
         for key, a in agg.items():
             a["status"] = avtale_status(key, contract_refs)
+            a["sum_display"] = money(a["sum"], a["currency"])
             out.append(a)
         out.sort(key=lambda x: x["sum"], reverse=True)
         return out
@@ -257,7 +258,7 @@ else:
                 o1, o2, o3, o4 = st.columns([1.6, 3, 1.6, 1.6])
                 o1.text(o["item_ref"])
                 o2.text(o["description"])
-                o3.text(nok(o["sum"]))
+                o3.text(o["sum_display"])
                 o4.markdown(f'<span style="color:{flag_color};font-weight:600">{o["status"]}</span>',
                             unsafe_allow_html=True)
         else:

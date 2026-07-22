@@ -2,12 +2,13 @@ from html import escape
 
 import streamlit as st
 from chrome import footer, header
-from db import get_session, nok
+from db import get_session, money, nok
 from sqlmodel import select
 from texts import RECOMMENDED_ACTIONS
 
 from core.extraction import build_sample_ehf, parse_ehf
 from core.extraction.ehf import EHFParseError
+from core.matching.currency import is_foreign
 from core.matching.findings import Severity
 from core.models import Invoice, InvoiceLine, InvoiceSource, Order, Supplier
 from core.reporting import build_protokoll, check_invoice
@@ -35,6 +36,16 @@ def render_audit_card(session, inv) -> None:
     """Render verdict block + finding cards + protokoll/booking CTAs for one invoice."""
     result = check_invoice(session, inv, actor="demo-bruker")
     order = session.get(Order, inv.order_id) if inv.order_id else None
+
+    # Foreign-currency banner: amounts shown in the invoice currency, never converted to NOK.
+    if is_foreign(inv):
+        st.markdown(
+            f'{_source_chip(inv.currency.upper(), _CHIP_INTERNT)} '
+            f'<strong>Faktura i utenlandsk valuta ({escape(inv.currency.upper())})</strong> — '
+            f'fakturabeløp {escape(money(inv.total_ex_vat, inv.currency))}. '
+            'Beløp sammenlignes ikke automatisk mot NOK-priser.',
+            unsafe_allow_html=True,
+        )
 
     if result.verdict.value == "SAMSVAR":
         st.success("SAMSVAR — fakturaen samsvarer med avtalt grunnlag")
@@ -166,7 +177,8 @@ with tab_check:
         labels = {}
         for inv in invoices:
             sup = session.get(Supplier, inv.supplier_id)
-            labels[inv.id] = f"{inv.invoice_number} — {sup.name} — {nok(inv.total_ex_vat)}"
+            labels[inv.id] = (f"{inv.invoice_number} — {sup.name} — "
+                              f"{money(inv.total_ex_vat, inv.currency)}")
 
         preselect_id = st.session_state.get("preselect_invoice")
         default_idx = list(labels.keys()).index(preselect_id) if preselect_id in labels else 0
@@ -214,7 +226,7 @@ with tab_upload:
                 f"Tolket: **{parsed.invoice_number}** · {parsed.invoice_date} · "
                 f"{parsed.supplier_name or 'ukjent leverandør'} "
                 f"(org.nr {parsed.supplier_org or '—'}) · {len(parsed.lines)} linje(r) · "
-                f"{nok(parsed.total_ex_vat)}"
+                f"{money(parsed.total_ex_vat, parsed.currency)}"
             )
             with get_session() as session:
                 supplier = None

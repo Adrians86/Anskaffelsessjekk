@@ -811,3 +811,20 @@ finding with real product impact; the rest are low-risk hardening I can batch on
 - Verified: an EUR invoice → verdict TIL_VURDERING, CURRENCY_MISMATCH present, verdi_funnet = 0.
   NOK invoices unaffected — 54 passed, ruff clean.
 - Next: W2 (UI — currency chip, currency rendering, separate from verdi funnet).
+
+---
+
+### 2026-07-21 · claude-code (Valuta v1 — W2: currency UI)
+- Done: **W2 complete** (UI only — no core change).
+  - New `db.money(amount, currency)`: "kr" for NOK, the currency code otherwise (EUR/USD…). Never
+    converts.
+  - **Fakturakontroll**: foreign-currency invoice shows a navy currency chip + banner ("Faktura i
+    utenlandsk valuta (EUR) — … Beløp sammenlignes ikke automatisk mot NOK-priser"); the
+    CURRENCY_MISMATCH finding renders as TIL VURDERING with anbefalt handling "Fastsett valutakurs
+    (Norges Bank) på fakturadato og vurder mot avtalt NOK-pris." Selectbox + upload amounts use money().
+  - **Arbeidsflate + Styringsinformasjon**: foreign invoices are counted (n_foreign) and shown
+    separately as "N faktura(er) i utenlandsk valuta — krever manuell vurdering … inngår ikke i
+    Verdi funnet (NOK)". Queue/dashboard amounts use money(); NOK verdi funnet sum unchanged.
+  - Leverandørkort amounts + fakturerte objekter also currency-aware (money()).
+- Tests: 54 passed. ruff clean. All 8 pages render; money() verified (EUR shows EUR, NOK shows kr).
+- Next: W3 (demo EUR invoice + tests + wrap-up).

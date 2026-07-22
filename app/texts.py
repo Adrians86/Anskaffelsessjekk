@@ -8,6 +8,8 @@ RECOMMENDED_ACTIONS = {
     "MISSING_RECEIPT": "Bekreft mottak før betaling",
     "MISSING_ORDER": "Knytt faktura til bestilling/avrop",
     "NO_AGREED_BASIS": "Etabler avtalegrunnlag eller vurder enkeltkjøp",
+    "CURRENCY_MISMATCH": "Fastsett valutakurs (Norges Bank) på fakturadato og vurder mot "
+                         "avtalt NOK-pris.",
 }
 
 try:

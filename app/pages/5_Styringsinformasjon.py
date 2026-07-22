@@ -4,9 +4,10 @@ import altair as alt
 import pandas as pd
 import streamlit as st
 from chrome import footer, header
-from db import get_session, nok
+from db import get_session, money, nok
 from sqlmodel import select
 
+from core.matching.currency import is_foreign
 from core.models import Invoice, Supplier
 from core.reporting import evaluate_invoice
 
@@ -24,11 +25,14 @@ def dashboard_data():
         rows, findings_rows, total_verdi = [], [], 0.0
         counts = {"SAMSVAR": 0, "TIL_VURDERING": 0, "AVVIK": 0}
         supplier_agg: dict[str, dict] = {}
+        n_foreign = 0
 
         for inv in invoices:
             r = evaluate_invoice(session, inv)
             counts[r.verdict.value] += 1
-            total_verdi += float(r.verdi_funnet)
+            total_verdi += float(r.verdi_funnet)  # foreign invoices contribute 0 (no NOK deviation)
+            if is_foreign(inv):
+                n_foreign += 1
             sup = session.get(Supplier, inv.supplier_id)
 
             agg = supplier_agg.setdefault(sup.name, {"verdi": 0.0, "funn": 0, "fakturaer": 0})
@@ -37,7 +41,8 @@ def dashboard_data():
             agg["fakturaer"] += 1
 
             rows.append({"Faktura": inv.invoice_number, "Leverandør": sup.name,
-                         "Beløp": nok(inv.total_ex_vat), "Vurdering": r.verdict.value,
+                         "Beløp": money(inv.total_ex_vat, inv.currency),
+                         "Vurdering": r.verdict.value,
                          "Verdi funnet": nok(r.verdi_funnet) if r.verdi_funnet else "—",
                          "Antall funn": len(r.findings)})
             for f in r.findings:
@@ -54,12 +59,13 @@ def dashboard_data():
                 })
         return {"rows": rows, "findings_rows": findings_rows, "counts": counts,
                 "total_verdi": total_verdi, "supplier_agg": supplier_agg,
-                "n_invoices": len(invoices)}
+                "n_invoices": len(invoices), "n_foreign": n_foreign}
 
 
 data = dashboard_data()
 rows = data["rows"]
 findings_rows = data["findings_rows"]
+n_foreign = data["n_foreign"]
 counts = data["counts"]
 total_verdi = data["total_verdi"]
 supplier_agg = data["supplier_agg"]
@@ -87,6 +93,10 @@ with col_avg:
 
 if total_verdi == 0:
     st.warning("Verdi funnet er 0 på demodata — kontrollér at demoscenariene er lastet.")
+
+if n_foreign:
+    st.info(f"{n_foreign} faktura(er) i utenlandsk valuta inngår **ikke** i verdi funnet (NOK) — "
+            "krever manuell vurdering av kurs. Se Fakturakontroll for detaljer.")
 
 if findings_rows:
     df_findings = pd.DataFrame(findings_rows)

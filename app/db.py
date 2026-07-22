@@ -39,3 +39,13 @@ def nok(amount) -> str:
     float/int for already-aggregated display values.
     """
     return f"{amount:,.2f} kr".replace(",", " ").replace(".", ",")
+
+
+def money(amount, currency: str | None = "NOK") -> str:
+    """Format an amount with its invoice currency — 'kr' for NOK, the code otherwise (EUR, USD…).
+
+    Never converts: a foreign-currency amount is shown in its own currency, never as NOK.
+    """
+    formatted = f"{amount:,.2f}".replace(",", " ").replace(".", ",")
+    code = (currency or "NOK").upper()
+    return f"{formatted} kr" if code == "NOK" else f"{formatted} {code}"

@@ -1,9 +1,10 @@
 import streamlit as st
-from db import get_session, nok
+from db import get_session, money, nok
 from sqlmodel import select
 from texts import RECOMMENDED_ACTIONS
 from ui_common import verdict_pill
 
+from core.matching.currency import is_foreign
 from core.models import AuditLog, Invoice, Supplier
 from core.reporting import evaluate_invoice
 
@@ -24,17 +25,21 @@ def compute_portfolio_stats():
         invoices = session.exec(select(Invoice)).all()
         counts = {"SAMSVAR": 0, "TIL_VURDERING": 0, "AVVIK": 0}
         total_verdi = 0
+        n_foreign = 0
 
         for inv in invoices:
             result = evaluate_invoice(session, inv)
             counts[result.verdict.value] += 1
             if result.verdi_funnet:
                 total_verdi += float(result.verdi_funnet)
+            if is_foreign(inv):
+                n_foreign += 1
 
         return {
             "total_invoices": len(invoices),
             "counts": counts,
-            "total_verdi": total_verdi
+            "total_verdi": total_verdi,
+            "n_foreign": n_foreign,
         }
 
 
@@ -54,7 +59,7 @@ def queue_rows():
                 finding_text = prefix + f.message[:60]
             rows.append({
                 "invoice": inv.invoice_number, "supplier": sup.name,
-                "amount": nok(inv.total_ex_vat), "status": result.verdict.value,
+                "amount": money(inv.total_ex_vat, inv.currency), "status": result.verdict.value,
                 "finding": finding_text, "invoice_id": inv.id,
             })
         return rows
@@ -92,6 +97,10 @@ with cols[3]:
     st.metric("Samsvar", stats["counts"]["SAMSVAR"])
 with cols[4]:
     st.metric("Verdi funnet", nok(stats["total_verdi"]) if stats["total_verdi"] > 0 else "0 kr")
+
+if stats.get("n_foreign"):
+    st.info(f"{stats['n_foreign']} faktura(er) i utenlandsk valuta — krever manuell vurdering. "
+            "Inngår ikke i «Verdi funnet» (NOK).")
 
 st.markdown("---")
 
