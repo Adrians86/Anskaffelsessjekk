@@ -119,4 +119,32 @@ def generate(session: Session) -> dict[str, Any]:
              [("HYD-2002", "5", "8300")])
     manifest.append({"invoice_number": "F-1005", "code": "MISSING_RECEIPT"})
 
+    # F-EUR-1: foreign-currency invoice (EUR) from a foreign parts supplier. Order + receipt are in
+    # place, so the ONLY finding is CURRENCY_MISMATCH (TIL_VURDERING). Price checks are suspended for
+    # foreign currency, so deviation stays 0 and the NOK verdi funnet is unaffected.
+    sup_de = Supplier(org_number="DE811234567", name="Hydraulik Süd GmbH (SYNTETISK)")
+    session.add(sup_de)
+    session.commit()
+    session.refresh(sup_de)
+    o_eur = Order(supplier_id=sup_de.id, contract_id=None, reference="AVROP-EUR",
+                  requested_by="bestiller.synt", estimated_value=Decimal("9500"),
+                  regime=Regime.FOSA, order_date=date(2026, 7, 1))
+    session.add(o_eur)
+    session.commit()
+    session.refresh(o_eur)
+    session.add(Receipt(order_id=o_eur.id, confirmed_by="verksted",
+                        confirmed_at=datetime(2026, 7, 5, tzinfo=UTC)))
+    session.commit()
+    inv_eur = Invoice(supplier_id=sup_de.id, order_id=o_eur.id, invoice_number="F-EUR-1",
+                      invoice_date=date(2026, 7, 10), total_ex_vat=Decimal("9500"),
+                      currency="EUR", source=InvoiceSource.EHF)
+    session.add(inv_eur)
+    session.commit()
+    session.refresh(inv_eur)
+    session.add(InvoiceLine(invoice_id=inv_eur.id, item_ref="DE-500", description="Del DE-500",
+                            quantity=Decimal("5"), unit_price=Decimal("1900"),
+                            line_total=Decimal("9500")))
+    session.commit()
+    manifest.append({"invoice_number": "F-EUR-1", "code": "CURRENCY_MISMATCH"})
+
     return {"scenario": "deler", "expected_findings": manifest}

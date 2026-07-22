@@ -26,6 +26,12 @@ SUPPLIER_PROFILES: dict[str, dict] = {
             {"navn": "Databehandleravtale (GDPR)", "gyldig_til": date(2028, 6, 30)},
         ],
     },
+    "DE811234567": {  # Hydraulik Süd GmbH (SYNTETISK) — foreign parts supplier (EUR)
+        "kategorier": ["Hydrauliske komponenter (import)"],
+        "kvalifikasjoner": [
+            {"navn": "CE-samsvar (EU)", "gyldig_til": date(2027, 12, 31)},
+        ],
+    },
 }
 
 

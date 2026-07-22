@@ -58,6 +58,21 @@ external integrations, changes to core data model.
 
 ## Current tasks
 
+**Valuta v1 delivered — foreign-currency invoices: detect + flag, never convert.**
+
+Mini-brief "Valuta v1" (docs/BRIEF_VALUTA_V1.md) delivered on main. Principle: DETECT + FLAG, zero
+automatic exchange-rate conversion (hard rule #3; "better a flag than a silent guess").
+- **W1** — new finding **CURRENCY_MISMATCH** (WARN → TIL_VURDERING) via core/matching/currency.py
+  when `invoice.currency ≠ NOK`; commitments.check suspends price comparison for foreign currency so
+  a raw EUR↔NOK difference never becomes a NOK deviation (deviation stays 0). Bumped core 0.3.0 → 0.4.0.
+- **W2** — `db.money(amount, currency)` (kr for NOK, code otherwise; never converts). Fakturakontroll
+  shows a currency banner + CURRENCY_MISMATCH anbefalt handling ("Fastsett valutakurs (Norges Bank)…").
+  Arbeidsflate/Styringsinformasjon show foreign invoices separately ("N faktura(er) i utenlandsk
+  valuta — krever manuell vurdering"), excluded from Verdi funnet (NOK).
+- **W3** — demo EUR invoice F-EUR-1 (Hydraulik Süd GmbH, EUR) → CURRENCY_MISMATCH; tests in
+  tests/test_valuta.py. **NOK reconciliation unchanged: Verdi funnet = 22 310 kr** (EUR adds 0).
+- **Phase 2 (deliberately out of scope):** exchange-rate conversion (Norges Bank rate at invoice date).
+
 **Leverandørkort v2 delivered — supplier card as a scoped, honest cooperation view.**
 
 Mini-brief "Leverandørkort v2" (docs/BRIEF_LEVERANDORKORT_V2.md) delivered on main. The

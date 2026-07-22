@@ -828,3 +828,26 @@ finding with real product impact; the rest are low-risk hardening I can batch on
   - Leverandørkort amounts + fakturerte objekter also currency-aware (money()).
 - Tests: 54 passed. ruff clean. All 8 pages render; money() verified (EUR shows EUR, NOK shows kr).
 - Next: W3 (demo EUR invoice + tests + wrap-up).
+
+---
+
+### 2026-07-21 · claude-code (Valuta v1 — W3: demo EUR invoice + tests + wrap-up)
+- Done: **W3 complete — Valuta v1 delivered.**
+  - **Demo EUR invoice F-EUR-1** in scenario_deler: new foreign supplier "Hydraulik Süd GmbH
+    (SYNTETISK)" (org DE811234567), order + receipt in place so the ONLY finding is CURRENCY_MISMATCH
+    → TIL VURDERING. Added to the scenario manifest (e2e precision/recall stays perfect). Synthetic
+    profile added for the foreign supplier.
+  - **tests/test_valuta.py** (4 tests): EUR → CURRENCY_MISMATCH + TIL_VURDERING; no deviation from a
+    raw currency difference; NOK portfolio verdi funnet unchanged (deler stays 10 310); price check
+    suspended even when a EUR amount would otherwise look "above" a NOK price.
+  - CLAUDE.md Current tasks → "Valuta v1 delivered".
+- **DoD:** (a) pytest **58 passed** (54 + 4). (b) all 8 pages clean via AppTest AND real
+  `streamlit run` → HTTP 200; verified: Arbeidsflate + Styringsinformasjon show the "utenlandsk
+  valuta" note, Fakturakontroll F-EUR-1 shows the currency banner + TIL VURDERING. (c) committed +
+  pushed. (d) STATUS per W step. ruff clean.
+- **Reconciliation intact: NOK Verdi funnet = 22 310 kr** (9 invoices now; the EUR one contributes 0).
+- **Phase 2 note (out of scope):** automatic exchange-rate conversion (Norges Bank, rate at invoice
+  date) is deliberately NOT built — rate is shaky audit ground; we flag, the human decides.
+- Live verification (egress blocks streamlit.app from sandbox — Adrian to confirm on redeploy, 0.4.0
+  forces core reinstall): open F-EUR-1 in Fakturakontroll → EUR banner + TIL VURDERING; check the
+  "utenlandsk valuta" note on Arbeidsflate/Styringsinformasjon; verdi funnet still 22 310.
