@@ -19,10 +19,24 @@ _REGIMES = {
     "ART123": "EØS art. 123 — vesentlige sikkerhetsinteresser (unntak)",
 }
 
+_OPPDRAGSGIVERE = {"statlig": "Statlig myndighet", "andre": "Andre (kommune m.fl.)"}
+_KONTRAKTTYPER = {
+    "vare_tjeneste": "Varer/tjenester",
+    "bygg_anlegg": "Bygge- og anleggskontrakt",
+    "saerlige_tjenester": "Særlige tjenester / helse- og sosial",
+}
+
 col1, col2, col3 = st.columns(3)
 regime = col1.selectbox("Regime", options=list(_REGIMES), format_func=_REGIMES.get)
 value = col2.number_input("Anslått verdi (NOK ekskl. mva)", min_value=0, value=750000, step=50000)
 on = col3.date_input("Vurderingsdato", value=date(2026, 7, 8))
+
+col4, col5 = st.columns(2)
+oppdragsgiver = col4.selectbox("Oppdragsgiver", options=list(_OPPDRAGSGIVERE),
+                               format_func=_OPPDRAGSGIVERE.get)
+kontrakttype = col5.selectbox("Kontrakttype", options=list(_KONTRAKTTYPER),
+                              format_func=_KONTRAKTTYPER.get)
+st.caption("EØS-terskelverdiene ble justert med virkning fra 21.04.2026 (regjeringen.no).")
 
 if regime == "FOSA":
     st.info("Merk: innslagspunktet på 500 000 kr gjelder IKKE for FOSA. "
@@ -47,7 +61,8 @@ def _arrow(col):
 
 if st.button("Vurder", type="primary"):
     hits = RulesEngine().evaluate(
-        Facts(regime=regime, estimated_value=Decimal(value), assessment_date=on)
+        Facts(regime=regime, estimated_value=Decimal(value), assessment_date=on,
+              oppdragsgiver=oppdragsgiver, kontrakttype=kontrakttype)
     )
 
     st.markdown("---")

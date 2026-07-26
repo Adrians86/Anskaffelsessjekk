@@ -851,3 +851,37 @@ finding with real product impact; the rest are low-risk hardening I can batch on
 - Live verification (egress blocks streamlit.app from sandbox — Adrian to confirm on redeploy, 0.4.0
   forces core reinstall): open F-EUR-1 in Fakturakontroll → EUR banner + TIL VURDERING; check the
   "utenlandsk valuta" note on Arbeidsflate/Styringsinformasjon; verdi funnet still 22 310.
+
+---
+
+### 2026-07-22 · claude-code (LEGAL BLOCKER — EØS thresholds 21.04.2026, corrected + completed)
+- Blocker (partner audit): thresholds_2026.yaml had the statlig EØS value **1 490 000** with
+  valid_from/citation "fra 21.04.2026" — internally contradictory (from 21.04.2026 the value is
+  **1 630 000**). Old/contradictory threshold = credibility loss with an expert. FIXED + completed
+  the full verified set (regjeringen.no, gjelder fra 21.04.2026):
+  - EØS statlig varer/tjenester **1 490 000 → 1 630 000** (rule value AND the Del II ceiling).
+  - EØS andre (kommune m.fl.) varer/tjenester → **2 500 000**.
+  - EØS bygg/anlegg → **62 900 000** (FOA and FOSA).
+  - Særlige/helse tjenester → **8 700 000**.
+  - FOSA varer/tjenester **5 000 000** (verified unchanged).
+  Every rule: valid_from 2026-04-21, citation amount now MATCHES the value (no "1,49" left),
+  citation_url = the regjeringen.no oversikt-PDF.
+- **Engine change (required to model the set correctly):** the EØS thresholds differ by
+  **oppdragsgiver** (statlig/andre) and **kontrakttype** (vare_tjeneste/bygg_anlegg/
+  saerlige_tjenester). Added these as `Facts` fields with defaults (statlig/vare_tjeneste →
+  existing behaviour and V2 Regelverkssjekk unchanged) and taught the engine to compare string
+  discriminators (op "eq"). Each EØS rule is gated so the categories never false-fire against each
+  other (the exact-set tests catch any overlap). Terskelsjekk UI gained Oppdragsgiver +
+  Kontrakttype selectors (defaults preserve the current demo). Bumped core **0.4.0 → 0.5.0** +
+  requirements rebuild marker (hard rule #10).
+- **Scope note (honest):** only the EØS ceilings are modelled for bygg/anlegg and særlige tjenester
+  (that is exactly what the verified set provides); their lower national/Del-I bands are a later
+  batch. National bands for varer/tjenester are complete for both statlig and andre.
+- Verification: **grep clean** — none of 1490000 / 2300000 / 4600000 / 57800000 / 7800000 (or
+  "1,49 mill") remain anywhere. New test `test_citation_amount_matches_value` asserts the citation
+  says 1,63 and never 1,49. Table-driven tests rewritten for all categories (exact-set).
+- Tests: **71 passed** (was 58 → +13 threshold/category cases). ruff clean. All 8 pages render;
+  real `streamlit run` → HTTP 200; Terskelsjekk verified for statlig (1,63) and andre (2,5).
+- Live verification (Adrian, after redeploy — 0.5.0 forces core reinstall): Terskelsjekk → pick
+  Oppdragsgiver/Kontrakttype, confirm 1,63 / 2,5 / 62,9 / 8,7 mill. thresholds and matching
+  citations with the regjeringen.no PDF link.

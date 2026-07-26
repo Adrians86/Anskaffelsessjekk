@@ -48,3 +48,4 @@ tests/test_models.py
 tests/test_protokoll.py
 tests/test_reglement.py
 tests/test_rules_thresholds.py
+tests/test_valuta.py

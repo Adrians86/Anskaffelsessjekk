@@ -32,10 +32,16 @@ PROFILES_DIR = DATA_DIR / "profiles"
 
 @dataclass(frozen=True)
 class Facts:
-    """Input to an assessment. `regime` must be resolved by the caller first."""
-    regime: str                 # "FOA" | "FOSA" | "ART123"
-    estimated_value: Decimal    # NOK, excluding VAT
+    """Input to an assessment. `regime` must be resolved by the caller first.
+
+    `oppdragsgiver` and `kontrakttype` discriminate the EØS thresholds (they differ by contracting
+    authority and contract kind). Defaults keep the common case (state authority, goods/services).
+    """
+    regime: str                          # "FOA" | "FOSA" | "ART123"
+    estimated_value: Decimal             # NOK, excluding VAT
     assessment_date: date
+    oppdragsgiver: str = "statlig"       # "statlig" | "andre" (kommune/others)
+    kontrakttype: str = "vare_tjeneste"  # "vare_tjeneste" | "bygg_anlegg" | "saerlige_tjenester"
 
 
 @dataclass(frozen=True)
@@ -61,6 +67,9 @@ class RulesEngine:
             return all(RulesEngine._condition_holds(c, facts) for c in when["all"])
         field, op, value = when["field"], when["op"], when["value"]
         actual = getattr(facts, field)
+        if op == "eq":
+            # String discriminators (oppdragsgiver, kontrakttype) compare as text; numbers still work.
+            return str(actual) == str(value)
         return _OPS[op](Decimal(str(actual)), Decimal(str(value)))
 
     @staticmethod
