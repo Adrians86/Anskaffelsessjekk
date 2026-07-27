@@ -885,3 +885,28 @@ finding with real product impact; the rest are low-risk hardening I can batch on
 - Live verification (Adrian, after redeploy — 0.5.0 forces core reinstall): Terskelsjekk → pick
   Oppdragsgiver/Kontrakttype, confirm 1,63 / 2,5 / 62,9 / 8,7 mill. thresholds and matching
   citations with the regjeringen.no PDF link.
+
+---
+
+### 2026-07-27 · claude-code (Språk: indikasjon, ikke konklusjon — jurist red-team funn)
+- Done: **language-only refinement** of the gyldighetsvurdering (BRIEF_INDIKASJON.md). Jurist
+  finding: a "vesentlig endring" presented as a CONCLUSION ("UGYLDIG") with a percentage is false
+  precision — it is a legal skjønnsvurdering (FOA §28-1, C-454/06 Pressetext).
+  - Three outcomes reworded as INDICATIONS: "✓ SANNSYNLIGVIS GYLDIG", "⚠ KREVER FORMALISERING",
+    "✗ MULIG UGYLDIG — krever juridisk vurdering" (chip "MULIG UGYLDIG", red kept).
+  - MULIG UGYLDIG text: "Kan innebære en vesentlig endring (jf. FOA §28-1). Vesentlig endring er en
+    juridisk skjønnsvurdering som krever ny konkurranse — vurder med jurist før du bekrefter." The
+    internal % stays only as a TRIGGER heuristic — never presented as the UI criterion.
+  - Fixed grey disclaimer under every vurdering (new `gyldighet_disclaimer()`): "Gyldighetsvurderingen
+    er en indikasjon som støtte for saksbehandler — ikke en juridisk konklusjon." Rendered in the
+    legend, the e-mail proposal preview, and every stored e-mail commitment (Avtaler + Leverandørkort).
+  - Legend updated to the three new labels. Pre-confirm banner reworded (st.warning, indication).
+  - "Bekreft" stays active for all outcomes (hard rule #3 unchanged). Audit text on confirm despite
+    a MULIG UGYLDIG indication = "bekreftet tross indikasjon om mulig vesentlig endring".
+- **No engine/threshold/rule/logic change; no schema change → NO version bump** (per brief). Only
+  display strings + one audit string + their test assertions changed.
+- Tests: **71 passed** (test_epost audit assertion updated to the new wording). ruff clean. All 8
+  pages render. AppTest verified example 3 (+45 %) → "✗ MULIG UGYLDIG" with FOA §28-1 + "vurder med
+  jurist" + disclaimer, Bekreft active, and the new audit entry on confirm.
+- Live verification (Adrian, after redeploy): Avtaler → Registrer fra e-post → Last inn eksempel
+  (utvidelse) → Foreslå → see MULIG UGYLDIG (indication, §28-1) + disclaimer; Bekreft still works.

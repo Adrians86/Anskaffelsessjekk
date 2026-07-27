@@ -58,6 +58,20 @@ external integrations, changes to core data model.
 
 ## Current tasks
 
+**Språk indikasjon-ikke-konklusjon levert (jurist-funn) — gyldighetsvurdering as indication, not verdict.**
+
+Mini-brief "Språk: indikasjon, ikke konklusjon" (docs/BRIEF_INDIKASJON.md) delivered on main.
+Legal red-team: a "vesentlig endring" shown as a CONCLUSION ("UGYLDIG") with a percentage is false
+precision — vesentlig endring (FOA §28-1, C-454/06 Pressetext) is a legal skjønnsvurdering.
+Language-only change (no engine/threshold/rule change): the three gyldighet outcomes are now
+indications — "✓ SANNSYNLIGVIS GYLDIG", "⚠ KREVER FORMALISERING", "✗ MULIG UGYLDIG — krever
+juridisk vurdering" (chip: "MULIG UGYLDIG", red kept). MULIG UGYLDIG text cites FOA §28-1 and
+"vurder med jurist"; the % is only an internal trigger, never presented as the UI criterion. A
+fixed grey disclaimer under every vurdering: "Gyldighetsvurderingen er en indikasjon som støtte for
+saksbehandler — ikke en juridisk konklusjon." "Bekreft" stays active for all outcomes (hard rule
+#3); audit text on confirm = "bekreftet tross indikasjon om mulig vesentlig endring". No version
+bump (no schema change).
+
 **Valuta v1 delivered — foreign-currency invoices: detect + flag, never convert.**
 
 Mini-brief "Valuta v1" (docs/BRIEF_VALUTA_V1.md) delivered on main. Principle: DETECT + FLAG, zero

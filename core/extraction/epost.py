@@ -71,19 +71,22 @@ def _condition_type(text: str) -> str:
 
 
 def _assess_gyldighet(text: str) -> tuple[str, str]:
-    """Demo heuristic: vesentlig endring -> UGYLDIG; mindre justering clause -> GYLDIG;
-    otherwise an informal price change -> KREVER FORMALISERING."""
+    """Demo heuristic that TRIGGERS an indication (never a legal conclusion). The percentage is
+    an internal trigger only — it is never presented as the criterion for vesentlig endring, which
+    is a legal skjønnsvurdering (FOA §28-1). Returns (status_code, indication_text)."""
     low = text.lower()
     pct = next((Decimal(m.group(1)) for m in _PCT_RE.finditer(text)), None)
     scope_expansion = any(w in low for w in _SCOPE_WORDS)
     if scope_expansion or (pct is not None and pct > _VESENTLIG_PCT):
         return (UGYLDIG,
-                "Vesentlig endring (>15 % / utvidet omfang) — krever ny konkurranse, "
-                "kan ikke avtales per e-post.")
+                "Kan innebære en vesentlig endring (jf. FOA §28-1). Vesentlig endring er en "
+                "juridisk skjønnsvurdering som krever ny konkurranse — vurder med jurist før du "
+                "bekrefter.")
     if any(w in low for w in _MINDRE_WORDS):
-        return (GYLDIG, "Innenfor avtalens klausul om mindre justeringer per e-post.")
+        return (GYLDIG, "Ser ut til å være i samsvar med avtalens endringsbestemmelser. "
+                        "Bekreftes av saksbehandler.")
     return (KREVER_FORMALISERING,
-            "Avtalen krever skriftlig tillegg — e-posten er varsel, ikke dokumentasjon.")
+            "Avtalen ser ut til å kreve skriftlig tillegg — e-posten er varsel, ikke dokumentasjon.")
 
 
 def confirm_audit_detail(avsender: str | None, gyldighet: str) -> str:
@@ -91,7 +94,7 @@ def confirm_audit_detail(avsender: str | None, gyldighet: str) -> str:
     (full sporbarhet: who, when — via created_at — and against which warning)."""
     who = avsender or "ukjent avsender"
     if gyldighet == UGYLDIG:
-        return f"forpliktelse bekreftet TROSS UGYLDIG-vurdering fra e-post ({who})"
+        return f"forpliktelse bekreftet tross indikasjon om mulig vesentlig endring fra e-post ({who})"
     return f"forpliktelse bekreftet fra e-post ({who})"
 
 

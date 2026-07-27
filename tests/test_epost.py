@@ -60,11 +60,11 @@ def test_empty_email_is_safe():
 def test_ugyldig_can_be_confirmed_and_is_flagged_in_audit():
     """Hard rule #3: no auto-blocking. An UGYLDIG e-mail CAN be registered by a human, but the
     audit entry marks it explicitly, and the confirmed commitment carries the UGYLDIG status."""
-    # The confirm is not blocked — it produces a distinguished audit detail.
+    # The confirm is not blocked — it produces a distinguished audit detail (indication wording).
     detail = confirm_audit_detail("T. Olsen", UGYLDIG)
-    assert "TROSS UGYLDIG-vurdering" in detail
+    assert "tross indikasjon om mulig vesentlig endring" in detail
     # A normal confirm has the plain detail (no override marker).
-    assert "TROSS" not in confirm_audit_detail("J. Hansen", KREVER_FORMALISERING)
+    assert "tross indikasjon" not in confirm_audit_detail("J. Hansen", KREVER_FORMALISERING)
 
     # A confirmed UGYLDIG commitment still participates in control (human took responsibility),
     # and carries the recorded gyldighet for a red status in the register.

@@ -5,7 +5,12 @@ import streamlit as st
 from chrome import footer, header
 from db import get_session, nok
 from sqlmodel import select
-from ui_forpliktelser import gyldighet_badge_html, gyldighet_legend, render_email_commitment
+from ui_forpliktelser import (
+    gyldighet_badge_html,
+    gyldighet_disclaimer,
+    gyldighet_legend,
+    render_email_commitment,
+)
 
 from core.extraction.epost import confirm_audit_detail, parse_email
 from core.models import (
@@ -124,13 +129,14 @@ with tab_epost:
             st.markdown(f"**Gyldighetsvurdering:** {gyldighet_badge_html(proposal.gyldighet)}",
                         unsafe_allow_html=True)
             st.caption(proposal.gyldighet_reason)
+            gyldighet_disclaimer()
 
-        # Human-in-the-loop (hard rule #3): the system recommends, it never blocks. For a
-        # vesentlig endring we warn strongly, but the saksbehandler may still register it.
+        # Human-in-the-loop (hard rule #3): the system indicates, it never blocks. For a possible
+        # vesentlig endring we flag strongly — as an INDICATION — but the saksbehandler decides.
         if proposal.gyldighet == "UGYLDIG":
-            st.error("⚠ Vesentlig endring: denne endringen krever sannsynligvis ny konkurranse "
-                     "og kan ikke gyldig avtales per e-post. Vurder formell anskaffelsesprosess "
-                     "før du bekrefter.")
+            st.warning("⚠ Mulig vesentlig endring: dette kan innebære en vesentlig endring "
+                       "(jf. FOA §28-1) som er en juridisk skjønnsvurdering og kan kreve ny "
+                       "konkurranse. Vurder med jurist før du bekrefter.")
 
         b1, b2 = st.columns(2)
         if b1.button("Bekreft og legg til", type="primary"):
@@ -173,8 +179,8 @@ with tab_epost:
                 session.commit()
             st.session_state.epost_proposed = False
             if proposal.gyldighet == "UGYLDIG":
-                st.warning("Registrert TROSS UGYLDIG-vurdering. Handlingen er logget i "
-                           "revisjonssporet med saksbehandlers ansvar.")
+                st.warning("Registrert tross indikasjon om mulig vesentlig endring. Handlingen er "
+                           "logget i revisjonssporet med saksbehandlers ansvar.")
             else:
                 st.success("Forpliktelsen er bekreftet og lagt til i kontrollgrunnlaget "
                            "(logget i revisjonssporet).")
