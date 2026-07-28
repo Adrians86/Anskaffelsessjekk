@@ -278,6 +278,33 @@ else:
                 except RegistryError as exc:
                     st.error(str(exc))
 
+        # (L4) Notater + redigerbare kvalifikasjoner (the "uwagi" — free text + editable categories).
+        st.markdown("**Notater og kvalifikasjoner**")
+        if sup.notes:
+            st.markdown(
+                '<div style="background:#FCFBF7;border:1px solid #E4E1D8;border-radius:8px;'
+                'padding:8px 12px;font-size:13px;color:#1C2733;white-space:pre-wrap">'
+                f'{escape(sup.notes)}</div>',
+                unsafe_allow_html=True,
+            )
+        else:
+            st.caption("Ingen notater ennå.")
+        if sup.categories:
+            st.caption("Kvalifikasjoner (redigerbare): " + escape(sup.categories))
+        with st.expander("✎ Rediger notat og kvalifikasjoner"):
+            with st.form(f"notat_{sup.id}"):
+                n4_cat = st.text_input("Kategorier / kvalifikasjoner (kommaseparert)",
+                                       value=sup.categories or "")
+                n4_notes = st.text_area("Notat", value=sup.notes or "", height=120,
+                                        placeholder="Fritt notat om samarbeidet …")
+                saved4 = st.form_submit_button("Lagre", type="primary")
+            if saved4:
+                update_supplier(session, sup.id, categories=n4_cat, notes=n4_notes,
+                                actor="demo-bruker")
+                _flash_and_rerun("ok", "Notat og kvalifikasjoner er lagret.")
+        st.caption("Den syntetiske profilen over (med gyldighetsdatoer) er les-only demo-innsikt; "
+                   "feltene her er dine egne, redigerbare kvalifikasjoner og notater.")
+
         # (b) Avtaler
         st.markdown("**Avtaler**")
         contracts = session.exec(
