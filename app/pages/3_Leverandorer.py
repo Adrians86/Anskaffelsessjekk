@@ -17,7 +17,7 @@ from core.models import (
     InvoiceLine,
     Supplier,
 )
-from core.registry import RegistryError, create_supplier
+from core.registry import RegistryError, create_supplier, update_supplier
 from core.reporting import evaluate_invoice
 from core.synth.leverandor_profiler import avtale_status, is_expired, profile_for
 
@@ -28,6 +28,18 @@ page_header(
     "Hvilke leverandører genererer flest avvik — ta det opp med kilden, "
     "ikke bare symptomene. (First Time Right)",
 )
+
+# Flash message survives the st.rerun() we trigger after list/selectbox-changing writes.
+_flash = st.session_state.pop("lev_flash", None)
+if _flash:
+    (st.success if _flash[0] == "ok" else st.error)(_flash[1])
+
+
+def _flash_and_rerun(kind: str, msg: str) -> None:
+    """Store a flash, drop stale caches, and rerun so the change is visible immediately."""
+    st.cache_data.clear()
+    st.session_state["lev_flash"] = (kind, msg)
+    st.rerun()
 
 
 @st.cache_data
@@ -175,6 +187,24 @@ else:
             unsafe_allow_html=True,
         )
         st.caption(f"Org.nr {escape(sup.org_number)}")
+
+        # (L2) Rediger firmadata — the "edit" leg of the A–Z tool.
+        with st.expander("✎ Rediger firmadata"):
+            with st.form(f"rediger_firma_{sup.id}"):
+                e1, e2 = st.columns(2)
+                r_name = e1.text_input("Navn", value=sup.name)
+                r_org = e2.text_input("Organisasjonsnummer", value=sup.org_number)
+                r_iso = st.checkbox("ISO-sertifisert", value=sup.iso_certified)
+                r_sec = st.checkbox("Sikkerhetsklarert", value=sup.security_cleared)
+                saved = st.form_submit_button("Lagre endringer", type="primary")
+            if saved:
+                try:
+                    update_supplier(session, sup.id, name=r_name, org_number=r_org,
+                                    iso_certified=r_iso, security_cleared=r_sec,
+                                    actor="demo-bruker")
+                    _flash_and_rerun("ok", f"Firmadata for «{r_name}» er lagret.")
+                except RegistryError as exc:
+                    st.error(str(exc))
 
         # (L1) Kategorier + kvalifikasjoner (what the supplier may deliver; expired in red)
         st.markdown("**Kategorier og kvalifikasjoner**")
