@@ -23,6 +23,8 @@ from core.registry import (
     create_supplier,
     delete_contact,
     list_contacts,
+    restore_supplier,
+    soft_delete_supplier,
     update_contact,
     update_supplier,
 )
@@ -51,12 +53,13 @@ def _flash_and_rerun(kind: str, msg: str) -> None:
 
 
 @st.cache_data
-def supplier_stats():
+def supplier_stats(include_deleted: bool = False):
     rows = []
     with get_session() as session:
-        suppliers = session.exec(
-            select(Supplier).where(Supplier.is_deleted == False)  # noqa: E712
-        ).all()
+        stmt = select(Supplier)
+        if not include_deleted:
+            stmt = stmt.where(Supplier.is_deleted == False)  # noqa: E712
+        suppliers = session.exec(stmt).all()
         for sup in suppliers:
             contracts = session.exec(
                 select(Contract).where(Contract.supplier_id == sup.id)
@@ -77,6 +80,7 @@ def supplier_stats():
 
             andel = (invoices_with_findings / len(invoices) * 100) if invoices else 0.0
             rows.append({
+                "Status": "Slettet" if sup.is_deleted else "Aktiv",
                 "Navn": sup.name,
                 "Org.nr": sup.org_number,
                 "Avtaler": len(contracts),
@@ -166,14 +170,17 @@ with st.expander("＋ Ny leverandør"):
         except RegistryError as exc:
             st.error(str(exc))
 
-rows = supplier_stats()
+show_deleted = st.toggle("Vis slettede leverandører", value=False,
+                         help="Myk sletting beholder raden og sporet — her kan de vises og gjenopprettes.")
+rows = supplier_stats(show_deleted)
 
 if not rows:
     st.info("Ingen leverandører registrert.")
 else:
-    df = pd.DataFrame(rows)[
-        ["Navn", "Org.nr", "Avtaler", "Fakturaer", "Funn", "Verdi funnet", "Andel m/ funn"]
-    ]
+    cols = ["Navn", "Org.nr", "Avtaler", "Fakturaer", "Funn", "Verdi funnet", "Andel m/ funn"]
+    if show_deleted:
+        cols = ["Status", *cols]
+    df = pd.DataFrame(rows)[cols]
     st.dataframe(df, use_container_width=True, hide_index=True)
 
     total_verdi = sum(r["_verdi"] for r in rows)
@@ -213,6 +220,22 @@ else:
                     _flash_and_rerun("ok", f"Firmadata for «{r_name}» er lagret.")
                 except RegistryError as exc:
                     st.error(str(exc))
+
+        # (L5) Slett / gjenopprett — soft delete keeps the row and the audit trail.
+        if sup.is_deleted:
+            st.warning("Denne leverandøren er slettet (mykt). Raden og revisjonssporet er beholdt.")
+            if st.button("↩ Gjenopprett leverandør", key=f"restore_{sup.id}"):
+                restore_supplier(session, sup.id, actor="demo-bruker")
+                _flash_and_rerun("ok", f"«{sup.name}» er gjenopprettet.")
+        else:
+            with st.expander("🗑 Slett leverandør"):
+                st.caption("Myk sletting: leverandøren skjules fra listen, men raden og "
+                           "revisjonssporet beholdes (kan gjenopprettes).")
+                confirm = st.checkbox("Jeg bekrefter sletting", key=f"confirm_del_{sup.id}")
+                if st.button("Slett leverandør", type="primary", disabled=not confirm,
+                             key=f"del_{sup.id}"):
+                    soft_delete_supplier(session, sup.id, actor="demo-bruker")
+                    _flash_and_rerun("ok", f"«{sup.name}» er slettet (mykt).")
 
         # (L1) Kategorier + kvalifikasjoner (what the supplier may deliver; expired in red)
         st.markdown("**Kategorier og kvalifikasjoner**")
