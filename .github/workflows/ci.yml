@@ -19,3 +19,21 @@ jobs:
         run: ruff check core/ app/ tests/
       - name: Tests (pytest)
         run: pytest -q
+      - name: Package integrity (non-editable build sees all subpackages)
+        # Streamlit Cloud installs non-editable (`.` in requirements.txt); an editable dev
+        # install would hide a missing subpackage. Build the wheel and assert core.registry
+        # (and the rules YAML data) are actually packaged — guards the 2026-07 Cloud crash.
+        run: |
+          pip install --quiet build
+          rm -rf dist
+          python -m build --wheel --outdir dist
+          python - <<'PY'
+          import glob, zipfile
+          w = glob.glob("dist/anskaffelsessjekk-*.whl")
+          assert len(w) == 1, f"expected exactly one wheel, got {w}"
+          names = zipfile.ZipFile(w[0]).namelist()
+          for required in ("core/registry/__init__.py", "core/models/contact.py",
+                           "core/rules/data/thresholds_2026.yaml"):
+              assert required in names, f"MISSING from wheel: {required}"
+          print("wheel OK:", w[0].split('/')[-1])
+          PY

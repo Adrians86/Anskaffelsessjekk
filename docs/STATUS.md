@@ -968,3 +968,31 @@ finding with real product impact; the rest are low-risk hardening I can batch on
   added data is per-session; durable persistence would need a real DB (out of current scope).
 - Next planned step: the functions behind «Kommer» (registrer avtale/forpliktelse/faktura fra
   kartoteket) — await partner brief. Await partner review from a clone / live URL.
+
+---
+
+### 2026-07-28 · claude-code
+- Done: **Live BLOCKER fix** — Leverandører crashed on Streamlit Cloud with
+  `ModuleNotFoundError: from core.registry import` even though repo code was correct and 92 tests
+  were green. Root cause: **committed build artifacts** were tracked in git — `UNKNOWN.egg-info/`
+  (empty top_level) and `build/…/UNKNOWN-0.0.0.egg-info/` — which poisoned Cloud's non-editable
+  `pip install .` ("multiple .dist-info: anskaffelsessjekk-0.6.0, UNKNOWN-0.0.0"), producing a
+  broken/ambiguous install where `core` (and the new `core.registry` subpackage) never landed.
+  CI stayed green because it uses an EDITABLE install (repo root on sys.path), which hides a
+  broken packages/build config.
+  - Fix: `git rm --cached` all tracked build artifacts (`*.egg-info/`, `build/`); added `build/` +
+    `dist/` to `.gitignore` (`*.egg-info/` was already ignored but the dirs were committed before
+    that rule). Packaging config itself was already correct — `find_packages(include=["core*"])`
+    discovers `core.registry`.
+  - Bumped 0.6.0 → **0.6.1** + requirements rebuild marker (force a fresh Cloud pip env).
+  - Added a CI guard "Package integrity": builds the wheel and asserts `core/registry/__init__.py`,
+    `core/models/contact.py`, and the rules YAML are actually packaged — this is what catches a bad
+    non-editable setup that the editable test install cannot.
+  - Verified: clean `python -m build` wheel is valid (single, correctly-named) and contains
+    core/registry + YAML data; installed the wheel NON-editably into a throwaway venv →
+    `import core.registry` + `ContactPerson` succeed, version 0.6.1. ruff clean, 92 passed, 8 pages open.
+- Decisions needed / questions: none. Note: the earlier committed `anskaffelsessjekk.egg-info` was
+  actually current (listed core/registry), but the `UNKNOWN` artifacts alone broke the build —
+  all build artifacts are now untracked and ignored for good.
+- Next planned step: Adrian re-checks the live URL after Cloud redeploys (egress blocks streamlit.app
+  from the sandbox, so live verification is on Adrian).
