@@ -7,7 +7,7 @@ Verdict semantic colors stay exactly as BRAND.md (#2E7D32 / #B58900 / #C62828).
 from html import escape
 
 import streamlit as st
-from theme import HAIRLINE, MUTED, NAVY, inject_theme
+from theme import HAIRLINE, MUTED, NAVY, PAPER, inject_theme
 
 FOOTER_TEXT = (
     "Anskaffelsessjekk · AS North Advisory · Adrian Śliwa — 19 år i logistikk og "
@@ -46,9 +46,12 @@ def page_header(eyebrow: str, title: str, lede: str, chip: str = "Syntetiske dat
 
 
 def footer() -> None:
-    """Render the consistent footer with a hairline rule."""
+    """Render the consistent footer with a hairline rule and the desktop-optimised note."""
     st.markdown(
         f'<hr style="border:0;border-top:1px solid {HAIRLINE};margin:18px 0 8px 0">'
-        f'<div style="font-size:11.5px;color:{MUTED}">{escape(FOOTER_TEXT)}</div>',
+        f'<div style="font-size:11.5px;color:{MUTED}">{escape(FOOTER_TEXT)}</div>'
+        f'<div style="font-size:11px;color:{MUTED};background:{PAPER};display:inline-block;'
+        f'border:1px solid {HAIRLINE};border-radius:10px;padding:1px 9px;margin-top:6px">'
+        'Optimalisert for desktop</div>',
         unsafe_allow_html=True,
     )

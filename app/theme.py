@@ -155,6 +155,17 @@ _STYLE = f"""
   font-size: 11px; letter-spacing: .3px; text-transform: uppercase;
 }}
 .stApp table td, .stApp table th {{ border-color: var(--as-hairline) !important; }}
+
+/* --- Mobile-lite (G5) — real minimum so a phone is not broken -------------- */
+/* Streamlit stacks st.columns vertically on narrow screens on its own; here we only fix the
+   custom flex strip (wrap) and let wide tables scroll horizontally. Full responsive = Phase 2. */
+@media (max-width: 640px) {{
+  .as-kpis {{ flex-wrap: wrap; }}
+  .as-kpi {{ flex: 1 1 45%; border-left: 0; border-bottom: 1px solid var(--as-hairline); }}
+  .as-h1 {{ font-size: 22px; }}
+  .as-lede {{ font-size: 12.5px; }}
+  .stApp table {{ display: block; overflow-x: auto; white-space: nowrap; }}
+}}
 </style>
 """
 
