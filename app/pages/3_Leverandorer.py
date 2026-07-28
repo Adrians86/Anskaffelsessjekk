@@ -52,6 +52,14 @@ def _flash_and_rerun(kind: str, msg: str) -> None:
     st.rerun()
 
 
+def _kommer(label: str, key: str) -> None:
+    """Honest roadmap hook: a disabled button + «Kommer» chip marking where the next
+    function will connect. Never a fake working button."""
+    c1, c2 = st.columns([2, 6])
+    c1.button(label, disabled=True, key=key, use_container_width=True)
+    c2.markdown('<span class="as-chip">Kommer</span>', unsafe_allow_html=True)
+
+
 @st.cache_data
 def supplier_stats(include_deleted: bool = False):
     rows = []
@@ -188,8 +196,11 @@ else:
 
     # --- V6: Leverandørkort drill-down ----------------------------------------
     st.divider()
-    st.subheader("Leverandørkort")
-    chosen_name = st.selectbox("Åpne leverandørkort", options=[r["Navn"] for r in rows])
+    st.subheader("Leverandørkartotek")
+    st.caption("Alt om leverandøren på ett sted — firma, kontaktpersoner, notat, avtaler, "
+               "forpliktelser og fakturaer. «Kommer»-knappene viser hvor de neste funksjonene "
+               "kobles på.")
+    chosen_name = st.selectbox("Åpne kartotek", options=[r["Navn"] for r in rows])
 
     with get_session() as session:
         sup = session.exec(select(Supplier).where(Supplier.name == chosen_name)).first()
@@ -342,6 +353,7 @@ else:
                             f"ramme {nok(c.total_value)} · {n_lines} linjer")
         else:
             st.caption("Ingen kontrakter registrert.")
+        _kommer("＋ Registrer avtale", f"komm_avtale_{sup.id}")
 
         # (c) Forpliktelser (reuse V1 rendering for e-mail commitments)
         st.markdown("**Forpliktelser**")
@@ -357,6 +369,7 @@ else:
                             f"{nok(cm.value) if cm.value is not None else '—'} · Kilde: {cm.source_ref}")
         else:
             st.caption("Ingen registrerte tilleggsforpliktelser.")
+        _kommer("＋ Registrer forpliktelse", f"komm_forpl_{sup.id}")
 
         # (d) Fakturaer (cached, read-only)
         st.markdown("**Fakturaer**")
@@ -373,6 +386,9 @@ else:
             if col6.button("Åpne →", key=f"levopen_{r['id']}"):
                 st.session_state.preselect_invoice = r["id"]
                 st.switch_page("pages/1_Fakturakontroll.py")
+        if not inv_rows:
+            st.caption("Ingen fakturaer registrert.")
+        _kommer("＋ Registrer faktura", f"komm_faktura_{sup.id}")
 
         # (e) Nøkkeltall — transactional facts
         st.markdown("**Nøkkeltall**")
