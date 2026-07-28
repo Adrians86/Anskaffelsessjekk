@@ -97,6 +97,48 @@ _STYLE = f"""
   border: 1px solid var(--as-hairline); border-radius: 10px;
   padding: 1px 9px; margin-top: 6px;
 }}
+
+/* --- KPI editorial strip (G3) — one connected strip, not loose cards ------- */
+.as-kpis {{
+  display: flex; background: var(--as-surface);
+  border: 1px solid var(--as-hairline); border-radius: 10px;
+  overflow: hidden; margin: 2px 0 16px 0;
+}}
+.as-kpi {{
+  flex: 1; padding: 12px 16px;
+  border-left: 1px solid var(--as-hairline); border-top: 3px solid var(--as-navy);
+}}
+.as-kpi:first-child {{ border-left: 0; }}
+.as-kpi .as-kpi-label {{
+  font-size: 10.5px; letter-spacing: .8px; text-transform: uppercase; color: var(--as-muted);
+}}
+.as-kpi .as-kpi-val {{
+  font-family: var(--as-serif); font-size: 25px; font-weight: 700; color: var(--as-navy);
+  margin-top: 2px; line-height: 1.1; font-variant-numeric: tabular-nums;
+}}
+.as-kpi.err {{ border-top-color: var(--as-err); }}
+.as-kpi.err .as-kpi-val {{ color: var(--as-err); }}
+.as-kpi.warn {{ border-top-color: var(--as-warn); }}
+.as-kpi.warn .as-kpi-val {{ color: var(--as-warn); }}
+.as-kpi.ok {{ border-top-color: var(--as-ok); }}
+.as-kpi.ok .as-kpi-val {{ color: var(--as-ok); }}
+.as-kpi.gold {{ border-top-color: var(--as-gold); }}
+.as-kpi.gold .as-kpi-val {{ color: var(--as-gold); }}
+
+/* --- Panel heading + events feed (G3) ------------------------------------- */
+.as-panel-title {{
+  font-size: 11px; letter-spacing: .8px; text-transform: uppercase;
+  color: var(--as-muted); font-weight: 700; margin: 4px 0 8px 0;
+}}
+.as-feed {{
+  background: var(--as-surface); border: 1px solid var(--as-hairline);
+  border-radius: 10px; padding: 6px 14px; font-size: 12.5px; color: var(--as-ink);
+}}
+.as-feed .as-feed-row {{ padding: 7px 0; border-bottom: 1px dashed var(--as-hairline); }}
+.as-feed .as-feed-row:last-child {{ border-bottom: 0; }}
+.as-feed time {{
+  color: var(--as-muted); margin-right: 8px; font-variant-numeric: tabular-nums;
+}}
 </style>
 """
 

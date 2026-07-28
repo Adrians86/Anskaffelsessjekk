@@ -1,3 +1,5 @@
+from html import escape
+
 import streamlit as st
 from db import get_session, money, nok
 from sqlmodel import select
@@ -87,18 +89,25 @@ def action_items():
 
 stats = compute_portfolio_stats()
 
-# KPI strip (5 containers)
-cols = st.columns(5)
-with cols[0]:
-    st.metric("Kontrollert", stats["total_invoices"])
-with cols[1]:
-    st.metric("Avvik", stats["counts"]["AVVIK"])
-with cols[2]:
-    st.metric("Til vurdering", stats["counts"]["TIL_VURDERING"])
-with cols[3]:
-    st.metric("Samsvar", stats["counts"]["SAMSVAR"])
-with cols[4]:
-    st.metric("Verdi funnet", nok(stats["total_verdi"]) if stats["total_verdi"] > 0 else "0 kr")
+# KPI editorial strip (variant C) — one connected strip with hairline dividers, not loose cards.
+_verdi_txt = nok(stats["total_verdi"]) if stats["total_verdi"] > 0 else "0 kr"
+_kpi_cells = [
+    ("", "Kontrollert", str(stats["total_invoices"])),
+    ("err", "Avvik", str(stats["counts"]["AVVIK"])),
+    ("warn", "Til vurdering", str(stats["counts"]["TIL_VURDERING"])),
+    ("ok", "Samsvar", str(stats["counts"]["SAMSVAR"])),
+    ("gold", "Verdi funnet", _verdi_txt),
+]
+st.markdown(
+    '<div class="as-kpis">'
+    + "".join(
+        f'<div class="as-kpi {cls}"><div class="as-kpi-label">{escape(label)}</div>'
+        f'<div class="as-kpi-val">{escape(val)}</div></div>'
+        for cls, label, val in _kpi_cells
+    )
+    + '</div>',
+    unsafe_allow_html=True,
+)
 
 if stats.get("n_foreign"):
     st.info(f"{stats['n_foreign']} faktura(er) i utenlandsk valuta — krever manuell vurdering. "
@@ -183,35 +192,37 @@ for tab_idx, (tab, filter_status) in enumerate(zip(tabs, tab_filters, strict=Tru
 
 st.markdown("---")
 
-# "Krever handling" section (WARN or DEVIATION findings as actionable rows)
-st.write("**Krever handling**")
+# Worklist ("Krever handling") and "Siste hendelser" side by side (variant C).
+col_work, col_feed = st.columns([3, 2], gap="large")
 
-items = action_items()
-if items:
-    for idx, item in enumerate(items[:10]):  # Show first 10
-        col1, col2, col3 = st.columns([1, 2, 3])
-        with col1:
-            st.checkbox("Kvitter", key=f"action_{idx}", label_visibility="collapsed")
-        with col2:
-            st.text(f"{item['invoice']} — {item['message'][:40]}")
-        with col3:
-            st.caption(f"**Anbefalt:** {item['recommended']}")
-else:
-    st.caption("Ingen funn som krever handling — alle fakturaer er i orden.")
-
-st.markdown("---")
-
-# "Siste hendelser" feed (last 8 AuditLog entries)
-st.write("**Siste hendelser**")
-
-with get_session() as session:
-    events = session.exec(select(AuditLog).order_by(AuditLog.created_at.desc())).all()[:8]
-
-    if events:
-        for event in events:
-            st.caption(f"**{event.created_at.strftime('%H:%M')}** — {event.actor}: {event.action} ({event.entity})")
+with col_work:
+    st.markdown('<div class="as-panel-title">Krever handling</div>', unsafe_allow_html=True)
+    items = action_items()
+    if items:
+        for idx, item in enumerate(items[:10]):  # Show first 10
+            c1, c2 = st.columns([0.6, 6])
+            with c1:
+                st.checkbox("Kvitter", key=f"action_{idx}", label_visibility="collapsed")
+            with c2:
+                st.markdown(f"**{item['invoice']}** — {item['message'][:44]}")
+                st.caption(f"Anbefalt: {item['recommended']}")
     else:
-        st.caption("Ingen hendelser ennå.")
+        st.caption("Ingen funn som krever handling — alle fakturaer er i orden.")
+
+with col_feed:
+    st.markdown('<div class="as-panel-title">Siste hendelser</div>', unsafe_allow_html=True)
+    with get_session() as session:
+        events = session.exec(select(AuditLog).order_by(AuditLog.created_at.desc())).all()[:8]
+        if events:
+            feed_rows = "".join(
+                f'<div class="as-feed-row"><time>{escape(e.created_at.strftime("%H:%M"))}</time>'
+                f'{escape(e.actor)}: {escape(e.action)} '
+                f'<span style="color:#5A6673">({escape(e.entity)})</span></div>'
+                for e in events
+            )
+        else:
+            feed_rows = '<div class="as-feed-row">Ingen hendelser ennå.</div>'
+    st.markdown(f'<div class="as-feed">{feed_rows}</div>', unsafe_allow_html=True)
 
 st.markdown("---")
 
