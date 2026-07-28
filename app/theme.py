@@ -139,6 +139,22 @@ _STYLE = f"""
 .as-feed time {{
   color: var(--as-muted); margin-right: 8px; font-variant-numeric: tabular-nums;
 }}
+
+/* --- Tables unified (G4) --------------------------------------------------- */
+/* st.dataframe: hairline border + small radius on the wrapper (glide grid inside). */
+.stApp [data-testid="stDataFrame"] {{
+  border: 1px solid var(--as-hairline); border-radius: 8px; overflow: hidden;
+}}
+/* Any HTML table (st.table / markdown): hairline, small radius, tabular numerals. */
+.stApp table {{
+  border: 1px solid var(--as-hairline); border-radius: 8px; border-collapse: separate;
+  border-spacing: 0; overflow: hidden; font-variant-numeric: tabular-nums;
+}}
+.stApp table th {{
+  background: var(--as-paper); color: var(--as-navy);
+  font-size: 11px; letter-spacing: .3px; text-transform: uppercase;
+}}
+.stApp table td, .stApp table th {{ border-color: var(--as-hairline) !important; }}
 </style>
 """
 
