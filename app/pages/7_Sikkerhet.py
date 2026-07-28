@@ -1,10 +1,14 @@
 """Security and data handling — Sikkerhet og databehandling."""
 import streamlit as st
-from chrome import footer, header
+from chrome import footer, header, page_header
 
 st.set_page_config(page_title="Sikkerhet og databehandling", page_icon="🔒", layout="wide")
 header()
-st.title("Sikkerhet og databehandling")
+page_header(
+    "Tillit", "Sikkerhet og databehandling",
+    "Hvordan demoen håndterer data, revisjonsspor og roller — syntetiske data, "
+    "append-only logg, menneske i sløyfen.",
+)
 
 st.markdown("""
 ## Syntetiske data i demoen

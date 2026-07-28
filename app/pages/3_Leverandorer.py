@@ -2,7 +2,7 @@ from html import escape
 
 import pandas as pd
 import streamlit as st
-from chrome import footer, header
+from chrome import footer, header, page_header
 from db import get_session, money, nok
 from sqlmodel import select
 from ui_common import verdict_pill
@@ -22,9 +22,11 @@ from core.synth.leverandor_profiler import avtale_status, is_expired, profile_fo
 
 st.set_page_config(page_title="Leverandører", page_icon="🏢", layout="wide")
 header()
-st.title("Leverandører")
-st.caption("Hvilke leverandører genererer flest avvik — ta det opp med kilden, "
-           "ikke bare symptomene. (First Time Right)")
+page_header(
+    "Samarbeid", "Leverandører",
+    "Hvilke leverandører genererer flest avvik — ta det opp med kilden, "
+    "ikke bare symptomene. (First Time Right)",
+)
 
 
 @st.cache_data

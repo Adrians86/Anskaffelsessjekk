@@ -3,15 +3,17 @@ from decimal import Decimal
 from html import escape
 
 import streamlit as st
-from chrome import footer, header
+from chrome import footer, header, page_header
 
 from core.rules.engine import Facts, RulesEngine
 
 st.set_page_config(page_title="Terskelsjekk", page_icon="⚖️", layout="wide")
 header()
-st.title("Terskelsjekk")
-st.caption("Første steg er alltid valg av regime — beløpet avgjør aldri regimet. "
-           "Reglene er versjonerte data med gyldighetsdatoer (per juli 2026).")
+page_header(
+    "Regelverk", "Terskelsjekk",
+    "Første steg er alltid valg av regime — beløpet avgjør aldri regimet. "
+    "Reglene er versjonerte data med gyldighetsdatoer (per juli 2026).",
+)
 
 _REGIMES = {
     "FOA": "Klassisk sektor (anskaffelsesloven + FOA)",

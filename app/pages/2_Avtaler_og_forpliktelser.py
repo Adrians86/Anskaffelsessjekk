@@ -2,7 +2,7 @@ from datetime import date
 from html import escape
 
 import streamlit as st
-from chrome import footer, header
+from chrome import footer, header, page_header
 from db import get_session, nok
 from sqlmodel import select
 from ui_forpliktelser import (
@@ -27,9 +27,11 @@ from core.synth.epost_examples import EXAMPLE_EMAILS
 
 st.set_page_config(page_title="Avtaler og forpliktelser", page_icon="📋", layout="wide")
 header()
-st.title("Avtaler og forpliktelser")
-st.caption("Alle avtalte betingelser i ett register — formelle kontrakter OG bekreftede "
-           "e-postavtaler. Dette er kontrollgrunnlaget for fakturakontrollen.")
+page_header(
+    "Forpliktelser", "Avtaler og forpliktelser",
+    "Alle avtalte betingelser i ett register — formelle kontrakter OG bekreftede "
+    "e-postavtaler. Dette er kontrollgrunnlaget for fakturakontrollen.",
+)
 
 tab_register, tab_epost = st.tabs(["Forpliktelsesregister", "Registrer fra e-post"])
 

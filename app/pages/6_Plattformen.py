@@ -1,12 +1,14 @@
 from html import escape
 
 import streamlit as st
-from chrome import footer, header
+from chrome import footer, header, page_header
 
 st.set_page_config(page_title="Plattformen", page_icon="🧩", layout="wide")
 header()
-st.title("Plattformen")
-st.markdown("Én motor, ett forpliktelsesregister — modulene er visninger på samme grunnlag.")
+page_header(
+    "Arkitektur", "Plattformen",
+    "Én motor, ett forpliktelsesregister — modulene er visninger på samme grunnlag.",
+)
 
 # Truthful status badges only — no card without one, no fake clickable module.
 AVAILABLE = ("Tilgjengelig", "#2E7D32", "#EAF4EC")

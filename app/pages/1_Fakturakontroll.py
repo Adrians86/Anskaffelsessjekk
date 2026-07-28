@@ -1,7 +1,7 @@
 from html import escape
 
 import streamlit as st
-from chrome import footer, header
+from chrome import footer, header, page_header
 from db import get_session, money, nok
 from sqlmodel import select
 from texts import RECOMMENDED_ACTIONS
@@ -16,7 +16,11 @@ from core.rules.engine import Facts, ReglementEngine, RulesEngine
 
 st.set_page_config(page_title="Fakturakontroll", page_icon="🧾", layout="wide")
 header()
-st.title("Fakturakontroll")
+page_header(
+    "Kontroll", "Fakturakontroll",
+    "Kontroller en faktura mot bestilling, mottak og alle registrerte forpliktelser "
+    "— i to retninger: leverandørens pris og egen prosedyre.",
+)
 
 _SEV_ICON = {Severity.DEVIATION: "🔴", Severity.WARN: "🟡", Severity.INFO: "ℹ️"}
 

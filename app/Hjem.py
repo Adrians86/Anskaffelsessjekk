@@ -10,13 +10,15 @@ from core.reporting import evaluate_invoice
 
 st.set_page_config(page_title="Arbeidsflate", page_icon="📊", layout="wide")
 
-from chrome import footer, header  # noqa: E402
+from chrome import footer, header, page_header  # noqa: E402
 
 header()
 
-st.markdown("## Arbeidsflate")
-st.markdown('<span style="font-size:12px;color:#8A94A0">Demo · syntetiske data · regelverk per 01.07.2026</span>', unsafe_allow_html=True)
-st.markdown("Full oversikt over kontrollstatus — hva som krever deg, og hva som er i orden.")
+page_header(
+    "Kontrolloversikt", "Arbeidsflate",
+    "Full oversikt over kontrollstatus — hva som krever deg, og hva som er i orden.",
+    chip="Syntetiske data · regelverk per 01.07.2026",
+)
 
 @st.cache_data
 def compute_portfolio_stats():

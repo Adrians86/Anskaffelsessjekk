@@ -3,7 +3,7 @@ from html import escape
 import altair as alt
 import pandas as pd
 import streamlit as st
-from chrome import footer, header
+from chrome import footer, header, page_header
 from db import get_session, money, nok
 from sqlmodel import select
 
@@ -13,9 +13,11 @@ from core.reporting import evaluate_invoice
 
 st.set_page_config(page_title="Styringsinformasjon", page_icon="📊", layout="wide")
 header()
-st.title("Styringsinformasjon")
-st.caption("Kontrollstatus for hele fakturaporteføljen — tall til controlling, "
-           "internkontroll og ledelse. Gevinstrealisering: verdi funnet.")
+page_header(
+    "Ledelse", "Styringsinformasjon",
+    "Kontrollstatus for hele fakturaporteføljen — tall til controlling, "
+    "internkontroll og ledelse. Gevinstrealisering: verdi funnet.",
+)
 
 @st.cache_data
 def dashboard_data():
