@@ -17,6 +17,7 @@ from core.models import (
     InvoiceLine,
     Supplier,
 )
+from core.registry import RegistryError, create_supplier
 from core.reporting import evaluate_invoice
 from core.synth.leverandor_profiler import avtale_status, is_expired, profile_for
 
@@ -33,7 +34,9 @@ page_header(
 def supplier_stats():
     rows = []
     with get_session() as session:
-        suppliers = session.exec(select(Supplier)).all()
+        suppliers = session.exec(
+            select(Supplier).where(Supplier.is_deleted == False)  # noqa: E712
+        ).all()
         for sup in suppliers:
             contracts = session.exec(
                 select(Contract).where(Contract.supplier_id == sup.id)
@@ -119,6 +122,29 @@ def supplier_invoiced_objects(supplier_id: int):
         out.sort(key=lambda x: x["sum"], reverse=True)
         return out
 
+
+# --- L1: opprett en leverandør fra bunn (full tool, ikke bare visning) --------
+with st.expander("＋ Ny leverandør"):
+    with st.form("ny_leverandor", clear_on_submit=True):
+        f1, f2 = st.columns(2)
+        n_org = f1.text_input("Organisasjonsnummer *")
+        n_name = f2.text_input("Navn *")
+        n_cat = st.text_input("Kategorier / kvalifikasjoner (kommaseparert)")
+        n_notes = st.text_area("Notat", height=80,
+                               placeholder="Fritt notat om leverandøren …")
+        submitted = st.form_submit_button("Opprett leverandør", type="primary")
+    if submitted:
+        try:
+            with get_session() as session:
+                new_sup = create_supplier(
+                    session, org_number=n_org, name=n_name,
+                    categories=n_cat or None, notes=n_notes or None, actor="demo-bruker",
+                )
+                new_name = new_sup.name
+            st.cache_data.clear()  # list/kort caches are now stale — refresh this run
+            st.success(f"Leverandør «{new_name}» opprettet og lagret i registeret.")
+        except RegistryError as exc:
+            st.error(str(exc))
 
 rows = supplier_stats()
 

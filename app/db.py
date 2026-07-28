@@ -11,7 +11,7 @@ import streamlit as st
 from sqlalchemy.pool import StaticPool
 from sqlmodel import Session, SQLModel, create_engine
 
-from core.synth import scenario_deler, scenario_konsulent
+from core.synth import kontakter, scenario_deler, scenario_konsulent
 
 
 @st.cache_resource
@@ -25,6 +25,7 @@ def get_engine():
     with Session(engine) as s:
         scenario_deler.generate(s)
         scenario_konsulent.generate(s)
+        kontakter.seed(s)
     return engine
 
 

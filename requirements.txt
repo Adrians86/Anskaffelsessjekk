@@ -1,5 +1,5 @@
 # Streamlit Community Cloud deployment dependencies
-# Rebuild marker: core 0.5.0 (EØS thresholds 21.04.2026 + Facts discriminators) + defusedxml — bump to force a
+# Rebuild marker: core 0.6.0 (Leverandør A–Z: ContactPerson model + Supplier.notes/is_deleted + registry CRUD) — bump to force a
 # fresh pip environment on Cloud whenever core/models or the core API changes.
 # Cloud only reinstalls dependencies when a dependency file changes; a version
 # bump in pyproject.toml alone is NOT seen unless this file also changes.
