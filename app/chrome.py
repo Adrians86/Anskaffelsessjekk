@@ -1,12 +1,13 @@
-"""Shared page chrome — navy header band and consistent footer.
+"""Shared page chrome — theme injection, navy product band, editorial page header, footer.
 
-UI-only helper (app/ layer). Keeps every page's top band and footer identical
-so the demo reads as one product. Verdict semantic colors live in the pages and
-must stay exactly as BRAND.md (#2E7D32 / #B58900 / #C62828).
+UI-only helper (app/ layer). Keeps every page's styling, top band and footer identical so the
+demo reads as one product. Colors/typography come from theme.py (single source of truth).
+Verdict semantic colors stay exactly as BRAND.md (#2E7D32 / #B58900 / #C62828).
 """
-import streamlit as st
+from html import escape
 
-NAVY = "#1F3A5F"
+import streamlit as st
+from theme import HAIRLINE, MUTED, NAVY, inject_theme
 
 FOOTER_TEXT = (
     "Anskaffelsessjekk · AS North Advisory · Adrian Śliwa — 19 år i logistikk og "
@@ -23,11 +24,31 @@ _HEADER_HTML = (
 
 
 def header() -> None:
-    """Render the navy product header band. Call once, right after set_page_config."""
+    """Inject the theme, then render the navy product band. Call once, after set_page_config."""
+    inject_theme()
     st.markdown(_HEADER_HTML, unsafe_allow_html=True)
 
 
+def page_header(eyebrow: str, title: str, lede: str, chip: str = "Syntetiske data") -> None:
+    """Render the shared editorial page header: eyebrow + serif H1 + lede + a small chip.
+
+    Replaces per-page st.title()+caption so all eight pages share one masthead. Every value is
+    HTML-escaped (hard rule #11) even though today's callers pass static strings."""
+    st.markdown(
+        '<div class="as-header">'
+        f'<div class="as-eyebrow">{escape(eyebrow)}</div>'
+        f'<div class="as-h1">{escape(title)}</div>'
+        f'<div class="as-lede">{escape(lede)}</div>'
+        f'<span class="as-chip">{escape(chip)}</span>'
+        '</div>',
+        unsafe_allow_html=True,
+    )
+
+
 def footer() -> None:
-    """Render the consistent footer. Call once at the end of the page."""
-    st.markdown("---")
-    st.caption(FOOTER_TEXT)
+    """Render the consistent footer with a hairline rule."""
+    st.markdown(
+        f'<hr style="border:0;border-top:1px solid {HAIRLINE};margin:18px 0 8px 0">'
+        f'<div style="font-size:11.5px;color:{MUTED}">{escape(FOOTER_TEXT)}</div>',
+        unsafe_allow_html=True,
+    )

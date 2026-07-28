@@ -2,15 +2,23 @@
 
 Brand colors and design system for Anskaffelsessjekk — consistent across all surfaces.
 
-## Primary palette
+**Runtime source of truth:** `app/theme.py` (the «Lyst kontor» / variant C theme) is the single
+place the live app reads colors and typography from. This document mirrors it for reference.
 
-| Token | Color | Hex | Usage |
-|-------|-------|-----|-------|
-| **Navy** (primary) | ![#1F3A5F](https://via.placeholder.com/24/1F3A5F/1F3A5F) | `#1F3A5F` | Text, headers, primary UI elements |
-| **Gold** (accent) | ![#B08D2E](https://via.placeholder.com/24/B08D2E/B08D2E) | `#B08D2E` | Dividers, accents, emphasis |
-| **Background** | ![#FAFBFC](https://via.placeholder.com/24/FAFBFC/FAFBFC) | `#FAFBFC` | Page background |
-| **Secondary BG** | ![#EEF2F6](https://via.placeholder.com/24/EEF2F6/EEF2F6) | `#EEF2F6` | Cards, containers |
-| **Text** | ![#1A1D21](https://via.placeholder.com/24/1A1D21/1A1D21) | `#1A1D21` | Body text, default |
+## Primary palette — «Lyst kontor» (variant C)
+
+| Token | Hex | Usage |
+|-------|-----|-------|
+| **Navy** (primary) | `#20364F` | Headings (serif), product band, primary UI elements |
+| **Gold** (accent) | `#A8842A` | Eyebrows, links, accents, action-tile borders |
+| **Ink** (body text) | `#1C2733` | Body text, default |
+| **Muted** | `#5A6673` | Captions, secondary text |
+| **Hairline** | `#E4E1D8` | 1px rules instead of drop shadows |
+| **Paper** | `#FCFBF7` | Warm "office paper" surface accents |
+| **Background** | `#FAFBFC` | Page background |
+
+Typography: serif (Georgia — web-safe, no external font) in headings/eyebrows; sans (Inter) in body.
+Hairlines replace shadows.
 
 ## Verdict indicators (semantic colors)
 
@@ -24,18 +32,20 @@ Used in charts, badges, and status blocks to indicate control outcomes.
 
 ## Implementation
 
-### Streamlit (`app/.streamlit/config.toml`)
-- `primaryColor`: `#1F3A5F` (navy)
+### Streamlit (`.streamlit/config.toml`)
+- `primaryColor`: `#20364F` (navy)
 - `backgroundColor`: `#FAFBFC`
-- `secondaryBackgroundColor`: `#EEF2F6`
+- `secondaryBackgroundColor`: `#F2EFE7`
 - `textColor`: `#1A1D21`
+- `font`: `inter` (body); headings are serif via `theme.py` CSS
 
 ### UI accents
-- Title underline (Hjem): `3px solid #B08D2E`
+- Editorial page header: gold eyebrow + serif navy H1 + muted lede + «Syntetiske data» chip
+- Action tiles (Arbeidsflate): `4px solid #A8842A` gold left border
 - Verdict chart (Styringsinformasjon): SAMSVAR `#2E7D32`, TIL_VURDERING `#B58900`, AVVIK `#C62828`
 
 ## Notes
 
-- Colors are final and locked for MVP (until 2026-07-21).
-- Semantic colors (verdicts) are brand-agnostic but tested for WCAG AA contrast.
-- Never hardcode colors in code — always reference design tokens from this file.
+- «Lyst kontor» (variant C) is the active identity from 2026-07-28; `app/theme.py` is authoritative.
+- Semantic colors (verdicts) are brand-agnostic but tested for WCAG AA contrast — never re-tinted.
+- Never hardcode colors in page code — reference `theme.py` tokens (or these design tokens).
