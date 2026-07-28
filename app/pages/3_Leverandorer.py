@@ -17,7 +17,15 @@ from core.models import (
     InvoiceLine,
     Supplier,
 )
-from core.registry import RegistryError, create_supplier, update_supplier
+from core.registry import (
+    RegistryError,
+    add_contact,
+    create_supplier,
+    delete_contact,
+    list_contacts,
+    update_contact,
+    update_supplier,
+)
 from core.reporting import evaluate_invoice
 from core.synth.leverandor_profiler import avtale_status, is_expired, profile_for
 
@@ -223,6 +231,52 @@ else:
                 )
         else:
             st.caption("Ingen registrerte kategorier/kvalifikasjoner (syntetisk profil mangler).")
+
+        # (L3) Kontaktpersoner — full add / edit / delete (this is "where to add a contact").
+        st.markdown("**Kontaktpersoner**")
+        contacts = list_contacts(session, sup.id)
+        if contacts:
+            for c in contacts:
+                with st.expander(f"{c.name} — {c.role or 'kontakt'}"):
+                    st.caption(f"E-post: {escape(c.email or '—')} · "
+                               f"Telefon: {escape(c.phone or '—')}")
+                    with st.form(f"edit_contact_{c.id}"):
+                        cc1, cc2 = st.columns(2)
+                        nm = cc1.text_input("Navn", value=c.name)
+                        rl = cc2.text_input("Rolle", value=c.role or "")
+                        em = cc1.text_input("E-post", value=c.email or "")
+                        ph = cc2.text_input("Telefon", value=c.phone or "")
+                        s1, s2 = st.columns(2)
+                        upd = s1.form_submit_button("Lagre", type="primary")
+                        rem = s2.form_submit_button("🗑 Slett")
+                    if upd:
+                        try:
+                            update_contact(session, c.id, name=nm, role=rl, email=em, phone=ph,
+                                           actor="demo-bruker")
+                            _flash_and_rerun("ok", f"Kontaktperson «{nm}» er lagret.")
+                        except RegistryError as exc:
+                            st.error(str(exc))
+                    if rem:
+                        delete_contact(session, c.id, actor="demo-bruker")
+                        _flash_and_rerun("ok", f"Kontaktperson «{c.name}» er slettet.")
+        else:
+            st.caption("Ingen kontaktpersoner registrert ennå.")
+
+        with st.expander("＋ Ny kontaktperson"):
+            with st.form(f"add_contact_{sup.id}", clear_on_submit=True):
+                ac1, ac2 = st.columns(2)
+                a_name = ac1.text_input("Navn *")
+                a_role = ac2.text_input("Rolle")
+                a_email = ac1.text_input("E-post")
+                a_phone = ac2.text_input("Telefon")
+                add_ok = st.form_submit_button("Legg til kontaktperson", type="primary")
+            if add_ok:
+                try:
+                    add_contact(session, sup.id, name=a_name, role=a_role,
+                                email=a_email, phone=a_phone, actor="demo-bruker")
+                    _flash_and_rerun("ok", f"Kontaktperson «{a_name}» er lagt til.")
+                except RegistryError as exc:
+                    st.error(str(exc))
 
         # (b) Avtaler
         st.markdown("**Avtaler**")
