@@ -940,3 +940,31 @@ finding with real product impact; the rest are low-risk hardening I can batch on
 - Decisions needed / questions for the partner: none — brief delivered as specified. Full
   responsiveness intentionally left to Phase 2 (mobile-lite only, per brief G5).
 - Next planned step: await partner review from a clone / live URL.
+
+---
+
+### 2026-07-28 · claude-code
+- Done: **Mini-brief "Funksjon 1: Leverandør A–Z"** (docs/BRIEF_LEVERANDOR_AZ.md) — the FIRST
+  function built as a full TOOL (add → view → edit → delete → use), not a view. Partner-approved
+  core-data-model change; introduces **hard rule #12** (full-tool A→Z) to the contract.
+  - **Foundation (L1):** new `ContactPerson` model; `Supplier` gains `notes` + `is_deleted`
+    (soft delete). `core/registry/leverandor.py` = pure CRUD service (takes a Session, imports NO
+    UI — hard rule #1); EVERY write appends an AuditLog row (hard rule #7). `core/synth/kontakter.py`
+    seeds synthetic contacts + notes on the demo suppliers. Version 0.5.0 → 0.6.0 + requirements
+    rebuild marker (hard rule #10).
+  - **L1** «＋ Ny leverandør» (create, unique-org.nr + required-name validation). **L2** «✎ Rediger
+    firmadata» (update). **L3** Kontaktpersoner full add/edit/delete. **L4** editable notat +
+    kvalifikasjoner (categories); synthetic profile kept read-only alongside. **L5** soft delete +
+    «Vis slettede» toggle + gjenopprett (row + trail kept). **L6** «Leverandørkartotek» gathers
+    firma/kontakter/notat/avtaler/forpliktelser/fakturaer with honest disabled «Kommer» hooks for the
+    next functions. **L7** `tests/test_leverandor_crud.py` (10 tests: full CRUD + one-audit-row-per-save).
+  - Persistence: in-memory SQLite (StaticPool, one engine per process) → saves persist for the
+    running demo-session. Durable disk persistence = out of scope (no DB migration, scope freeze).
+- Tests: **92 passed** (82 + 10 new CRUD). ruff clean. All 8 pages open via AppTest; the
+  Leverandører page shows Ny-leverandør, Rediger, Kontaktpersoner CRUD, notat, soft delete, and the
+  3 «Kommer» hooks. **Reconciliation unchanged: 22 310 kr.**
+- Decisions needed / questions for the partner: none — brief delivered as specified, incl. the new
+  hard rule #12. Note for the partner: on Streamlit Cloud restart the in-memory DB reseeds, so
+  added data is per-session; durable persistence would need a real DB (out of current scope).
+- Next planned step: the functions behind «Kommer» (registrer avtale/forpliktelse/faktura fra
+  kartoteket) — await partner brief. Await partner review from a clone / live URL.

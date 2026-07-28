@@ -36,6 +36,11 @@ and in `docs/ARCHITECTURE.md`. Your job: implement within this contract.
     so a page degrades gracefully instead of crashing while a stale env is still live.
 11. Any dynamic value interpolated into HTML rendered with `unsafe_allow_html` MUST pass through
     `html.escape()` — user-originated content (e-mails, uploads) will flow here in future features.
+12. **Full-tool rule (A→Z):** no feature is DONE until it is complete from A to Z —
+    add → view → edit → delete → use. A read-only "view" is NOT a finished feature. This
+    supersedes any earlier "a view is enough" and applies to every future function. CRUD/persistence
+    logic lives in a pure `core/` service (takes a Session, imports no UI) and every save appends an
+    audit row (hard rule #7).
 
 ## Definition of DONE (for Claude Code agents)
 A task is **done** only when ALL four are true:
@@ -57,6 +62,23 @@ change, authentication, new modules/features, database migration (SQLite stays),
 external integrations, changes to core data model.
 
 ## Current tasks
+
+**Leverandør A–Z levert — første funksjon bygget som fullt verktøy (add→view→edit→delete→use).**
+
+Mini-brief "Funksjon 1: Leverandør A–Z" (docs/BRIEF_LEVERANDOR_AZ.md) delivered on main. Partner-
+approved core-data-model change; introduces **hard rule #12** (full-tool A→Z). Version 0.5.0 → 0.6.0.
+- **Foundation** — new `ContactPerson` model; `Supplier` gains `notes` + `is_deleted` (soft delete).
+  `core/registry/leverandor.py` = pure CRUD service (takes a Session, imports no UI, hard rule #1);
+  EVERY write appends an AuditLog row (hard rule #7). `core/synth/kontakter.py` seeds synthetic
+  contacts + notes. Version bump + requirements rebuild marker (hard rule #10).
+- **L1** «＋ Ny leverandør» form (create). **L2** «✎ Rediger firmadata» (update, unique-org.nr guard).
+  **L3** Kontaktpersoner full add/edit/delete. **L4** editable notat + kvalifikasjoner (categories).
+  **L5** soft delete + «Vis slettede» + gjenopprett (row + trail kept). **L6** «Leverandørkartotek»
+  gathers firma/kontakter/notat/avtaler/forpliktelser/fakturaer with honest «Kommer» hooks for the
+  next functions. **L7** `tests/test_leverandor_crud.py` (10 tests: CRUD + one-audit-row-per-save).
+- pytest 92 passed, ruff clean, all 8 pages open. **Reconciliation unchanged: 22 310 kr.** In-memory
+  SQLite (StaticPool) → saves persist for the running demo-session (durable disk = out of scope).
+- **Next functions (behind «Kommer»):** register avtale/forpliktelse/faktura from the kartotek.
 
 **Grafikk v1 levert — én visuell identitet «Lyst kontor» (variant C) på alle 8 sider.**
 
