@@ -910,3 +910,33 @@ finding with real product impact; the rest are low-risk hardening I can batch on
   jurist" + disclaimer, Bekreft active, and the new audit entry on confirm.
 - Live verification (Adrian, after redeploy): Avtaler → Registrer fra e-post → Last inn eksempel
   (utvidelse) → Foreslå → see MULIG UGYLDIG (indication, §28-1) + disclaimer; Bekreft still works.
+
+---
+
+### 2026-07-28 · claude-code
+- Done: **Mini-brief "Grafikk v1"** (docs/BRIEF_GRAFIKK_V1.md) — one visual identity «Lyst kontor»
+  (variant C) across all 8 pages. Pure visual polish (in scope), G1→G6, commit+push per step:
+  - **G1** `app/theme.py` = single source of truth: navy #20364F, gold #A8842A, serif headings
+    (Georgia, no external font), hairlines instead of shadows. `chrome.header()` injects the theme
+    on every page; `config.toml` primaryColor → navy; BRAND.md updated (theme.py authoritative).
+  - **G2** `chrome.page_header(eyebrow, serif H1, lede, «Syntetiske data» chip)` replaces
+    st.title()+caption on all 8 pages. Every value html.escape()-d (hard rule #11).
+  - **G3** Arbeidsflate variant C: KPI **editorial strip** (one connected strip, hairline dividers,
+    semantic top-accents — not loose cards) + action tiles + «Krever handling» worklist and «Siste
+    hendelser» feed **side by side**. Reconciliation unchanged: **Verdi funnet = 22 310 kr**.
+  - **G4** verdict pills → rounded tinted chips (BRAND colors kept, emoji dropped); st.dataframe +
+    HTML tables get hairline border, small radius, tabular-nums, paper headers; gold links global.
+  - **G5** mobile-lite: @media(max-width:640px) wraps KPI strip + scrolls wide tables (Streamlit
+    stacks columns itself); footer badge «Optimalisert for desktop». Full responsive = Phase 2.
+  - **G6** `tests/test_grafikk.py`: 8 pages open + theme/header present on each + reconciliation
+    22 310 + mobile-lite CSS present.
+- **No engine/threshold/rule/core-model change → NO version bump** (pure UI). Verdict semantic
+  colors #2E7D32/#B58900/#C62828 untouched.
+- Tests: **82 passed** (71 + 11 new grafikk). ruff clean. All 8 pages render via AppTest.
+- Live verification (Adrian, after redeploy): every page shows the gold eyebrow + serif H1 + lede +
+  «Syntetiske data» chip; Arbeidsflate shows the KPI strip and side-by-side worklist/feed;
+  numbers reconcile at 22 310. Narrow-window check: KPI strip wraps, columns stack, «Optimalisert
+  for desktop» badge in footer. (Sandbox egress blocks streamlit.app, so live check is on Adrian.)
+- Decisions needed / questions for the partner: none — brief delivered as specified. Full
+  responsiveness intentionally left to Phase 2 (mobile-lite only, per brief G5).
+- Next planned step: await partner review from a clone / live URL.

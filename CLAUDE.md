@@ -58,6 +58,26 @@ external integrations, changes to core data model.
 
 ## Current tasks
 
+**Grafikk v1 levert — én visuell identitet «Lyst kontor» (variant C) på alle 8 sider.**
+
+Mini-brief "Grafikk v1" (docs/BRIEF_GRAFIKK_V1.md) delivered on main. Pure visual polish (in scope:
+"visual polish of the Streamlit app") — NO engine/threshold/rule/core-model change, no version bump.
+- **G1** — `app/theme.py`: single source of truth (navy #20364F, gold #A8842A, serif headings via
+  Georgia, hairlines instead of shadows). `chrome.header()` injects the theme on every page.
+- **G2** — `chrome.page_header(eyebrow, serif H1, lede, «Syntetiske data» chip)` replaces
+  st.title()+caption on all 8 pages (every value html.escape()-d, hard rule #11).
+- **G3** — Arbeidsflate variant C: KPI **editorial strip** (one connected strip w/ hairline dividers
+  + semantic top-accents, not loose cards) + action tiles + «Krever handling» worklist and «Siste
+  hendelser» feed **side by side**. Reconciliation unchanged: **Verdi funnet = 22 310 kr**.
+- **G4** — verdict pills → rounded tinted chips (BRAND semantic colors kept); st.dataframe/HTML
+  tables get hairline border, small radius, tabular-nums, paper headers; gold links global.
+- **G5** — mobile-lite: @media(max-width:640px) wraps the KPI strip and scrolls wide tables,
+  Streamlit stacks columns on its own; footer badge «Optimalisert for desktop». Full responsive =
+  Phase 2.
+- **G6** — wrap-up: `tests/test_grafikk.py` (all 8 pages open + theme/header present + reconciliation
+  22 310 + mobile-lite CSS present). pytest 82 passed, ruff clean. BRAND.md updated to variant C
+  (theme.py = runtime source of truth); verdict colors #2E7D32/#B58900/#C62828 untouched.
+
 **Språk indikasjon-ikke-konklusjon levert (jurist-funn) — gyldighetsvurdering as indication, not verdict.**
 
 Mini-brief "Språk: indikasjon, ikke konklusjon" (docs/BRIEF_INDIKASJON.md) delivered on main.
