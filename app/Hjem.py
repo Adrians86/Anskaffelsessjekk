@@ -22,6 +22,16 @@ page_header(
     chip="Syntetiske data · regelverk per 01.07.2026",
 )
 
+# U7 — actions first: the three primary tasks right at the top.
+_act = st.columns(3)
+if _act[0].button("⬆ Last opp faktura (EHF)", use_container_width=True):
+    st.switch_page("pages/1_Fakturakontroll.py")
+if _act[1].button("✎ Registrer forpliktelse", use_container_width=True):
+    st.switch_page("pages/2_Avtaler_og_forpliktelser.py")
+if _act[2].button("⚖ Kjør terskelsjekk", use_container_width=True):
+    st.switch_page("pages/4_Terskelsjekk.py")
+st.markdown("---")
+
 @st.cache_data
 def compute_portfolio_stats():
     """Compute all portfolio metrics (cached)."""
@@ -135,25 +145,6 @@ if total > 0:
         st.markdown(bar_html, unsafe_allow_html=True)
     with col_legend:
         st.caption(f"● {stats['counts']['AVVIK']} avvik · {stats['counts']['TIL_VURDERING']} til vurdering · {stats['counts']['SAMSVAR']} samsvar")
-
-st.markdown("---")
-
-# Action tiles (3, gold left border)
-cols = st.columns(3)
-with cols[0]:
-    if st.button("⬆ Last opp faktura (EHF)", use_container_width=True):
-        st.switch_page("pages/1_Fakturakontroll.py")
-    st.caption("Kontroller en faktura mot hele forpliktelsesbildet")
-
-with cols[1]:
-    if st.button("✎ Registrer forpliktelse", use_container_width=True):
-        st.switch_page("pages/2_Avtaler_og_forpliktelser.py")
-    st.caption("Avtale, e-postavtale eller annen betingelse")
-
-with cols[2]:
-    if st.button("⚖ Kjør terskelsjekk", use_container_width=True):
-        st.switch_page("pages/4_Terskelsjekk.py")
-    st.caption("Riktig regime og prosedyre — med paragraf")
 
 st.markdown("---")
 
