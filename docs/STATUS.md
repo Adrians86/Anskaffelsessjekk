@@ -996,3 +996,31 @@ finding with real product impact; the rest are low-risk hardening I can batch on
   all build artifacts are now untracked and ignored for good.
 - Next planned step: Adrian re-checks the live URL after Cloud redeploys (egress blocks streamlit.app
   from the sandbox, so live verification is on Adrian).
+
+---
+
+### 2026-07-29 · claude-code
+- Done: **Mini-brief "Leverandør v2: full kartotek"** (docs/BRIEF_LEVERANDOR_V2.md) — answers the
+  honest complaint on A–Z ("I can only edit name and org.nr"). K1→K8, commit+push per step; the
+  kartotek is now a real, complete supplier record, everything editable (hard rule #12 A→Z).
+  - **Foundation (K1):** Supplier gains address/postal_code/city/website/email/phone/status/
+    cooperation_rating; `ContactPerson.side` (SUPPLIER/INTERNAL); new `SupplierService` +
+    `Qualification` models. `core/registry` extended (pure, no UI, hard rule #1): full firma update
+    (status validated), category add/remove, service CRUD, qualification CRUD, contact side — EVERY
+    write appends an AuditLog row (hard rule #7). Seed enriched (both contact sides, services, quals
+    incl. one expired). Version 0.6.1 → **0.7.0** + requirements rebuild marker (hard rule #10).
+  - **K1** «Rediger firmadata» edits the whole firmakort (header shows status chip + address).
+    **K2** kategorier as add/remove tags. **K3** tjenester/produkter full CRUD (optional price).
+    **K4** kvalifikasjoner editable (navn + valgfri «gyldig til»; uten dato = hak, utløpt = rødt) —
+    replaces the read-only synthetic-profile quals. **K5** personer i to grupper (kontakt hos
+    leverandøren + ansvarlig hos oss). **K6** kartotek-oversikt teller alle lister; avtaler/
+    forpliktelser/fakturaer + «Kommer»-hooks. **K7** egen samarbeidsvurdering (cooperation_rating)
+    ved siden av auto-tall; KOFA-forbehold beholdt.
+  - **K8** `tests/test_leverandor_v2.py` (10 tests); CI package-integrity guard extended with the new
+    model files (service.py, qualification.py).
+- Tests: **102 passed** (92 + 10 new v2). ruff clean. All 8 pages open via AppTest. **Reconciliation
+  unchanged: 22 310 kr.** In-memory SQLite → saves persist for the running demo-session.
+- Decisions needed / questions: none — brief delivered as specified. Contact side is set at creation
+  (move-between-groups would extend update_contact = a later core change; delete+re-add works now).
+- Next planned step: functions behind «Kommer» (registrer avtale/forpliktelse/faktura). Await partner
+  review from a clone / live URL (egress blocks streamlit.app from the sandbox).

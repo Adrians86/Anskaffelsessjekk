@@ -63,6 +63,23 @@ external integrations, changes to core data model.
 
 ## Current tasks
 
+**Leverandør v2 levert — full kartotek (K1–K8), alt redigerbart, ikke bare navn/org.nr.**
+
+Mini-brief "Leverandør v2: full kartotek" (docs/BRIEF_LEVERANDOR_V2.md) delivered on main. Partner-
+approved core-data-model change. Version 0.6.1 → **0.7.0** + requirements rebuild marker.
+- **Foundation (K1)** — Supplier gains address/postal_code/city/website/email/phone/status/
+  cooperation_rating; `ContactPerson.side` (SUPPLIER/INTERNAL); new `SupplierService` + `Qualification`
+  models. `core/registry/leverandor.py` extended: full firma update, category add/remove, service
+  CRUD, qualification CRUD, contact side — EVERY write appends an AuditLog row. Seed enriched.
+- **K1** «Rediger firmadata» edits the whole firmakort (header shows status + address). **K2**
+  kategorier as add/remove tags. **K3** tjenester/produkter full CRUD (optional price). **K4**
+  kvalifikasjoner editable (navn + valgfri gyldig-til; utløpte i rødt). **K5** personer i to grupper
+  (kontakt hos leverandøren + ansvarlig hos oss). **K6** kartotek-oversikt teller alle lister +
+  «Kommer»-hooks. **K7** egen samarbeidsvurdering ved siden av auto-tall (KOFA-forbehold beholdt).
+- **K8** `tests/test_leverandor_v2.py` (10 tester: firma/kategori/tjeneste/kvalifikasjon/side/audit);
+  CI package-integrity guard utvidet med de nye modellfilene. pytest 102 passed, ruff clean, alle 8
+  sider åpner. **Reconciliation unchanged: 22 310 kr.**
+
 **Leverandør A–Z levert — første funksjon bygget som fullt verktøy (add→view→edit→delete→use).**
 
 Mini-brief "Funksjon 1: Leverandør A–Z" (docs/BRIEF_LEVERANDOR_AZ.md) delivered on main. Partner-

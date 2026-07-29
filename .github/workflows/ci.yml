@@ -33,6 +33,7 @@ jobs:
           assert len(w) == 1, f"expected exactly one wheel, got {w}"
           names = zipfile.ZipFile(w[0]).namelist()
           for required in ("core/registry/__init__.py", "core/models/contact.py",
+                           "core/models/service.py", "core/models/qualification.py",
                            "core/rules/data/thresholds_2026.yaml"):
               assert required in names, f"MISSING from wheel: {required}"
           print("wheel OK:", w[0].split('/')[-1])
