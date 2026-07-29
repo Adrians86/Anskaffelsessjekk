@@ -61,21 +61,21 @@ with tab_register:
         st.subheader("Kontrakter")
         for contract in session.exec(select(Contract)).all():
             sup = session.get(Supplier, contract.supplier_id)
-            st.markdown(f"**{contract.title}**")
-            st.markdown(f"**{contract.reference}** · {sup.name} · "
-                        f"{contract.valid_from} → {contract.valid_to} · "
-                        f"ramme {nok(contract.total_value)}")
-            lines = session.exec(
-                select(ContractLine).where(ContractLine.contract_id == contract.id)
-            ).all()
-            st.dataframe(
-                [{"Artikkel": line.item_ref, "Beskrivelse": line.description,
-                  "Avtalt pris": nok(line.unit_price), "Enhet": line.unit,
-                  "Maks mengde": str(line.max_quantity) if line.max_quantity else "—"}
-                 for line in lines],
-                hide_index=True, use_container_width=True,
-            )
-            st.divider()
+            with st.container(border=True):
+                st.markdown(f"**{contract.title}**")
+                st.caption(f"{contract.reference} · {sup.name} · "
+                           f"{contract.valid_from} → {contract.valid_to} · "
+                           f"ramme {nok(contract.total_value)}")
+                lines = session.exec(
+                    select(ContractLine).where(ContractLine.contract_id == contract.id)
+                ).all()
+                st.dataframe(
+                    [{"Artikkel": line.item_ref, "Beskrivelse": line.description,
+                      "Avtalt pris": nok(line.unit_price), "Enhet": line.unit,
+                      "Maks mengde": str(line.max_quantity) if line.max_quantity else "—"}
+                     for line in lines],
+                    hide_index=True, use_container_width=True,
+                )
 
 # --- Tab 2: register a commitment from an e-mail (human-in-the-loop) -----------
 with tab_epost:
@@ -184,8 +184,8 @@ with tab_epost:
                 st.warning("Registrert tross indikasjon om mulig vesentlig endring. Handlingen er "
                            "logget i revisjonssporet med saksbehandlers ansvar.")
             else:
-                st.success("Forpliktelsen er bekreftet og lagt til i kontrollgrunnlaget "
-                           "(logget i revisjonssporet).")
+                st.toast("Forpliktelsen er bekreftet og lagt til i kontrollgrunnlaget.",
+                         icon="✅")
         if b2.button("Avvis"):
             st.session_state.epost_proposed = False
             st.info("Forslaget er avvist. Ingenting er lagt til.")
