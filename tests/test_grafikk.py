@@ -62,3 +62,12 @@ def test_mobile_lite_minimum_present() -> None:
     md = " ".join(m.value for m in _run("Hjem.py").markdown)
     assert "max-width: 640px" in md    # KPI strip wraps / tables scroll on a phone
     assert "Optimalisert for desktop" in md
+
+
+def test_dato_format_ddmmyyyy() -> None:
+    """UX-pass U6: dates render as DD.MM.YYYY (Norwegian); None → «—»."""
+    from datetime import date
+
+    import db
+    assert db.dato(date(2026, 1, 5)) == "05.01.2026"
+    assert db.dato(None) == "—"

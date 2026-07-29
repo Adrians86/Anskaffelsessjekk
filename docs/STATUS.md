@@ -1024,3 +1024,28 @@ finding with real product impact; the rest are low-risk hardening I can batch on
   (move-between-groups would extend update_contact = a later core change; delete+re-add works now).
 - Next planned step: functions behind «Kommer» (registrer avtale/forpliktelse/faktura). Await partner
   review from a clone / live URL (egress blocks streamlit.app from the sandbox).
+
+---
+
+### 2026-07-29 · claude-code
+- Done: **Mini-brief "UX-pass v1"** (docs/BRIEF_UX_PASS.md) — whole-interface tidy (droga A), U1→U8,
+  commit+push per step. **Pure UI/layout: ZERO engine/threshold/rule/core-model change, no version
+  bump.** 102→103 tests stay green; reconciliation stays 22 310 kr.
+  - **U1** Leverandørkartotek split into 7 tabs (Oversikt / Firmadata / Kategorier og tjenester /
+    Kvalifikasjoner / Personer / Avtaler, forpliktelser og fakturaer / Vurdering); edits moved to
+    `st.popover`. Notat edit no longer doubles as a categories editor (categories = tags tab).
+  - **U2** supplier list: search box (name/org.nr) + tidy table + «＋ Ny leverandør» in a popover.
+  - **U3** one form pattern: named save buttons + `st.toast` on every save (errors stay banners).
+  - **U4** verdict card (Fakturakontroll): verdict big on top (serif, colored), findings as readable
+    rows, «Hvorfor — grunnlag og anbefalt handling» in an expander per finding.
+  - **U5** Avtaler tidied: contracts in bordered cards; e-post confirm → toast.
+  - **U6** global consistency: new `db.dato()` → DD.MM.YYYY everywhere dates show; renamed a local
+    `dato` var on Avtaler that shadowed the formatter. **U7** Arbeidsflate: actions lifted to the top,
+    per-tile marketing captions dropped.
+  - **U8** `tests/test_grafikk.py` extended (dato-format + existing mobile-lite/narrow-screen guard).
+- Tests: **103 passed** (102 + 1 new dato-format). ruff clean. All 8 pages open via AppTest.
+  Reconciliation unchanged: **22 310 kr**. No version bump (no core change).
+- Decisions needed / questions: none — brief delivered as specified. Full Arbeidsflate redesign and
+  full responsiveness remain deliberately deferred (Phase 2), per brief.
+- Next planned step: await partner review from a clone / live URL (egress blocks streamlit.app from
+  the sandbox, so live verification is on Adrian).

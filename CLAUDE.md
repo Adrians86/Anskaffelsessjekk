@@ -63,6 +63,23 @@ external integrations, changes to core data model.
 
 ## Current tasks
 
+**UX-pass v1 levert (U1–U8) — hele grensesnittet ryddet, null logikkendring.**
+
+Mini-brief "UX-pass v1" (docs/BRIEF_UX_PASS.md) delivered on main. Pure UI/layout (droga A —
+orden innenfor Streamlits rammer); NO engine/threshold/rule/core-model change, INGEN versjonsbump.
+- **U1** Leverandørkartotek i 7 faner (Oversikt / Firmadata / Kategorier og tjenester /
+  Kvalifikasjoner / Personer / Avtaler, forpliktelser og fakturaer / Vurdering); redigering flyttet
+  til `st.popover` — skjermen holdes ryddig. Notat-redigering dobler ikke lenger som kategori-editor.
+- **U2** leverandørliste: søkefelt (navn/org.nr) + ryddig tabell + «＋ Ny leverandør» i popover.
+- **U3** ett skjemamønster: navngitte lagre-knapper + `st.toast` på hver lagring (feil = banner).
+- **U4** verdikt-kortet (Fakturakontroll): verdikt STORT øverst (serif, farget), funn i lesbare
+  rader, «Hvorfor — grunnlag og anbefalt handling» i expander per funn.
+- **U5** Avtaler ryddet: kontrakter i egne bordered kort; e-post-bekreftelse → toast.
+- **U6** global konsistens: ny `db.dato()` → DD.MM.ÅÅÅÅ overalt datoer vises; pills/ikoner/beløp
+  ensartet. **U7** Arbeidsflate: handlinger løftet helt til topps, mindre markedstekst.
+- **U8** `tests/test_grafikk.py` utvidet (dato-format + smal-skjerm/mobile-lite). pytest 103 passed,
+  ruff clean, alle 8 sider åpner. **Reconciliation unchanged: 22 310 kr.**
+
 **Leverandør v2 levert — full kartotek (K1–K8), alt redigerbart, ikke bare navn/org.nr.**
 
 Mini-brief "Leverandør v2: full kartotek" (docs/BRIEF_LEVERANDOR_V2.md) delivered on main. Partner-
