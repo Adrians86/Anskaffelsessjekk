@@ -20,10 +20,13 @@ from core.models import (
 from core.registry import (
     SUPPLIER_STATUSES,
     RegistryError,
+    add_category,
     add_contact,
     create_supplier,
     delete_contact,
+    list_categories,
     list_contacts,
+    remove_category,
     restore_supplier,
     soft_delete_supplier,
     update_contact,
@@ -274,11 +277,35 @@ else:
                     soft_delete_supplier(session, sup.id, actor="demo-bruker")
                     _flash_and_rerun("ok", f"«{sup.name}» er slettet (mykt).")
 
-        # (L1) Kategorier + kvalifikasjoner (what the supplier may deliver; expired in red)
-        st.markdown("**Kategorier og kvalifikasjoner**")
+        # (K2) Kategorier — editable tags (what the supplier delivers): add / remove.
+        st.markdown("**Kategorier** — hva leverandøren leverer")
+        cats = list_categories(session, sup.id)
+        if cats:
+            ccols = st.columns(4)
+            for i, cat in enumerate(cats):
+                if ccols[i % 4].button(f"✕ {cat}", key=f"delcat_{sup.id}_{i}",
+                                       use_container_width=True,
+                                       help="Fjern kategori"):
+                    remove_category(session, sup.id, cat, actor="demo-bruker")
+                    _flash_and_rerun("ok", f"Kategori «{cat}» fjernet.")
+        else:
+            st.caption("Ingen kategorier ennå.")
+        with st.form(f"addcat_{sup.id}", clear_on_submit=True):
+            ac1, ac2 = st.columns([4, 1])
+            new_cat = ac1.text_input("Ny kategori", label_visibility="collapsed",
+                                     placeholder="Ny kategori …")
+            cat_added = ac2.form_submit_button("Legg til")
+        if cat_added:
+            try:
+                add_category(session, sup.id, new_cat, actor="demo-bruker")
+                _flash_and_rerun("ok", f"Kategori «{new_cat}» lagt til.")
+            except RegistryError as exc:
+                st.error(str(exc))
+
+        # (L1) Kvalifikasjoner — syntetisk profil (erstattes av redigerbare i K4).
         profile = profile_for(sup.org_number)
         if profile:
-            st.markdown("Kategorier: " + ", ".join(escape(k) for k in profile["kategorier"]))
+            st.markdown("**Kvalifikasjoner**")
             for q in profile["kvalifikasjoner"]:
                 expired = is_expired(q["gyldig_til"])
                 color = "#C62828" if expired else "#2E7D32"
@@ -289,8 +316,6 @@ else:
                     f'<span style="color:#8A94A0;font-size:12px">(t.o.m. {q["gyldig_til"]})</span>',
                     unsafe_allow_html=True,
                 )
-        else:
-            st.caption("Ingen registrerte kategorier/kvalifikasjoner (syntetisk profil mangler).")
 
         # (L3) Kontaktpersoner — full add / edit / delete (this is "where to add a contact").
         st.markdown("**Kontaktpersoner**")
