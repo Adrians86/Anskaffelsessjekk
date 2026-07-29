@@ -1,25 +1,41 @@
-"""Registry: create/read/update/delete for master data (leverandører, kontaktpersoner).
+"""Registry: create/read/update/delete for master data (leverandører, kontaktpersoner,
+tjenester/produkter, kvalifikasjoner, kategorier).
 
 Pure core — takes a Session, imports no UI (hard rule #1). Every write appends an audit row
-(hard rule #7). This is the persistence layer behind the "Leverandør A–Z" tool.
+(hard rule #7). This is the persistence layer behind the "Leverandør" tool.
 """
 from core.registry.leverandor import (
+    SUPPLIER_STATUSES,
     RegistryError,
+    add_category,
     add_contact,
+    add_qualification,
+    add_service,
     create_supplier,
     delete_contact,
+    delete_qualification,
+    delete_service,
     get_supplier,
+    list_categories,
     list_contacts,
+    list_qualifications,
+    list_services,
     list_suppliers,
+    remove_category,
     restore_supplier,
     soft_delete_supplier,
     update_contact,
+    update_qualification,
+    update_service,
     update_supplier,
 )
 
 __all__ = [
-    "RegistryError",
+    "RegistryError", "SUPPLIER_STATUSES",
     "list_suppliers", "get_supplier", "create_supplier", "update_supplier",
     "soft_delete_supplier", "restore_supplier",
     "list_contacts", "add_contact", "update_contact", "delete_contact",
+    "list_categories", "add_category", "remove_category",
+    "list_services", "add_service", "update_service", "delete_service",
+    "list_qualifications", "add_qualification", "update_qualification", "delete_qualification",
 ]

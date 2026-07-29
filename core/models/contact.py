@@ -9,6 +9,10 @@ from datetime import UTC, datetime
 
 from sqlmodel import Field, SQLModel
 
+# A contact belongs to one of two groups (v2).
+SIDE_SUPPLIER = "SUPPLIER"    # kontakt hos leverandøren
+SIDE_INTERNAL = "INTERNAL"    # ansvarlig hos oss
+
 
 class ContactPerson(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
@@ -17,4 +21,5 @@ class ContactPerson(SQLModel, table=True):
     role: str | None = None          # e.g. "kundeansvarlig", "fakturakontakt"
     email: str | None = None
     phone: str | None = None
+    side: str = Field(default=SIDE_SUPPLIER, index=True)   # SUPPLIER | INTERNAL
     created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))

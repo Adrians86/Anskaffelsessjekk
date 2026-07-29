@@ -1,5 +1,5 @@
 # Streamlit Community Cloud deployment dependencies
-# Rebuild marker: core 0.6.1 (Leverandør A–Z + fix: purge committed egg-info/build so Cloud reinstalls core.registry cleanly) — bump to force a
+# Rebuild marker: core 0.7.0 (Leverandør v2: SupplierService + Qualification models, Supplier firma fields, ContactPerson.side) — bump to force a
 # fresh pip environment on Cloud whenever core/models or the core API changes.
 # Cloud only reinstalls dependencies when a dependency file changes; a version
 # bump in pyproject.toml alone is NOT seen unless this file also changes.

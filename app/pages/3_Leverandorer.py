@@ -18,6 +18,7 @@ from core.models import (
     Supplier,
 )
 from core.registry import (
+    SUPPLIER_STATUSES,
     RegistryError,
     add_contact,
     create_supplier,
@@ -205,29 +206,54 @@ else:
     with get_session() as session:
         sup = session.exec(select(Supplier).where(Supplier.name == chosen_name)).first()
 
-        # (a) header
+        # (a) header + firmakort summary
+        _status_color = {"Aktiv": "#2E7D32", "Inaktiv": "#6B7280", "Sperret": "#C62828"}
+        _sc = _status_color.get(sup.status, "#6B7280")
         st.markdown(
             f'### {escape(sup.name)} '
             '<span style="background:#F1F3F5;color:#6B7280;font-size:11px;font-weight:600;'
-            'padding:2px 10px;border-radius:10px;vertical-align:middle">SYNTETISK</span>',
+            'padding:2px 10px;border-radius:10px;vertical-align:middle">SYNTETISK</span> '
+            f'<span style="background:{_sc}1A;color:{_sc};font-size:11px;font-weight:700;'
+            f'padding:2px 10px;border-radius:10px;vertical-align:middle">'
+            f'{escape(sup.status)}</span>',
             unsafe_allow_html=True,
         )
-        st.caption(f"Org.nr {escape(sup.org_number)}")
+        _addr = ", ".join(escape(x) for x in (sup.address, f"{sup.postal_code or ''} "
+                          f"{sup.city or ''}".strip()) if x and x.strip())
+        _lines = [f"Org.nr {escape(sup.org_number)}"]
+        if _addr:
+            _lines.append(_addr)
+        _contact_bits = [escape(x) for x in (sup.phone, sup.email, sup.website) if x]
+        if _contact_bits:
+            _lines.append(" · ".join(_contact_bits))
+        st.caption("  \n".join(_lines))
 
-        # (L2) Rediger firmadata — the "edit" leg of the A–Z tool.
+        # (K1) Rediger firmadata — the full firmakort, not two fields.
         with st.expander("✎ Rediger firmadata"):
             with st.form(f"rediger_firma_{sup.id}"):
                 e1, e2 = st.columns(2)
                 r_name = e1.text_input("Navn", value=sup.name)
                 r_org = e2.text_input("Organisasjonsnummer", value=sup.org_number)
+                r_addr = st.text_input("Adresse", value=sup.address or "")
+                p1, p2, p3 = st.columns([1, 2, 2])
+                r_post = p1.text_input("Postnr", value=sup.postal_code or "")
+                r_city = p2.text_input("Sted", value=sup.city or "")
+                r_status = p3.selectbox("Status", SUPPLIER_STATUSES,
+                                        index=SUPPLIER_STATUSES.index(sup.status)
+                                        if sup.status in SUPPLIER_STATUSES else 0)
+                w1, w2, w3 = st.columns(3)
+                r_web = w1.text_input("Nettside", value=sup.website or "")
+                r_email = w2.text_input("E-post", value=sup.email or "")
+                r_phone = w3.text_input("Telefon", value=sup.phone or "")
                 r_iso = st.checkbox("ISO-sertifisert", value=sup.iso_certified)
                 r_sec = st.checkbox("Sikkerhetsklarert", value=sup.security_cleared)
                 saved = st.form_submit_button("Lagre endringer", type="primary")
             if saved:
                 try:
                     update_supplier(session, sup.id, name=r_name, org_number=r_org,
-                                    iso_certified=r_iso, security_cleared=r_sec,
-                                    actor="demo-bruker")
+                                    address=r_addr, postal_code=r_post, city=r_city,
+                                    website=r_web, email=r_email, phone=r_phone, status=r_status,
+                                    iso_certified=r_iso, security_cleared=r_sec, actor="demo-bruker")
                     _flash_and_rerun("ok", f"Firmadata for «{r_name}» er lagret.")
                 except RegistryError as exc:
                     st.error(str(exc))
