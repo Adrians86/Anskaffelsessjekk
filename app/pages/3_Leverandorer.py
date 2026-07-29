@@ -1,3 +1,4 @@
+from datetime import date
 from decimal import Decimal
 from html import escape
 
@@ -23,22 +24,26 @@ from core.registry import (
     RegistryError,
     add_category,
     add_contact,
+    add_qualification,
     add_service,
     create_supplier,
     delete_contact,
+    delete_qualification,
     delete_service,
     list_categories,
     list_contacts,
+    list_qualifications,
     list_services,
     remove_category,
     restore_supplier,
     soft_delete_supplier,
     update_contact,
+    update_qualification,
     update_service,
     update_supplier,
 )
 from core.reporting import evaluate_invoice
-from core.synth.leverandor_profiler import avtale_status, is_expired, profile_for
+from core.synth.leverandor_profiler import avtale_status
 
 st.set_page_config(page_title="Leverandører", page_icon="🏢", layout="wide")
 header()
@@ -307,20 +312,63 @@ else:
             except RegistryError as exc:
                 st.error(str(exc))
 
-        # (L1) Kvalifikasjoner — syntetisk profil (erstattes av redigerbare i K4).
-        profile = profile_for(sup.org_number)
-        if profile:
-            st.markdown("**Kvalifikasjoner**")
-            for q in profile["kvalifikasjoner"]:
-                expired = is_expired(q["gyldig_til"])
+        # (K4) Kvalifikasjoner — editable: name + optional validity; expired shown red.
+        st.markdown("**Kvalifikasjoner**")
+        st.caption("Uten dato: bare et hak (gjelder). Med dato: utløpte vises i rødt.")
+        quals = list_qualifications(session, sup.id)
+        if quals:
+            for q in quals:
+                expired = q.is_expired()
                 color = "#C62828" if expired else "#2E7D32"
-                status = "UTLØPT" if expired else "Gyldig"
+                if q.valid_to is None:
+                    status_txt, date_txt = "Gjelder", "uten utløp"
+                else:
+                    status_txt = "UTLØPT" if expired else "Gyldig"
+                    date_txt = f"t.o.m. {q.valid_to}"
                 st.markdown(
                     f'<span style="color:{color};font-weight:600">●</span> '
-                    f'{escape(q["navn"])} — <span style="color:{color}">{status}</span> '
-                    f'<span style="color:#8A94A0;font-size:12px">(t.o.m. {q["gyldig_til"]})</span>',
+                    f'{escape(q.name)} — <span style="color:{color};font-weight:600">{status_txt}'
+                    f'</span> <span style="color:#8A94A0;font-size:12px">({escape(date_txt)})</span>',
                     unsafe_allow_html=True,
                 )
+                with st.expander(f"✎ {q.name}"):
+                    with st.form(f"edit_qual_{q.id}"):
+                        q_name = st.text_input("Navn", value=q.name)
+                        qh1, qh2 = st.columns([1, 2])
+                        q_has = qh1.checkbox("Har gyldighetsdato", value=q.valid_to is not None,
+                                             key=f"qh_{q.id}")
+                        q_date = qh2.date_input("Gyldig til", value=q.valid_to or date.today(),
+                                                key=f"qd_{q.id}")
+                        qe1, qe2 = st.columns(2)
+                        q_upd = qe1.form_submit_button("Lagre", type="primary")
+                        q_del = qe2.form_submit_button("🗑 Slett")
+                    if q_upd:
+                        try:
+                            update_qualification(session, q.id, name=q_name,
+                                                 valid_to=(q_date if q_has else None),
+                                                 update_valid_to=True, actor="demo-bruker")
+                            _flash_and_rerun("ok", f"«{q_name}» er lagret.")
+                        except RegistryError as exc:
+                            st.error(str(exc))
+                    if q_del:
+                        delete_qualification(session, q.id, actor="demo-bruker")
+                        _flash_and_rerun("ok", f"«{q.name}» er slettet.")
+        else:
+            st.caption("Ingen kvalifikasjoner registrert ennå.")
+        with st.expander("＋ Ny kvalifikasjon"):
+            with st.form(f"add_qual_{sup.id}", clear_on_submit=True):
+                aq_name = st.text_input("Navn *", key=f"aqn_{sup.id}")
+                aq1, aq2 = st.columns([1, 2])
+                aq_has = aq1.checkbox("Har gyldighetsdato", key=f"aqh_{sup.id}")
+                aq_date = aq2.date_input("Gyldig til", value=date.today(), key=f"aqd_{sup.id}")
+                qual_added = st.form_submit_button("Legg til", type="primary")
+            if qual_added:
+                try:
+                    add_qualification(session, sup.id, name=aq_name,
+                                      valid_to=(aq_date if aq_has else None), actor="demo-bruker")
+                    _flash_and_rerun("ok", f"«{aq_name}» er lagt til.")
+                except RegistryError as exc:
+                    st.error(str(exc))
 
         # (K3) Tjenester og produkter — full add / edit / delete catalog.
         st.markdown("**Tjenester og produkter**")
