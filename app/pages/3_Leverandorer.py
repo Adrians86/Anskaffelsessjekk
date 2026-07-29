@@ -1,3 +1,4 @@
+from decimal import Decimal
 from html import escape
 
 import pandas as pd
@@ -22,14 +23,18 @@ from core.registry import (
     RegistryError,
     add_category,
     add_contact,
+    add_service,
     create_supplier,
     delete_contact,
+    delete_service,
     list_categories,
     list_contacts,
+    list_services,
     remove_category,
     restore_supplier,
     soft_delete_supplier,
     update_contact,
+    update_service,
     update_supplier,
 )
 from core.reporting import evaluate_invoice
@@ -316,6 +321,63 @@ else:
                     f'<span style="color:#8A94A0;font-size:12px">(t.o.m. {q["gyldig_til"]})</span>',
                     unsafe_allow_html=True,
                 )
+
+        # (K3) Tjenester og produkter — full add / edit / delete catalog.
+        st.markdown("**Tjenester og produkter**")
+        services = list_services(session, sup.id)
+        if services:
+            for svc in services:
+                price = nok(svc.unit_price) if svc.unit_price is not None else "—"
+                unit_txt = f" / {svc.unit}" if svc.unit else ""
+                with st.expander(f"{svc.name} — {price}{unit_txt}"):
+                    with st.form(f"edit_svc_{svc.id}"):
+                        sv1, sv2 = st.columns(2)
+                        s_name = sv1.text_input("Navn", value=svc.name)
+                        s_unit = sv2.text_input("Enhet", value=svc.unit or "")
+                        s_desc = st.text_input("Beskrivelse", value=svc.description or "")
+                        sp1, sp2 = st.columns([1, 2])
+                        s_haspris = sp1.checkbox("Angi pris", value=svc.unit_price is not None,
+                                                 key=f"hp_{svc.id}")
+                        s_price = sp2.number_input(
+                            "Pris (NOK)", min_value=0.0, step=100.0,
+                            value=float(svc.unit_price) if svc.unit_price is not None else 0.0,
+                            key=f"pr_{svc.id}")
+                        se1, se2 = st.columns(2)
+                        s_upd = se1.form_submit_button("Lagre", type="primary")
+                        s_del = se2.form_submit_button("🗑 Slett")
+                    if s_upd:
+                        try:
+                            update_service(session, svc.id, name=s_name, description=s_desc,
+                                           unit=s_unit,
+                                           unit_price=Decimal(str(s_price)) if s_haspris else None,
+                                           update_price=True, actor="demo-bruker")
+                            _flash_and_rerun("ok", f"«{s_name}» er lagret.")
+                        except RegistryError as exc:
+                            st.error(str(exc))
+                    if s_del:
+                        delete_service(session, svc.id, actor="demo-bruker")
+                        _flash_and_rerun("ok", f"«{svc.name}» er slettet.")
+        else:
+            st.caption("Ingen tjenester/produkter registrert ennå.")
+        with st.expander("＋ Ny tjeneste/produkt"):
+            with st.form(f"add_svc_{sup.id}", clear_on_submit=True):
+                nv1, nv2 = st.columns(2)
+                a_name = nv1.text_input("Navn *")
+                a_unit = nv2.text_input("Enhet (stk/time/måned)")
+                a_desc = st.text_input("Beskrivelse ")
+                np1, np2 = st.columns([1, 2])
+                a_haspris = np1.checkbox("Angi pris", key=f"hp_new_{sup.id}")
+                a_price = np2.number_input("Pris (NOK)", min_value=0.0, step=100.0, value=0.0,
+                                           key=f"pr_new_{sup.id}")
+                svc_added = st.form_submit_button("Legg til", type="primary")
+            if svc_added:
+                try:
+                    add_service(session, sup.id, name=a_name, description=a_desc, unit=a_unit,
+                                unit_price=Decimal(str(a_price)) if a_haspris else None,
+                                actor="demo-bruker")
+                    _flash_and_rerun("ok", f"«{a_name}» er lagt til.")
+                except RegistryError as exc:
+                    st.error(str(exc))
 
         # (L3) Kontaktpersoner — full add / edit / delete (this is "where to add a contact").
         st.markdown("**Kontaktpersoner**")
