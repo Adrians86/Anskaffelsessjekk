@@ -51,24 +51,38 @@ def render_audit_card(session, inv) -> None:
             unsafe_allow_html=True,
         )
 
+    # U4 — verdict big on top: one clear editorial block, colored by outcome.
+    _V = {
+        "SAMSVAR": ("SAMSVAR", "#2E7D32", "#EAF4EC"),
+        "TIL_VURDERING": ("TIL VURDERING", "#B58900", "#FBF7EC"),
+        "AVVIK": ("AVVIK", "#C62828", "#FBEAEA"),
+    }
+    vlabel, vcolor, vbg = _V[result.verdict.value]
     if result.verdict.value == "SAMSVAR":
-        st.success("SAMSVAR — fakturaen samsvarer med avtalt grunnlag")
+        vsub = "Fakturaen samsvarer med avtalt grunnlag."
     elif result.verdict.value == "TIL_VURDERING":
-        if result.verdi_funnet:
-            st.warning(f"TIL VURDERING — {nok(result.verdi_funnet)}")
-        else:
-            st.warning("TIL VURDERING — krever manuell vurdering")
+        vsub = (f"{nok(result.verdi_funnet)} til vurdering."
+                if result.verdi_funnet else "Krever manuell vurdering.")
     else:
-        st.error(f"AVVIK — {nok(result.verdi_funnet)} over avtalt")
+        vsub = f"{nok(result.verdi_funnet)} over avtalt."
+    st.markdown(
+        f'<div style="background:{vbg};border-left:6px solid {vcolor};border-radius:8px;'
+        f'padding:14px 18px;margin:6px 0">'
+        f"<div style=\"font-family:Georgia,'Times New Roman',serif;font-size:26px;"
+        f'font-weight:700;color:{vcolor};line-height:1.1">{vlabel}</div>'
+        f'<div style="font-size:13px;color:#5A6673;margin-top:2px">{escape(vsub)}</div></div>',
+        unsafe_allow_html=True,
+    )
 
     if not result.findings:
         st.success("Ingen funn. Fakturaen samsvarer med bestilling, mottak og "
                    "alle registrerte forpliktelser.")
 
+    # U4 — findings as readable rows; the "why" (grunnlag + anbefalt handling) in an expander.
     for f in result.findings:
         is_email = f.code.value == "INFORMAL_BASIS"
+        anbefalt = RECOMMENDED_ACTIONS.get(f.code.value, "Vurder med saksbehandler")
         if is_email:
-            # E-mail-based grunnlag: gold left border + explicit prefix.
             st.markdown(
                 '<div style="border-left:4px solid #B58900;background:#FBF7EC;'
                 'padding:10px 14px;border-radius:4px;margin:6px 0">'
@@ -76,30 +90,19 @@ def render_audit_card(session, inv) -> None:
                 f'{_source_chip("Forpliktelser", _CHIP_FORPLIKTELSER)}</div>',
                 unsafe_allow_html=True,
             )
-            with st.container(border=True):
-                col1, col2 = st.columns(2)
-                with col1:
-                    st.markdown(f"**Grunnlag:** {f.citation}")
-                with col2:
-                    st.markdown(f"**Anbefalt handling:** "
-                                f"{RECOMMENDED_ACTIONS.get(f.code.value, 'Vurder med saksbehandler')}")
-                if f.expected is not None:
-                    st.markdown(f"**Avtalt:** {f.expected} · **Fakturert:** {f.actual}")
-            continue
-
-        with st.container(border=True):
-            st.markdown(f"{_SEV_ICON[f.severity]} **{escape(f.message)}**"
-                        f"{_source_chip('Forpliktelser', _CHIP_FORPLIKTELSER)}",
-                        unsafe_allow_html=True)
-            col1, col2 = st.columns(2)
-            with col1:
-                st.markdown(f"**Grunnlag:** {f.citation}")
-            with col2:
-                st.markdown(f"**Anbefalt handling:** "
-                            f"{RECOMMENDED_ACTIONS.get(f.code.value, 'Vurder med saksbehandler')}")
+        else:
+            st.markdown(
+                f'<div style="padding:6px 0">{_SEV_ICON[f.severity]} '
+                f'<strong>{escape(f.message)}</strong>'
+                f'{_source_chip("Forpliktelser", _CHIP_FORPLIKTELSER)}</div>',
+                unsafe_allow_html=True,
+            )
+        with st.expander("Hvorfor — grunnlag og anbefalt handling"):
+            st.markdown(f"**Grunnlag:** {f.citation}")
+            st.markdown(f"**Anbefalt handling:** {anbefalt}")
             if f.expected is not None:
                 st.markdown(f"**Avtalt:** {f.expected} · **Fakturert:** {f.actual}")
-            if f.deviation_amount:
+            if not is_email and f.deviation_amount:
                 st.markdown(f"**Avvik:** {nok(f.deviation_amount)}")
 
     # V3 — Internt reglement: the THIRD source (organization's own rules, data-driven).
