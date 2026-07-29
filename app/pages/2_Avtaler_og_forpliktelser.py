@@ -3,7 +3,7 @@ from html import escape
 
 import streamlit as st
 from chrome import footer, header, page_header
-from db import get_session, nok
+from db import dato, get_session, nok
 from sqlmodel import select
 from ui_forpliktelser import (
     gyldighet_badge_html,
@@ -64,7 +64,7 @@ with tab_register:
             with st.container(border=True):
                 st.markdown(f"**{contract.title}**")
                 st.caption(f"{contract.reference} · {sup.name} · "
-                           f"{contract.valid_from} → {contract.valid_to} · "
+                           f"{dato(contract.valid_from)} → {dato(contract.valid_to)} · "
                            f"ramme {nok(contract.total_value)}")
                 lines = session.exec(
                     select(ContractLine).where(ContractLine.contract_id == contract.id)
@@ -103,7 +103,7 @@ with tab_epost:
     c1, c2, c3 = st.columns(3)
     leverandor = c1.selectbox("Leverandør", supplier_names, key="epost_lev") if supplier_names else None
     avsender = c2.text_input("Avsender", key="epost_avsender")
-    dato = c3.date_input("Dato", value=date(2026, 6, 12), key="epost_dato")
+    valgt_dato = c3.date_input("Dato", value=date(2026, 6, 12), key="epost_dato")
 
     if st.button("Foreslå forpliktelse", type="primary"):
         st.session_state.epost_proposed = True
@@ -119,7 +119,7 @@ with tab_epost:
                 f"**Artikkel (item_ref):** {escape(proposal.item_ref or '—')}  \n"
                 f"**Betingelse:** {escape(proposal.condition_type)}  \n"
                 f"**Verdi:** {nok(proposal.value) if proposal.value is not None else '—'}  \n"
-                f"**Kilde:** e-post {escape(str(dato))} · {escape(avsender or '—')}"
+                f"**Kilde:** e-post {escape(dato(valgt_dato))} · {escape(avsender or '—')}"
             )
             st.markdown("**Sitat (fra e-posten):**")
             st.markdown(
@@ -156,7 +156,7 @@ with tab_epost:
                     supplier_id=sup.id,
                     contract_id=contract.id if contract else None,
                     source_type=SourceType.EMAIL,
-                    source_ref=f"e-post {dato.isoformat()}, {avsender}",
+                    source_ref=f"e-post {valgt_dato.isoformat()}, {avsender}",
                     source_quote=text.strip()[:500],
                     gyldighet=proposal.gyldighet,
                     condition_type=cond,

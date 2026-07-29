@@ -33,6 +33,16 @@ def get_session() -> Session:
     return Session(get_engine())
 
 
+def dato(d) -> str:
+    """Format a date as DD.MM.YYYY (Norwegian). Accepts date/datetime; None → «—»."""
+    if d is None:
+        return "—"
+    try:
+        return d.strftime("%d.%m.%Y")
+    except AttributeError:
+        return str(d)
+
+
 def nok(amount) -> str:
     """Format an amount as Norwegian kroner for the UI.
 

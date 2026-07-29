@@ -7,7 +7,7 @@ demo-level heuristic on existing data (no full rules pass yet) — see BRIEF_VER
 from html import escape
 
 import streamlit as st
-from db import nok
+from db import dato, nok
 
 GOLD = "#B08D2E"
 
@@ -97,7 +97,7 @@ def render_email_commitment(c) -> None:
     item_ref = escape(c.item_ref) if c.item_ref else "—"
     condition = escape(c.condition_type.value)
     source_ref = escape(c.source_ref)
-    valid_from = escape(str(c.valid_from))
+    valid_from = escape(dato(c.valid_from))
 
     st.markdown(
         f'<div style="border-left:4px solid {GOLD};background:#FBF7EC;padding:12px 16px;'

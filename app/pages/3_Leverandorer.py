@@ -5,7 +5,7 @@ from html import escape
 import pandas as pd
 import streamlit as st
 from chrome import footer, header, page_header
-from db import get_session, money, nok
+from db import dato, get_session, money, nok
 from sqlmodel import select
 from ui_common import verdict_pill
 from ui_forpliktelser import render_email_commitment
@@ -135,7 +135,7 @@ def supplier_invoice_rows(supplier_id: int):
             r = evaluate_invoice(session, inv)
             out.append({
                 "id": inv.id, "number": inv.invoice_number,
-                "date": str(inv.invoice_date), "amount": money(inv.total_ex_vat, inv.currency),
+                "date": dato(inv.invoice_date), "amount": money(inv.total_ex_vat, inv.currency),
                 "verdict": r.verdict.value,
                 "verdi_display": nok(r.verdi_funnet) if r.verdi_funnet else "—",
                 "verdi_num": float(r.verdi_funnet), "has_findings": bool(r.findings),
@@ -492,7 +492,7 @@ else:
                         status_txt, date_txt = "Gjelder", "uten utløp"
                     else:
                         status_txt = "UTLØPT" if expired else "Gyldig"
-                        date_txt = f"t.o.m. {q.valid_to}"
+                        date_txt = f"t.o.m. {dato(q.valid_to)}"
                     st.markdown(
                         f'<span style="color:{color};font-weight:600">●</span> '
                         f'{escape(q.name)} — <span style="color:{color};font-weight:600">'
@@ -561,7 +561,8 @@ else:
                     n_lines = len(session.exec(
                         select(ContractLine).where(ContractLine.contract_id == c.id)
                     ).all())
-                    st.markdown(f"- **{c.reference}** · {c.title} · {c.valid_from} → {c.valid_to} · "
+                    st.markdown(f"- **{c.reference}** · {c.title} · "
+                                f"{dato(c.valid_from)} → {dato(c.valid_to)} · "
                                 f"ramme {nok(c.total_value)} · {n_lines} linjer")
             else:
                 st.caption("Ingen kontrakter registrert.")

@@ -2,7 +2,7 @@ from html import escape
 
 import streamlit as st
 from chrome import footer, header, page_header
-from db import get_session, money, nok
+from db import dato, get_session, money, nok
 from sqlmodel import select
 from texts import RECOMMENDED_ACTIONS
 
@@ -230,7 +230,7 @@ with tab_upload:
 
         if parsed is not None:
             st.caption(
-                f"Tolket: **{parsed.invoice_number}** · {parsed.invoice_date} · "
+                f"Tolket: **{parsed.invoice_number}** · {dato(parsed.invoice_date)} · "
                 f"{parsed.supplier_name or 'ukjent leverandør'} "
                 f"(org.nr {parsed.supplier_org or '—'}) · {len(parsed.lines)} linje(r) · "
                 f"{money(parsed.total_ex_vat, parsed.currency)}"
