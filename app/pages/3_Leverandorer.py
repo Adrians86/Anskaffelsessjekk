@@ -11,6 +11,8 @@ from ui_common import verdict_pill
 from ui_forpliktelser import render_email_commitment
 
 from core.models import (
+    SIDE_INTERNAL,
+    SIDE_SUPPLIER,
     AuditLog,
     Commitment,
     Contract,
@@ -427,51 +429,54 @@ else:
                 except RegistryError as exc:
                     st.error(str(exc))
 
-        # (L3) Kontaktpersoner — full add / edit / delete (this is "where to add a contact").
-        st.markdown("**Kontaktpersoner**")
-        contacts = list_contacts(session, sup.id)
-        if contacts:
-            for c in contacts:
+        # (K5) Personer i to grupper: kontakt hos leverandøren + ansvarlig hos oss.
+        st.markdown("**Personer**")
+
+        def _render_contact_group(side: str, add_label: str) -> None:
+            for c in list_contacts(session, sup.id, side=side):
                 with st.expander(f"{c.name} — {c.role or 'kontakt'}"):
                     st.caption(f"E-post: {escape(c.email or '—')} · "
                                f"Telefon: {escape(c.phone or '—')}")
                     with st.form(f"edit_contact_{c.id}"):
-                        cc1, cc2 = st.columns(2)
-                        nm = cc1.text_input("Navn", value=c.name)
-                        rl = cc2.text_input("Rolle", value=c.role or "")
-                        em = cc1.text_input("E-post", value=c.email or "")
-                        ph = cc2.text_input("Telefon", value=c.phone or "")
-                        s1, s2 = st.columns(2)
-                        upd = s1.form_submit_button("Lagre", type="primary")
-                        rem = s2.form_submit_button("🗑 Slett")
+                        nm = st.text_input("Navn", value=c.name)
+                        rl = st.text_input("Rolle", value=c.role or "")
+                        em = st.text_input("E-post", value=c.email or "")
+                        ph = st.text_input("Telefon", value=c.phone or "")
+                        cs1, cs2 = st.columns(2)
+                        upd = cs1.form_submit_button("Lagre", type="primary")
+                        rem = cs2.form_submit_button("🗑 Slett")
                     if upd:
                         try:
                             update_contact(session, c.id, name=nm, role=rl, email=em, phone=ph,
                                            actor="demo-bruker")
-                            _flash_and_rerun("ok", f"Kontaktperson «{nm}» er lagret.")
+                            _flash_and_rerun("ok", f"«{nm}» er lagret.")
                         except RegistryError as exc:
                             st.error(str(exc))
                     if rem:
                         delete_contact(session, c.id, actor="demo-bruker")
-                        _flash_and_rerun("ok", f"Kontaktperson «{c.name}» er slettet.")
-        else:
-            st.caption("Ingen kontaktpersoner registrert ennå.")
+                        _flash_and_rerun("ok", f"«{c.name}» er slettet.")
+            with st.expander(add_label):
+                with st.form(f"add_contact_{side}_{sup.id}", clear_on_submit=True):
+                    a_name = st.text_input("Navn *", key=f"cn_{side}_{sup.id}")
+                    a_role = st.text_input("Rolle", key=f"cr_{side}_{sup.id}")
+                    a_email = st.text_input("E-post", key=f"ce_{side}_{sup.id}")
+                    a_phone = st.text_input("Telefon", key=f"cp_{side}_{sup.id}")
+                    add_ok = st.form_submit_button("Legg til", type="primary")
+                if add_ok:
+                    try:
+                        add_contact(session, sup.id, name=a_name, role=a_role, email=a_email,
+                                    phone=a_phone, side=side, actor="demo-bruker")
+                        _flash_and_rerun("ok", f"«{a_name}» er lagt til.")
+                    except RegistryError as exc:
+                        st.error(str(exc))
 
-        with st.expander("＋ Ny kontaktperson"):
-            with st.form(f"add_contact_{sup.id}", clear_on_submit=True):
-                ac1, ac2 = st.columns(2)
-                a_name = ac1.text_input("Navn *")
-                a_role = ac2.text_input("Rolle")
-                a_email = ac1.text_input("E-post")
-                a_phone = ac2.text_input("Telefon")
-                add_ok = st.form_submit_button("Legg til kontaktperson", type="primary")
-            if add_ok:
-                try:
-                    add_contact(session, sup.id, name=a_name, role=a_role,
-                                email=a_email, phone=a_phone, actor="demo-bruker")
-                    _flash_and_rerun("ok", f"Kontaktperson «{a_name}» er lagt til.")
-                except RegistryError as exc:
-                    st.error(str(exc))
+        g1, g2 = st.columns(2)
+        with g1:
+            st.markdown("*Kontakt hos leverandøren*")
+            _render_contact_group(SIDE_SUPPLIER, "＋ Ny kontakt (leverandør)")
+        with g2:
+            st.markdown("*Ansvarlig hos oss*")
+            _render_contact_group(SIDE_INTERNAL, "＋ Ny ansvarlig (intern)")
 
         # (L4) Notater + redigerbare kvalifikasjoner (the "uwagi" — free text + editable categories).
         st.markdown("**Notater og kvalifikasjoner**")
