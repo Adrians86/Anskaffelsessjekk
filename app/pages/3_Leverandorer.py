@@ -171,16 +171,18 @@ def supplier_invoiced_objects(supplier_id: int):
         return out
 
 
-# --- L1: opprett en leverandør fra bunn (full tool, ikke bare visning) --------
-with st.expander("＋ Ny leverandør"):
+# --- Leverandørliste: søk + tabell + «Ny leverandør» i popover (U2) -----------
+top_search, top_new = st.columns([3, 1])
+search = top_search.text_input(
+    "Søk", placeholder="🔎 Søk på navn eller org.nr …", label_visibility="collapsed")
+with top_new.popover("＋ Ny leverandør", use_container_width=True):
     with st.form("ny_leverandor", clear_on_submit=True):
-        f1, f2 = st.columns(2)
-        n_org = f1.text_input("Organisasjonsnummer *")
-        n_name = f2.text_input("Navn *")
-        n_cat = st.text_input("Kategorier / kvalifikasjoner (kommaseparert)")
+        n_org = st.text_input("Organisasjonsnummer *")
+        n_name = st.text_input("Navn *")
+        n_cat = st.text_input("Kategorier (kommaseparert)")
         n_notes = st.text_area("Notat", height=80,
                                placeholder="Fritt notat om leverandøren …")
-        submitted = st.form_submit_button("Opprett leverandør", type="primary")
+        submitted = st.form_submit_button("Lagre leverandør", type="primary")
     if submitted:
         try:
             with get_session() as session:
@@ -190,25 +192,27 @@ with st.expander("＋ Ny leverandør"):
                 )
                 new_name = new_sup.name
             st.cache_data.clear()  # list/kort caches are now stale — refresh this run
-            st.success(f"Leverandør «{new_name}» opprettet og lagret i registeret.")
+            st.success(f"«{new_name}» opprettet.")
         except RegistryError as exc:
             st.error(str(exc))
 
 show_deleted = st.toggle("Vis slettede leverandører", value=False,
                          help="Myk sletting beholder raden og sporet — her kan de vises og gjenopprettes.")
 rows = supplier_stats(show_deleted)
+if search:
+    _q = search.strip().lower()
+    rows = [r for r in rows if _q in r["Navn"].lower() or _q in r["Org.nr"].lower()]
 
 if not rows:
-    st.info("Ingen leverandører registrert.")
+    st.info("Ingen treff for søket." if search else "Ingen leverandører registrert.")
 else:
     cols = ["Navn", "Org.nr", "Avtaler", "Fakturaer", "Funn", "Verdi funnet", "Andel m/ funn"]
     if show_deleted:
         cols = ["Status", *cols]
-    df = pd.DataFrame(rows)[cols]
-    st.dataframe(df, use_container_width=True, hide_index=True)
+    st.dataframe(pd.DataFrame(rows)[cols], use_container_width=True, hide_index=True)
 
     total_verdi = sum(r["_verdi"] for r in rows)
-    st.caption(f"Total verdi funnet på tvers av leverandører: **{nok(total_verdi)}**")
+    st.caption(f"{len(rows)} leverandør(er) · total verdi funnet: **{nok(total_verdi)}**")
 
     # --- Leverandørkartotek (U1: faner + popover-redigering) -------------------
     st.divider()
