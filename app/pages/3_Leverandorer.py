@@ -243,6 +243,21 @@ else:
             _lines.append(" · ".join(_contact_bits))
         st.caption("  \n".join(_lines))
 
+        # (K6) Kartotek-oversikt — teller alt om leverandøren på ett sted.
+        _n_contracts = len(session.exec(
+            select(Contract).where(Contract.supplier_id == sup.id)).all())
+        _n_invoices = len(session.exec(
+            select(Invoice).where(Invoice.supplier_id == sup.id)).all())
+        _n_commit = len(session.exec(
+            select(Commitment).where(Commitment.supplier_id == sup.id)).all())
+        st.caption(
+            f"**Kartotek:** {len(list_categories(session, sup.id))} kategorier · "
+            f"{len(list_services(session, sup.id))} tjenester · "
+            f"{len(list_qualifications(session, sup.id))} kvalifikasjoner · "
+            f"{len(list_contacts(session, sup.id))} personer · "
+            f"{_n_contracts} avtaler · {_n_commit} forpliktelser · {_n_invoices} fakturaer"
+        )
+
         # (K1) Rediger firmadata — the full firmakort, not two fields.
         with st.expander("✎ Rediger firmadata"):
             with st.form(f"rediger_firma_{sup.id}"):
