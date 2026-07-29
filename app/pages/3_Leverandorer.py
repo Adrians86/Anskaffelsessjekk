@@ -55,14 +55,18 @@ page_header(
     "ikke bare symptomene. (First Time Right)",
 )
 
-# Flash message survives the st.rerun() we trigger after list/selectbox-changing writes.
+# One form pattern (U3): every save shows a toast; the message survives the st.rerun() we trigger
+# after a write. A save-error stays as a prominent banner (must not be missed).
 _flash = st.session_state.pop("lev_flash", None)
 if _flash:
-    (st.success if _flash[0] == "ok" else st.error)(_flash[1])
+    if _flash[0] == "ok":
+        st.toast(_flash[1], icon="✅")
+    else:
+        st.error(_flash[1])
 
 
 def _flash_and_rerun(kind: str, msg: str) -> None:
-    """Store a flash, drop stale caches, and rerun so the change is visible immediately."""
+    """Store a flash toast, drop stale caches, and rerun so the change is visible immediately."""
     st.cache_data.clear()
     st.session_state["lev_flash"] = (kind, msg)
     st.rerun()
@@ -192,7 +196,7 @@ with top_new.popover("＋ Ny leverandør", use_container_width=True):
                 )
                 new_name = new_sup.name
             st.cache_data.clear()  # list/kort caches are now stale — refresh this run
-            st.success(f"«{new_name}» opprettet.")
+            st.toast(f"«{new_name}» opprettet.", icon="✅")
         except RegistryError as exc:
             st.error(str(exc))
 
