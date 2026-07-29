@@ -606,6 +606,29 @@ else:
                        f"{vc['SAMSVAR']} samsvar. Trend over tid vises når flere "
                        "kontrollperioder foreligger.")
 
+        # (K7) Egen samarbeidsvurdering — free-text assessment that complements the auto stats.
+        st.markdown("**Egen samarbeidsvurdering**")
+        if sup.cooperation_rating:
+            st.markdown(
+                '<div style="background:#FCFBF7;border:1px solid #E4E1D8;border-radius:8px;'
+                'padding:8px 12px;font-size:13px;color:#1C2733;white-space:pre-wrap">'
+                f'{escape(sup.cooperation_rating)}</div>',
+                unsafe_allow_html=True,
+            )
+        else:
+            st.caption("Ingen samarbeidsvurdering skrevet ennå.")
+        with st.expander("✎ Rediger samarbeidsvurdering"):
+            with st.form(f"samarbeid_{sup.id}"):
+                cr = st.text_area("Samarbeidsvurdering (egen vurdering)",
+                                  value=sup.cooperation_rating or "", height=100,
+                                  placeholder="Din egen vurdering av samarbeidet …")
+                cr_saved = st.form_submit_button("Lagre", type="primary")
+            if cr_saved:
+                update_supplier(session, sup.id, cooperation_rating=cr, actor="demo-bruker")
+                _flash_and_rerun("ok", "Samarbeidsvurdering er lagret.")
+        st.caption("Egen vurdering — supplerer auto-tallene over. Samme KOFA-forbehold gjelder: "
+                   "innsikt i samarbeidet, ikke en kvalifikasjonsrangering.")
+
         # (L3) Fakturerte objekter — what we paid for, flagged på/utenfor avtale (context only)
         st.markdown("**Fakturerte objekter**")
         st.caption("Hva vi faktisk har betalt for — kontekst, ikke et maskinregister.")
