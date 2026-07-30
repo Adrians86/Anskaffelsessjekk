@@ -12,7 +12,9 @@ from ui_forpliktelser import (
     render_email_commitment,
 )
 from ui_kontrakt import (
+    render_kontrakt_actions,
     render_kontrakt_header,
+    render_linked_invoices,
     render_ny_avtale_form,
     render_prisliste,
     show_kontrakt_flash,
@@ -87,8 +89,11 @@ with tab_avtaler:
             contract = get_contract(session, chosen_id)
             if contract:
                 render_kontrakt_header(contract, sup_by_id)
+                render_kontrakt_actions(session, contract)
                 st.divider()
                 render_prisliste(session, contract)
+                st.divider()
+                render_linked_invoices(session, contract)
 
 # --- Tab 1: the register (e-postavtaler + kontrakter) --------------------------
 with tab_register:
