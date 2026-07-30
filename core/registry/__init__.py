@@ -4,6 +4,11 @@ tjenester/produkter, kvalifikasjoner, kategorier, avtaler/prislister).
 Pure core — takes a Session, imports no UI (hard rule #1). Every write appends an audit row
 (hard rule #7). This is the persistence layer behind the "Leverandør" and "Kontrakt" tools.
 """
+from core.registry.faktura import (
+    intake_invoice,
+    latest_decision,
+    record_decision,
+)
 from core.registry.kontrakt import (
     _clause_label,
     add_line,
@@ -57,4 +62,6 @@ __all__ = [
     "soft_delete_contract", "restore_contract",
     "list_lines", "add_line", "update_line", "delete_line",
     "change_clause_of", "_clause_label",
+    # Faktura intake + decision
+    "intake_invoice", "record_decision", "latest_decision",
 ]

@@ -11,6 +11,7 @@ from core.models.contract import (
     ContractType,
     clause_assessment_hint,
 )
+from core.models.decision import INVOICE_DECISIONS, InvoiceDecision
 from core.models.invoice import Invoice, InvoiceLine, InvoiceSource
 from core.models.order import Order, Regime
 from core.models.qualification import Qualification
@@ -22,6 +23,7 @@ __all__ = [
     "AuditLog", "CheckResult", "Verdict",
     "Commitment", "ConditionType", "Formalization", "SourceType",
     "ContactPerson", "SIDE_SUPPLIER", "SIDE_INTERNAL",
+    "InvoiceDecision", "INVOICE_DECISIONS",
     "Contract", "ContractLine", "ContractType",
     "CHANGE_CLAUSES", "CONTRACT_STATUSES", "CONTRACT_REGIMES", "clause_assessment_hint",
     "Invoice", "InvoiceLine", "InvoiceSource",
