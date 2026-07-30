@@ -63,6 +63,27 @@ external integrations, changes to core data model.
 
 ## Current tasks
 
+**Funksjon 3 levert — Faktura A–Z (N1–N8): inntak + verifikasjon end-to-end, første fulle kjede.**
+
+Brief "Funksjon 3: Faktura A–Z" (docs/BRIEF_FAKTURA_AZ.md) delivered on main. Domyka kjeden
+leverandør (F1) + kontrakt/prisliste (F2) → **faktura kontrolleres mot avtalt prisliste**. Partner-
+approved core change. Version 0.8.0 → **0.9.0** + requirements rebuild marker.
+- **N2** `core/extraction/csv_faktura.py` — batch-CSV parser (rader grupperes til fakturaer på
+  fakturanr; norske header-aliaser; ; eller , ; DD.MM.ÅÅÅÅ/ISO). Gjenbruker EHF ParsedInvoice.
+- **N3/N4** `core/matching/prisliste.py` (ADDITIV — rører ikke three_way/commitments, så demo-
+  reconciliation 22 310 er urørt): resolve_contract (order.contract_id ellers leverandørens aktive
+  avtale) + check → funn med **HVORFOR** («Pris 13000 > avtalt 12500 for HYD-1001, avtale RA-x»),
+  verify() → verdikt + funn + kontrakt + antall prislinjer.
+- **N6** ny `InvoiceDecision` (append-only) + `core/registry/faktura.py`: intake_invoice (delt
+  EHF+CSV-persistens, idempotent, audited) + record_decision (menneske bestemmer, hard rule #3) +
+  latest_decision. **N1/N5/N7** `app/ui_faktura.py`: inntaksskjerm (EHF/CSV/flere EHF/PDF-JPG
+  «Kommer OCR»), koblings-banner, verdikt-m/HVORFOR, batch-liste (avvik øverst), beslutning,
+  protokoll PDF. Faktura vises på avtalens koblede fakturaer + i leverandørkortet.
+- **N8** `tests/test_faktura_az.py` (9 tester: CSV · prisliste-HVORFOR · beslutning=1 AuditLog · les=0
+  · idempotent); CI package-guard utvidet med faktura-modulene. pytest 121 passed, ruff clean, alle
+  8 sider åpner. **Reconciliation unchanged: 22 310 kr.**
+- **Neste (F4):** forpliktelser (e-postavtaler) mot endringsklausul; OCR (PDF/JPG) = bølge 2.
+
 **Funksjon 2 levert — Kontrakt + prisliste A–Z (M1–M7), grunnlag #2 for verifikasjon.**
 
 Brief "Funksjon 2: Kontrakt + prisliste A–Z" (docs/BRIEF_KONTRAKT_AZ.md) delivered on main. Partner-

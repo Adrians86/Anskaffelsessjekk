@@ -1076,3 +1076,33 @@ finding with real product impact; the rest are low-risk hardening I can batch on
   basis today (order.contract_id → ContractLine); F3 will wire faktura-inntak/verifikasjon end to end.
 - Next planned step: F3 (faktura-inntak + verifikasjon), F4 (forpliktelser). Await partner review from
   a clone / live URL (egress blocks streamlit.app from the sandbox).
+
+---
+
+### 2026-07-30 · claude-code
+- Done: **Funksjon 3 — Faktura A–Z (N1–N8)** delivered on main (brief: docs/BRIEF_FAKTURA_AZ.md).
+  Closes the first full chain: leverandør (F1) + kontrakt/prisliste (F2) → faktura kontrollert MOT
+  prislisten. Version 0.8.0 → **0.9.0** + requirements rebuild marker (partner-approved core-model change).
+  - **N1** Fakturakontroll fikk «Inntak (EHF / batch)»-fane: EHF (én fil), Batch (CSV m/ eksempel),
+    Batch (flere EHF), PDF/JPG synlig men ærlig deaktivert («Kommer (OCR)»).
+  - **N2** `core/extraction/csv_faktura.py` — `parse_csv` grupperer rader på fakturanr, fleksible
+    norske kolonnenavn, `;`/`,`-sniffing, dato ISO/DD.MM.ÅÅÅÅ. Gjenbruker EHF `ParsedInvoice`.
+  - **N3** Eksplisitt kobling faktura→leverandør→avtale+prisliste (`prisliste.resolve_contract`) vist
+    som banner: «kontrolleres MOT avtale RA-x … prisliste N linjer».
+  - **N4** `core/matching/prisliste.py` — verdikt MED HVORFOR: PRICE_ABOVE_AGREED (avvik),
+    QTY_ABOVE_MAX (avvik), NO_AGREED_BASIS (til vurdering); melding navngir pris/avtalt/artikkel/avtale
+    («Pris 13000 > avtalt 12500 for HYD-1001 (avtale RA-DELER)»). ADDITIV — rører ikke three_way/commitments.
+  - **N5** batch-resultatliste, avvik øverst, verdi funnet per parti (worklist-frø).
+  - **N6** `core/models/decision.py` (InvoiceDecision) + `core/registry/faktura.py`
+    (`intake_invoice` idempotent + `record_decision` append-only + `latest_decision`); beslutning
+    godkjenn/avvis/vent m/ begrunnelse. Blokkeres aldri, kun logget (hard rule #3). Hver skriv = 1 AuditLog.
+  - **N7** protokoll-PDF per faktura; enkeltresultat = kobling → verdikt → beslutning → protokoll.
+  - **N8** `tests/test_faktura_az.py` (9 tester: CSV-parse · prisliste HVORFOR · intake idempotent+audit ·
+    beslutning append-only+latest-wins+audit · les=0-skriv/H1); CI package-guard utvidet med de fire
+    nye modulene i wheel.
+- Tests: **121 passed**, ruff clean, alle 8 sider åpner (AppTest), wheel-guard grønt lokalt.
+  **Reconciliation unchanged: 22 310 kr** (batch-fakturaer bidrar 0 til det globale NOK-tallet;
+  prisliste-verifikasjonen er additiv).
+- Decisions needed / questions for the partner: none open. F3 lukker første fulle kjede A→Z.
+- Next planned step: F4 (forpliktelser) — eller partner-review. Live-verifisering på streamlit.app
+  ligger på partner-/Adrian-siden (egress blokkerer streamlit.app fra sandbox).
