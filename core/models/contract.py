@@ -21,6 +21,24 @@ CLAUSE_KPI = "kpi_regulering"
 CLAUSE_ANNET = "annet"
 CHANGE_CLAUSES = (CLAUSE_KUN_SKRIFTLIG, CLAUSE_MINDRE_JUSTERING, CLAUSE_KPI, CLAUSE_ANNET)
 
+# Assessment hint per endringsklausul — DATA the verification logic (F4) will read when it judges
+# an e-mail that changes a contracted price. This is NOT a verdict: it only says how a clause
+# disposes a later assessment. NO verification logic here (M4 keeps the engine untouched).
+CLAUSE_HINT_FORMALISERING = "krever_formalisering"   # kun_skriftlig_tillegg
+CLAUSE_HINT_KAN_GYLDIG = "kan_vaere_gyldig"          # mindre_justering_epost / kpi_regulering
+CLAUSE_HINT_VURDERING = "krever_vurdering"           # annet
+_CLAUSE_HINTS = {
+    CLAUSE_KUN_SKRIFTLIG: CLAUSE_HINT_FORMALISERING,
+    CLAUSE_MINDRE_JUSTERING: CLAUSE_HINT_KAN_GYLDIG,
+    CLAUSE_KPI: CLAUSE_HINT_KAN_GYLDIG,
+    CLAUSE_ANNET: CLAUSE_HINT_VURDERING,
+}
+
+
+def clause_assessment_hint(clause: str) -> str:
+    """How the endringsklausul disposes a later e-mail-change assessment (F4). DATA, not a verdict."""
+    return _CLAUSE_HINTS.get(clause, CLAUSE_HINT_VURDERING)
+
 # Kontrakt-status and regime as simple strings (kept flexible, like Supplier.status).
 CONTRACT_STATUSES = ("aktiv", "utløpt", "utkast")
 CONTRACT_REGIMES = ("FOA", "FOSA")

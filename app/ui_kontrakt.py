@@ -20,7 +20,16 @@ from core.models import (
     CONTRACT_STATUSES,
     ContractType,
     Invoice,
+    clause_assessment_hint,
 )
+
+# What each endringsklausul implies for a later e-mail-change assessment (F4). Shown as context;
+# no verdict is computed here.
+_CLAUSE_HINT_TEXT = {
+    "krever_formalisering": "En endring krever skriftlig formalisering (tillegg).",
+    "kan_vaere_gyldig": "Mindre justering kan være gyldig uten nytt tillegg.",
+    "krever_vurdering": "Endring krever konkret vurdering.",
+}
 from core.registry import (
     RegistryError,
     _clause_label,
@@ -197,6 +206,9 @@ def render_kontrakt_header(contract, suppliers_by_id: dict) -> None:
         f'<strong>{escape(_clause_label(contract.change_clause))}</strong></div>',
         unsafe_allow_html=True,
     )
+    hint = _CLAUSE_HINT_TEXT.get(clause_assessment_hint(contract.change_clause), "")
+    if hint:
+        st.caption(f"↪ {hint} (grunnlag for verifikasjon i F3/F4)")
 
 
 def render_linked_invoices(session, contract) -> None:

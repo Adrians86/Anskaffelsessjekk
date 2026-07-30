@@ -9,6 +9,7 @@ from core.models.contract import (
     Contract,
     ContractLine,
     ContractType,
+    clause_assessment_hint,
 )
 from core.models.invoice import Invoice, InvoiceLine, InvoiceSource
 from core.models.order import Order, Regime
@@ -22,7 +23,7 @@ __all__ = [
     "Commitment", "ConditionType", "Formalization", "SourceType",
     "ContactPerson", "SIDE_SUPPLIER", "SIDE_INTERNAL",
     "Contract", "ContractLine", "ContractType",
-    "CHANGE_CLAUSES", "CONTRACT_STATUSES", "CONTRACT_REGIMES",
+    "CHANGE_CLAUSES", "CONTRACT_STATUSES", "CONTRACT_REGIMES", "clause_assessment_hint",
     "Invoice", "InvoiceLine", "InvoiceSource",
     "Order", "Regime", "Receipt", "Supplier",
     "SupplierService", "Qualification",
