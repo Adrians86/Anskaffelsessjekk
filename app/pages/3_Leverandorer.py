@@ -9,7 +9,7 @@ from db import dato, get_session, money, nok
 from sqlmodel import select
 from ui_common import verdict_pill
 from ui_forpliktelser import render_email_commitment
-from ui_kontrakt import render_ny_avtale_form, show_kontrakt_flash
+from ui_kontrakt import render_ny_avtale_form, show_kontrakt_flash, status_badge, type_label
 
 from core.models import (
     SIDE_INTERNAL,
@@ -35,6 +35,8 @@ from core.registry import (
     delete_service,
     list_categories,
     list_contacts,
+    list_contracts,
+    list_lines,
     list_qualifications,
     list_services,
     remove_category,
@@ -303,8 +305,7 @@ else:
 
         # ---- Oversikt -------------------------------------------------------
         with tab_over:
-            _n_contracts = len(session.exec(
-                select(Contract).where(Contract.supplier_id == sup.id)).all())
+            _n_contracts = len(list_contracts(session, supplier_id=sup.id))
             _n_invoices = len(session.exec(
                 select(Invoice).where(Invoice.supplier_id == sup.id)).all())
             _n_commit = len(session.exec(
@@ -555,19 +556,22 @@ else:
         # ---- Avtaler, forpliktelser og fakturaer ----------------------------
         with tab_avt:
             st.markdown("**Avtaler**")
-            contracts = session.exec(
-                select(Contract).where(Contract.supplier_id == sup.id)
-            ).all()
-            if contracts:
-                for c in contracts:
-                    n_lines = len(session.exec(
-                        select(ContractLine).where(ContractLine.contract_id == c.id)
-                    ).all())
-                    st.markdown(f"- **{c.reference}** · {c.title} · "
-                                f"{dato(c.valid_from)} → {dato(c.valid_to)} · "
-                                f"ramme {nok(c.total_value)} · {n_lines} linjer")
+            sup_contracts = list_contracts(session, supplier_id=sup.id)
+            if sup_contracts:
+                for c in sup_contracts:
+                    n_lines = len(list_lines(session, c.id))
+                    cc1, cc2 = st.columns([6, 1])
+                    cc1.markdown(
+                        f"**{c.reference}** · {c.title} · {type_label(c.contract_type)} · "
+                        f"{dato(c.valid_from)} → {dato(c.valid_to)} · "
+                        f"ramme {nok(c.total_value) if c.total_value is not None else '—'} · "
+                        f"{n_lines} prislinjer {status_badge(c.status)}",
+                        unsafe_allow_html=True)
+                    if cc2.button("Åpne →", key=f"openavt_{c.id}"):
+                        st.session_state.preselect_contract = c.id
+                        st.switch_page("pages/2_Avtaler_og_forpliktelser.py")
             else:
-                st.caption("Ingen kontrakter registrert.")
+                st.caption("Ingen avtaler registrert.")
             with st.popover("＋ Ny avtale"):
                 render_ny_avtale_form(session, [sup], default_supplier_id=sup.id,
                                       key_prefix=f"lev{sup.id}")
