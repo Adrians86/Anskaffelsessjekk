@@ -19,6 +19,12 @@ from core.models import Contract, ContractLine, Invoice, InvoiceLine, Verdict
 _PRICE_TOLERANCE = Decimal("0")
 
 
+def _fmt(d: Decimal) -> str:
+    """Clean number for user-facing messages: no trailing zeros (12500, not 12500.0000)."""
+    s = format(d.normalize(), "f")
+    return s
+
+
 def resolve_contract(session: Session, invoice: Invoice) -> Contract | None:
     """Which contract this invoice is controlled against: the order's contract when linked,
     otherwise the supplier's active (non-deleted) contract with a price list. Reads only."""
@@ -74,7 +80,7 @@ def check(session: Session, invoice: Invoice, contract: Contract | None) -> list
                 message=(f"Ingen prislinje for {line.item_ref} i avtale {ref} — "
                          "artikkelen står ikke i prislisten."),
                 citation=f"Avtale {ref} (prisliste)",
-                expected="(på prisliste)", actual=str(line.unit_price),
+                expected="(på prisliste)", actual=_fmt(line.unit_price),
             ))
             continue
 
@@ -84,20 +90,20 @@ def check(session: Session, invoice: Invoice, contract: Contract | None) -> list
             findings.append(Finding(
                 code=Code.PRICE_ABOVE_AGREED, severity=Severity.DEVIATION,
                 invoice_id=invoice.id, invoice_line_id=line.id,
-                message=(f"Pris {line.unit_price} > avtalt {agreed} for {line.item_ref} "
+                message=(f"Pris {_fmt(line.unit_price)} > avtalt {_fmt(agreed)} for {line.item_ref} "
                          f"(avtale {ref})."),
                 citation=f"Prislinje {line.item_ref}, avtale {ref}",
-                expected=str(agreed), actual=str(line.unit_price), deviation_amount=over,
+                expected=_fmt(agreed), actual=_fmt(line.unit_price), deviation_amount=over,
             ))
         if (cl.max_quantity is not None and line.quantity > cl.max_quantity):
             over_qty = line.quantity - cl.max_quantity
             findings.append(Finding(
                 code=Code.QTY_ABOVE_MAX, severity=Severity.DEVIATION,
                 invoice_id=invoice.id, invoice_line_id=line.id,
-                message=(f"Mengde {line.quantity} > maks {cl.max_quantity} for {line.item_ref} "
+                message=(f"Mengde {_fmt(line.quantity)} > maks {_fmt(cl.max_quantity)} for {line.item_ref} "
                          f"(avtale {ref})."),
-                citation=f"Prislinje {line.item_ref} (maks {cl.max_quantity}), avtale {ref}",
-                expected=str(cl.max_quantity), actual=str(line.quantity),
+                citation=f"Prislinje {line.item_ref} (maks {_fmt(cl.max_quantity)}), avtale {ref}",
+                expected=_fmt(cl.max_quantity), actual=_fmt(line.quantity),
                 deviation_amount=over_qty * line.unit_price,
             ))
     return findings

@@ -5,12 +5,21 @@ from chrome import footer, header, page_header
 from db import dato, get_session, money, nok
 from sqlmodel import select
 from texts import RECOMMENDED_ACTIONS
+from ui_faktura import (
+    faktura_flash,
+    linkage_banner,
+    render_batch_results,
+    render_decision,
+    render_single_result,
+)
 
 from core.extraction import build_sample_ehf, parse_ehf
+from core.extraction.csv_faktura import CSVParseError, parse_csv
 from core.extraction.ehf import EHFParseError
 from core.matching.currency import is_foreign
 from core.matching.findings import Severity
-from core.models import Invoice, InvoiceLine, InvoiceSource, Order, Supplier
+from core.models import Invoice, InvoiceSource, Order, Supplier
+from core.registry import intake_invoice
 from core.reporting import build_protokoll, check_invoice
 from core.rules.engine import Facts, ReglementEngine, RulesEngine
 
@@ -175,7 +184,17 @@ def render_audit_card(session, inv) -> None:
                "Kontrollen er logget i revisjonssporet.")
 
 
-tab_check, tab_upload = st.tabs(["Kontroller faktura", "Last opp faktura (EHF)"])
+faktura_flash()
+
+_SAMPLE_CSV = (
+    "fakturanr;dato;orgnr;artikkelnr;beskrivelse;antall;pris\n"
+    "B-1001;2026-07-10;998877665;HYD-1001;Hydraulikkpumpe;2;13000\n"
+    "B-1001;2026-07-10;998877665;HYD-2002;Ventil;1;8300\n"
+    "B-1002;2026-07-11;987654321;KONS-SENIOR;Seniorkonsulent;12;1600\n"
+)
+_MAX_UPLOAD_BYTES = 5 * 1024 * 1024  # 5 MB — invoices are a few kB; cap abuse/DoS.
+
+tab_check, tab_intake = st.tabs(["Kontroller faktura", "Inntak (EHF / batch)"])
 
 # --- Tab 1: control an existing (demo) invoice ---------------------------------
 with tab_check:
@@ -199,83 +218,83 @@ with tab_check:
             if "preselect_invoice" in st.session_state:
                 del st.session_state.preselect_invoice
             inv = session.get(Invoice, chosen)
+            linkage_banner(session, inv)
             render_audit_card(session, inv)
+            st.divider()
+            render_decision(session, inv)
 
-# --- Tab 2: upload and parse an EHF invoice ------------------------------------
-with tab_upload:
-    st.markdown("Last opp en EHF-faktura (UBL 2.1 XML). Den blir tolket, knyttet til "
-                "leverandør på organisasjonsnummer og kontrollert mot forpliktelsesbildet.")
+# --- Tab 2: intake (EHF single / batch CSV / batch EHF; PDF/JPG = Kommer OCR) --
+with tab_intake:
+    st.markdown("Inntak av fakturaer — enkeltvis (EHF) eller i partia (CSV / flere filer). "
+                "Hver faktura knyttes til leverandør på org.nr og kontrolleres mot avtalt prisliste.")
+    mode = st.radio("Kilde", ["EHF (én fil)", "Batch (CSV)", "Batch (flere EHF)", "PDF / JPG"],
+                    horizontal=True)
 
-    st.download_button(
-        label="Last ned eksempel-EHF",
-        data=build_sample_ehf(),
-        file_name="eksempel-EHF-F-1003.xml",
-        mime="application/xml",
-        help="Syntetisk EHF bygget fra F-1003 — last ned, last opp igjen, og se kontrollen.",
-    )
+    if mode == "EHF (én fil)":
+        st.download_button("Last ned eksempel-EHF", data=build_sample_ehf(),
+                           file_name="eksempel-EHF-F-1003.xml", mime="application/xml")
+        up = st.file_uploader("EHF-fil (.xml)", type=["xml"], key="ehf_single")
+        if up is not None and up.size > _MAX_UPLOAD_BYTES:
+            st.error("Filen er for stor (maks 5 MB).")
+            up = None
+        if up is not None:
+            try:
+                parsed = parse_ehf(up.getvalue())
+            except EHFParseError as exc:
+                st.error(f"Kunne ikke tolke EHF: {exc}")
+                parsed = None
+            if parsed is not None:
+                with get_session() as session:
+                    inv = intake_invoice(session, parsed, source=InvoiceSource.EHF)
+                    st.caption(f"Importert: **{inv.invoice_number}** · {dato(inv.invoice_date)} · "
+                               f"{len(parsed.lines)} linje(r).")
+                    st.divider()
+                    render_single_result(session, inv)
 
-    _MAX_UPLOAD_BYTES = 5 * 1024 * 1024  # 5 MB — an EHF invoice is a few KB; cap abuse/DoS.
+    elif mode == "Batch (CSV)":
+        st.download_button("Last ned eksempel-CSV", data=_SAMPLE_CSV,
+                           file_name="eksempel-fakturaer.csv", mime="text/csv",
+                           help="Syntetisk parti med to fakturaer — last ned, last opp igjen.")
+        up = st.file_uploader("CSV-fil (.csv)", type=["csv"], key="csv_batch")
+        if up is not None and up.size > _MAX_UPLOAD_BYTES:
+            st.error("Filen er for stor (maks 5 MB).")
+            up = None
+        if up is not None:
+            try:
+                parsed_list = parse_csv(up.getvalue())
+            except CSVParseError as exc:
+                st.error(f"Kunne ikke tolke CSV: {exc}")
+                parsed_list = None
+            if parsed_list:
+                with get_session() as session:
+                    imported = [intake_invoice(session, p, source=InvoiceSource.MANUAL)
+                                for p in parsed_list]
+                    st.success(f"{len(imported)} faktura(er) importert fra CSV.")
+                    st.divider()
+                    render_batch_results(session, imported)
 
-    uploaded = st.file_uploader("EHF-fil (.xml)", type=["xml"], key="ehf_upload")
-    if uploaded is not None and uploaded.size > _MAX_UPLOAD_BYTES:
-        st.error(f"Filen er for stor ({uploaded.size / 1_048_576:.1f} MB). "
-                 "Maksimal størrelse er 5 MB — en EHF-faktura er normalt noen få kB.")
-        uploaded = None
-    if uploaded is not None:
-        try:
-            parsed = parse_ehf(uploaded.getvalue())
-        except EHFParseError as exc:
-            st.error(f"Kunne ikke tolke filen som EHF-faktura: {exc}")
-            parsed = None
-
-        if parsed is not None:
-            st.caption(
-                f"Tolket: **{parsed.invoice_number}** · {dato(parsed.invoice_date)} · "
-                f"{parsed.supplier_name or 'ukjent leverandør'} "
-                f"(org.nr {parsed.supplier_org or '—'}) · {len(parsed.lines)} linje(r) · "
-                f"{money(parsed.total_ex_vat, parsed.currency)}"
-            )
+    elif mode == "Batch (flere EHF)":
+        ups = st.file_uploader("EHF-filer (.xml)", type=["xml"], accept_multiple_files=True,
+                               key="ehf_multi")
+        valid = [u for u in (ups or []) if u.size <= _MAX_UPLOAD_BYTES]
+        if valid:
             with get_session() as session:
-                supplier = None
-                if parsed.supplier_org:
-                    supplier = session.exec(
-                        select(Supplier).where(Supplier.org_number == parsed.supplier_org)
-                    ).first()
-                if supplier is None:
-                    supplier = Supplier(
-                        org_number=parsed.supplier_org or f"UKJENT-{parsed.invoice_number}",
-                        name=(parsed.supplier_name or "Ukjent leverandør") + " (OPPLASTET)",
-                    )
-                    session.add(supplier)
-                    session.commit()
-                    session.refresh(supplier)
-                    st.info("Ukjent organisasjonsnummer — leverandør opprettet. "
-                            "Fakturaen mangler avtalegrunnlag, som kontrollen vil vise.")
+                imported = []
+                for u in valid:
+                    try:
+                        imported.append(intake_invoice(session, parse_ehf(u.getvalue()),
+                                                        source=InvoiceSource.EHF))
+                    except EHFParseError as exc:
+                        st.error(f"{u.name}: {exc}")
+                if imported:
+                    st.success(f"{len(imported)} faktura(er) importert.")
+                    st.divider()
+                    render_batch_results(session, imported)
 
-                # Idempotent: reuse an existing invoice with the same number for this supplier.
-                inv = session.exec(
-                    select(Invoice)
-                    .where(Invoice.supplier_id == supplier.id)
-                    .where(Invoice.invoice_number == parsed.invoice_number)
-                ).first()
-                if inv is None:
-                    inv = Invoice(
-                        supplier_id=supplier.id, order_id=None,
-                        invoice_number=parsed.invoice_number, invoice_date=parsed.invoice_date,
-                        total_ex_vat=parsed.total_ex_vat, currency=parsed.currency,
-                        source=InvoiceSource.EHF,
-                    )
-                    session.add(inv)
-                    session.commit()
-                    session.refresh(inv)
-                    for ln in parsed.lines:
-                        session.add(InvoiceLine(
-                            invoice_id=inv.id, item_ref=ln.item_ref, description=ln.description,
-                            quantity=ln.quantity, unit_price=ln.unit_price, line_total=ln.line_total,
-                        ))
-                    session.commit()
-
-                st.markdown("---")
-                render_audit_card(session, inv)
+    else:  # PDF / JPG
+        st.file_uploader("PDF / JPG", type=["pdf", "jpg", "jpeg", "png"], disabled=True,
+                         key="ocr_disabled")
+        st.info("PDF/JPG-inntak med OCR kommer i bølge 2. Foreløpig støttes EHF og CSV — som gir "
+                "strukturerte linjer å kontrollere direkte mot prislisten.")
 
 footer()
