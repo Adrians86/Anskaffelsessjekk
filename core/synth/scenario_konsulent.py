@@ -34,8 +34,9 @@ def generate(session: Session) -> dict[str, Any]:
     contract = Contract(
         supplier_id=sup.id, contract_type=ContractType.RAMMEAVTALE,
         reference="RA-2026-KONS", title="Rammeavtale konsulentinnleie (SYNTETISK)",
-        total_value=Decimal("4800000"),
+        regime="FOA", total_value=Decimal("4800000"),
         valid_from=date(2026, 1, 1), valid_to=date(2027, 12, 31),
+        change_clause="mindre_justering_epost", status="aktiv",
     )
     session.add(contract)
     session.commit()
