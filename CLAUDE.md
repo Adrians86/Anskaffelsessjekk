@@ -63,6 +63,24 @@ external integrations, changes to core data model.
 
 ## Current tasks
 
+**Funksjon 2 levert — Kontrakt + prisliste A–Z (M1–M7), grunnlag #2 for verifikasjon.**
+
+Brief "Funksjon 2: Kontrakt + prisliste A–Z" (docs/BRIEF_KONTRAKT_AZ.md) delivered on main. Partner-
+approved core-data-model change. Version 0.7.0 → **0.8.0** + requirements rebuild marker.
+- **Foundation (M1)** — Contract gains regime/change_clause/status/is_deleted; ContractLine.currency.
+  `core/registry/kontrakt.py` = pure CRUD (create/update/soft_delete/restore contract + add/update/
+  delete line), EVERY write appends an AuditLog row; `change_clause_of` read-helper. `app/ui_kontrakt.py`
+  shared «Ny avtale» form + status badge + prisliste + kontraktvisning.
+- **M1** Avtaler-siden «Avtaler»-fane (liste + søk + «＋ Ny avtale»); Leverandørkort «＋ Ny avtale»
+  aktivert. **M2** prisliste (kontraktslinjer) full CRUD — verifikasjonsgrunnlaget. **M3** kontrakt-
+  visning + rediger (popover) + soft-delete (bekreftelse). **M4** endringsklausul som DATA for motoren
+  (`clause_assessment_hint`, ingen ny verifikasjonslogikk). **M5** leverandørkort viser avtaler med
+  «Åpne →» + reell telling. **M6** seed beriket (regime/klausul/status), reconciliation uendret.
+- **M7** `tests/test_kontrakt_crud.py` (9 tester: CRUD + audit-per-skriv + H1 les-uten-skriv + klausul);
+  CI package-guard utvidet med kontrakt-modul. pytest 112 passed, ruff clean, alle 8 sider åpner.
+  **Reconciliation unchanged: 22 310 kr** (fakturaene matcher nå eksplisitte prislinjer).
+- **Neste (F3/F4):** faktura-inntak/verifikasjon (F3), forpliktelser (F4).
+
 **UX-pass v1 levert (U1–U8) — hele grensesnittet ryddet, null logikkendring.**
 
 Mini-brief "UX-pass v1" (docs/BRIEF_UX_PASS.md) delivered on main. Pure UI/layout (droga A —

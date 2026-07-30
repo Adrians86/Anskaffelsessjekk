@@ -1049,3 +1049,30 @@ finding with real product impact; the rest are low-risk hardening I can batch on
   full responsiveness remain deliberately deferred (Phase 2), per brief.
 - Next planned step: await partner review from a clone / live URL (egress blocks streamlit.app from
   the sandbox, so live verification is on Adrian).
+
+---
+
+### 2026-07-29 · claude-code
+- Done: **Brief "Funksjon 2: Kontrakt + prisliste A–Z"** (docs/BRIEF_KONTRAKT_AZ.md) — verification
+  basis #2 (after leverandør). Uten prisliste har kontrollen ingenting å sammenligne fakturapriser MOT.
+  Full A–Z (hard rule #12), M1→M7, commit+push per step.
+  - **Foundation (M1):** Contract gains regime/change_clause/status/is_deleted; ContractLine.currency.
+    `core/registry/kontrakt.py` = pure CRUD (create/update/soft_delete/restore contract + add/update/
+    delete line), NO UI import (hard rule #1), EVERY write appends an AuditLog row (hard rule #7).
+    `app/ui_kontrakt.py` shared «Ny avtale» form + status badge + prisliste + kontraktvisning + flash-
+    toast. Version 0.7.0 → **0.8.0** + requirements rebuild marker (hard rule #10).
+  - **M1** Avtaler-siden «Avtaler»-fane (liste + søk + «＋ Ny avtale»); Leverandørkort «＋ Ny avtale»
+    aktivert (var «Kommer»). **M2** prisliste (kontraktslinjer) full CRUD med tom-tilstand — dette ER
+    grunnlaget verifikasjonen bruker. **M3** kontraktvisning (grunndata + prisliste + koblede fakturaer
+    les) + rediger (popover, forhåndsutfylt) + soft-delete (bekreftelse + advarsel). **M4** endrings-
+    klausul lagres/vises + `clause_assessment_hint()` gjør den tilgjengelig for motoren (F4) som DATA —
+    INGEN ny verifikasjonslogikk. **M5** leverandørkort viser avtaler med «Åpne →» + reell telling.
+    **M6** seed beriket (Hydraulikk FOSA/kun_skriftlig_tillegg, Konsulenthuset FOA/mindre_justering_epost).
+  - **M7** `tests/test_kontrakt_crud.py` (9 tests: contract+line CRUD, one-audit-row-per-write, H1
+    reads-never-write, endringsklausul read-path); CI package-guard extended with core/registry/kontrakt.py.
+- Tests: **112 passed** (103 + 9 new). ruff clean. All 8 pages open via AppTest. **Reconciliation
+  unchanged: 22 310 kr** — the demo invoices now match EXPLICIT price lines (ikke hardkodede verdier).
+- Decisions needed / questions: none — brief delivered as specified. Kontraktslinjer are the matcher's
+  basis today (order.contract_id → ContractLine); F3 will wire faktura-inntak/verifikasjon end to end.
+- Next planned step: F3 (faktura-inntak + verifikasjon), F4 (forpliktelser). Await partner review from
+  a clone / live URL (egress blocks streamlit.app from the sandbox).
