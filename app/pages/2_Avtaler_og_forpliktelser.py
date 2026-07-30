@@ -11,6 +11,12 @@ from ui_forpliktelser import (
     gyldighet_legend,
     render_email_commitment,
 )
+from ui_kontrakt import (
+    render_kontrakt_header,
+    render_ny_avtale_form,
+    show_kontrakt_flash,
+    type_label,
+)
 
 from core.extraction.epost import confirm_audit_detail, parse_email
 from core.models import (
@@ -23,6 +29,7 @@ from core.models import (
     SourceType,
     Supplier,
 )
+from core.registry import get_contract, list_contracts, list_suppliers
 from core.synth.epost_examples import EXAMPLE_EMAILS
 
 st.set_page_config(page_title="Avtaler og forpliktelser", page_icon="📋", layout="wide")
@@ -33,7 +40,52 @@ page_header(
     "e-postavtaler. Dette er kontrollgrunnlaget for fakturakontrollen.",
 )
 
-tab_register, tab_epost = st.tabs(["Forpliktelsesregister", "Registrer fra e-post"])
+show_kontrakt_flash()
+
+tab_avtaler, tab_register, tab_epost = st.tabs(
+    ["Avtaler", "Forpliktelsesregister", "Registrer fra e-post"])
+
+# --- Tab: Avtaler (kontrakter + prisliste) — Funksjon 2 ------------------------
+with tab_avtaler:
+    csearch_col, cnew_col = st.columns([3, 1])
+    csearch = csearch_col.text_input(
+        "Søk avtale", placeholder="🔎 Søk tittel / avtalenr / leverandør",
+        label_visibility="collapsed")
+    with get_session() as session:
+        suppliers = list_suppliers(session)
+        sup_by_id = {s.id: s.name for s in suppliers}
+        with cnew_col.popover("＋ Ny avtale", use_container_width=True):
+            render_ny_avtale_form(session, suppliers, key_prefix="avt")
+
+        contracts = list_contracts(session)
+        if csearch:
+            q = csearch.strip().lower()
+            contracts = [c for c in contracts
+                         if q in c.title.lower() or q in c.reference.lower()
+                         or q in sup_by_id.get(c.supplier_id, "").lower()]
+
+        if not contracts:
+            st.info("Ingen treff for søket." if csearch
+                    else "Ingen avtaler ennå — opprett den første med «＋ Ny avtale».")
+        else:
+            st.dataframe(
+                [{"Tittel": c.title, "Avtalenr": c.reference,
+                  "Leverandør": sup_by_id.get(c.supplier_id, "—"),
+                  "Type": type_label(c.contract_type),
+                  "Periode": f"{dato(c.valid_from)} → {dato(c.valid_to)}",
+                  "Ramme": nok(c.total_value) if c.total_value is not None else "—",
+                  "Status": c.status} for c in contracts],
+                hide_index=True, use_container_width=True,
+            )
+            st.divider()
+            labels = {c.id: f"{c.reference} — {c.title}" for c in contracts}
+            preselect = st.session_state.pop("preselect_contract", None)
+            default_idx = list(labels).index(preselect) if preselect in labels else 0
+            chosen_id = st.selectbox("Åpne avtale", list(labels), format_func=labels.get,
+                                     index=default_idx)
+            contract = get_contract(session, chosen_id)
+            if contract:
+                render_kontrakt_header(contract, sup_by_id)
 
 # --- Tab 1: the register (e-postavtaler + kontrakter) --------------------------
 with tab_register:

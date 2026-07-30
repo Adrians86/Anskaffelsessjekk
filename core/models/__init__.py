@@ -2,7 +2,14 @@
 from core.models.audit import AuditLog, CheckResult, Verdict
 from core.models.commitment import Commitment, ConditionType, Formalization, SourceType
 from core.models.contact import SIDE_INTERNAL, SIDE_SUPPLIER, ContactPerson
-from core.models.contract import Contract, ContractLine, ContractType
+from core.models.contract import (
+    CHANGE_CLAUSES,
+    CONTRACT_REGIMES,
+    CONTRACT_STATUSES,
+    Contract,
+    ContractLine,
+    ContractType,
+)
 from core.models.invoice import Invoice, InvoiceLine, InvoiceSource
 from core.models.order import Order, Regime
 from core.models.qualification import Qualification
@@ -15,6 +22,7 @@ __all__ = [
     "Commitment", "ConditionType", "Formalization", "SourceType",
     "ContactPerson", "SIDE_SUPPLIER", "SIDE_INTERNAL",
     "Contract", "ContractLine", "ContractType",
+    "CHANGE_CLAUSES", "CONTRACT_STATUSES", "CONTRACT_REGIMES",
     "Invoice", "InvoiceLine", "InvoiceSource",
     "Order", "Regime", "Receipt", "Supplier",
     "SupplierService", "Qualification",

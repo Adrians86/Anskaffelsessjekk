@@ -9,6 +9,7 @@ from db import dato, get_session, money, nok
 from sqlmodel import select
 from ui_common import verdict_pill
 from ui_forpliktelser import render_email_commitment
+from ui_kontrakt import render_ny_avtale_form, show_kontrakt_flash
 
 from core.models import (
     SIDE_INTERNAL,
@@ -63,6 +64,7 @@ if _flash:
         st.toast(_flash[1], icon="✅")
     else:
         st.error(_flash[1])
+show_kontrakt_flash()
 
 
 def _flash_and_rerun(kind: str, msg: str) -> None:
@@ -566,7 +568,9 @@ else:
                                 f"ramme {nok(c.total_value)} · {n_lines} linjer")
             else:
                 st.caption("Ingen kontrakter registrert.")
-            _kommer("＋ Registrer avtale", f"komm_avtale_{sup.id}")
+            with st.popover("＋ Ny avtale"):
+                render_ny_avtale_form(session, [sup], default_supplier_id=sup.id,
+                                      key_prefix=f"lev{sup.id}")
 
             st.markdown("**Forpliktelser**")
             commitments = session.exec(
