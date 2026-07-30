@@ -14,6 +14,7 @@ from ui_forpliktelser import (
 from ui_kontrakt import (
     render_kontrakt_header,
     render_ny_avtale_form,
+    render_prisliste,
     show_kontrakt_flash,
     type_label,
 )
@@ -86,6 +87,8 @@ with tab_avtaler:
             contract = get_contract(session, chosen_id)
             if contract:
                 render_kontrakt_header(contract, sup_by_id)
+                st.divider()
+                render_prisliste(session, contract)
 
 # --- Tab 1: the register (e-postavtaler + kontrakter) --------------------------
 with tab_register:
