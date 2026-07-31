@@ -8,7 +8,7 @@ from chrome import footer, header, page_header
 from db import dato, get_session, money, nok
 from sqlmodel import select
 from ui_common import verdict_pill
-from ui_forpliktelser import render_email_commitment
+from ui_forpliktelser import forpliktelse_flash, render_supplier_forpliktelser
 from ui_kontrakt import render_ny_avtale_form, show_kontrakt_flash, status_badge, type_label
 
 from core.models import (
@@ -39,6 +39,7 @@ from core.registry import (
     list_lines,
     list_qualifications,
     list_services,
+    list_suppliers,
     remove_category,
     restore_supplier,
     soft_delete_supplier,
@@ -67,6 +68,7 @@ if _flash:
     else:
         st.error(_flash[1])
 show_kontrakt_flash()
+forpliktelse_flash()
 
 
 def _flash_and_rerun(kind: str, msg: str) -> None:
@@ -577,20 +579,10 @@ else:
                                       key_prefix=f"lev{sup.id}")
 
             st.markdown("**Forpliktelser**")
-            commitments = session.exec(
-                select(Commitment).where(Commitment.supplier_id == sup.id)
-            ).all()
-            if commitments:
-                for cm in commitments:
-                    if cm.source_type.value == "EMAIL":
-                        render_email_commitment(cm)
-                    else:
-                        st.info(f"{cm.item_ref}: {cm.condition_type.value} = "
-                                f"{nok(cm.value) if cm.value is not None else '—'} · "
-                                f"Kilde: {cm.source_ref}")
-            else:
-                st.caption("Ingen registrerte tilleggsforpliktelser.")
-            _kommer("＋ Registrer forpliktelse", f"komm_forpl_{sup.id}")
+            st.caption("Avtalte betingelser utenfor kontrakten — e-post, møte, aneks. "
+                       "Legges til her, ikke i en løsrevet fane.")
+            all_suppliers = list_suppliers(session)
+            render_supplier_forpliktelser(session, all_suppliers, sup, key_prefix="levforp")
 
             st.markdown("**Fakturaer**")
             for r in inv_rows:
