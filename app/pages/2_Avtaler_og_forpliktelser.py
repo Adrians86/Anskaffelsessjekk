@@ -1,13 +1,8 @@
-from datetime import date
-from html import escape
-
 import streamlit as st
 from chrome import footer, header, page_header
 from db import dato, get_session, nok
 from sqlmodel import select
 from ui_forpliktelser import (
-    gyldighet_badge_html,
-    gyldighet_disclaimer,
     gyldighet_legend,
     render_email_commitment,
 )
@@ -21,19 +16,13 @@ from ui_kontrakt import (
     type_label,
 )
 
-from core.extraction.epost import confirm_audit_detail, parse_email
 from core.models import (
-    AuditLog,
     Commitment,
-    ConditionType,
     Contract,
     ContractLine,
-    Formalization,
-    SourceType,
     Supplier,
 )
 from core.registry import get_contract, list_contracts, list_suppliers
-from core.synth.epost_examples import EXAMPLE_EMAILS
 
 st.set_page_config(page_title="Avtaler og forpliktelser", page_icon="📋", layout="wide")
 header()
@@ -45,8 +34,7 @@ page_header(
 
 show_kontrakt_flash()
 
-tab_avtaler, tab_register, tab_epost = st.tabs(
-    ["Avtaler", "Forpliktelsesregister", "Registrer fra e-post"])
+tab_avtaler, tab_register = st.tabs(["Avtaler", "Forpliktelsesregister"])
 
 # --- Tab: Avtaler (kontrakter + prisliste) — Funksjon 2 ------------------------
 with tab_avtaler:
@@ -104,7 +92,8 @@ with tab_register:
 
         st.subheader("📧 E-postavtaler i kontrollgrunnlaget")
         st.caption("En e-postavtale kontrolleres alltid mot avtalen og regelverket — "
-                   "den er aldri et selvstendig bevis.")
+                   "den er aldri et selvstendig bevis. Nye forpliktelser legges til på "
+                   "leverandørkortet (Leverandører → fanen «Avtaler, forpliktelser og fakturaer»).")
         st.markdown("**Gyldighetsvurdering — mulige utfall:**")
         gyldighet_legend()
 
@@ -136,118 +125,5 @@ with tab_register:
                      for line in lines],
                     hide_index=True, use_container_width=True,
                 )
-
-# --- Tab 2: register a commitment from an e-mail (human-in-the-loop) -----------
-with tab_epost:
-    st.caption("KI-uttrekk fra e-post er under utvikling. I demo brukes enkel tekstgjenkjenning "
-               "— saksbehandler bekrefter alltid før forpliktelsen inngår i kontroll.")
-
-    with get_session() as session:
-        supplier_names = [s.name for s in session.exec(select(Supplier)).all()]
-
-    # E2: load one of three synthetic example e-mails (the three gyldighet outcomes).
-    def _load_example():
-        ex = next(e for e in EXAMPLE_EMAILS if e["label"] == st.session_state.epost_ex_choice)
-        st.session_state.epost_text = ex["body"]
-        st.session_state.epost_avsender = ex["avsender"]
-        st.session_state.epost_proposed = False
-
-    colx1, colx2 = st.columns([3, 1])
-    colx1.selectbox("Eksempelmail (syntetisk)", [e["label"] for e in EXAMPLE_EMAILS],
-                    key="epost_ex_choice")
-    colx2.markdown("<div style='height:28px'></div>", unsafe_allow_html=True)
-    colx2.button("Last inn eksempel", on_click=_load_example)
-
-    text = st.text_area("Lim inn e-postinnhold", key="epost_text", height=150,
-                        placeholder="Lim inn teksten fra e-posten her …")
-    c1, c2, c3 = st.columns(3)
-    leverandor = c1.selectbox("Leverandør", supplier_names, key="epost_lev") if supplier_names else None
-    avsender = c2.text_input("Avsender", key="epost_avsender")
-    valgt_dato = c3.date_input("Dato", value=date(2026, 6, 12), key="epost_dato")
-
-    if st.button("Foreslå forpliktelse", type="primary"):
-        st.session_state.epost_proposed = True
-
-    if st.session_state.get("epost_proposed") and text.strip():
-        proposal = parse_email(text)
-
-        st.markdown("#### Forslag til forpliktelse")
-        st.caption("Forslag fra tekstgjenkjenning — ikke bekreftet. Kontrollér før du legger til.")
-        with st.container(border=True):
-            st.markdown(
-                f"**Leverandør:** {escape(leverandor or '—')}  \n"
-                f"**Artikkel (item_ref):** {escape(proposal.item_ref or '—')}  \n"
-                f"**Betingelse:** {escape(proposal.condition_type)}  \n"
-                f"**Verdi:** {nok(proposal.value) if proposal.value is not None else '—'}  \n"
-                f"**Kilde:** e-post {escape(dato(valgt_dato))} · {escape(avsender or '—')}"
-            )
-            st.markdown("**Sitat (fra e-posten):**")
-            st.markdown(
-                f'<div style="font-style:italic;color:#5A5140;background:#FFFDF6;'
-                f'border-left:2px solid #B08D2E;padding:6px 10px;font-size:13px">'
-                f'«{escape(text.strip())}»</div>',
-                unsafe_allow_html=True,
-            )
-            st.markdown(f"**Gyldighetsvurdering:** {gyldighet_badge_html(proposal.gyldighet)}",
-                        unsafe_allow_html=True)
-            st.caption(proposal.gyldighet_reason)
-            gyldighet_disclaimer()
-
-        # Human-in-the-loop (hard rule #3): the system indicates, it never blocks. For a possible
-        # vesentlig endring we flag strongly — as an INDICATION — but the saksbehandler decides.
-        if proposal.gyldighet == "UGYLDIG":
-            st.warning("⚠ Mulig vesentlig endring: dette kan innebære en vesentlig endring "
-                       "(jf. FOA §28-1) som er en juridisk skjønnsvurdering og kan kreve ny "
-                       "konkurranse. Vurder med jurist før du bekrefter.")
-
-        b1, b2 = st.columns(2)
-        if b1.button("Bekreft og legg til", type="primary"):
-            with get_session() as session:
-                sup = session.exec(
-                    select(Supplier).where(Supplier.name == leverandor)
-                ).first()
-                contract = session.exec(
-                    select(Contract).where(Contract.supplier_id == sup.id)
-                ).first()
-                cond = (ConditionType[proposal.condition_type]
-                        if proposal.condition_type in ConditionType.__members__
-                        else ConditionType.PRICE)
-                commitment = Commitment(
-                    supplier_id=sup.id,
-                    contract_id=contract.id if contract else None,
-                    source_type=SourceType.EMAIL,
-                    source_ref=f"e-post {valgt_dato.isoformat()}, {avsender}",
-                    source_quote=text.strip()[:500],
-                    gyldighet=proposal.gyldighet,
-                    condition_type=cond,
-                    item_ref=proposal.item_ref,
-                    value=proposal.value,
-                    unit=proposal.unit,
-                    valid_from=dato,
-                    formalization=Formalization.PENDING_ANNEX,
-                    extracted_by="regel:epost-parser-v1",
-                    confirmed_by_user=True,
-                )
-                session.add(commitment)
-                session.commit()
-                session.refresh(commitment)
-                # Real action → append-only audit trail. A confirm despite UGYLDIG is recorded
-                # explicitly (who, when via created_at, against which warning).
-                session.add(AuditLog(
-                    actor="demo-bruker", action="commitment.confirmed_from_email",
-                    entity=f"commitment:{commitment.id}",
-                    detail=confirm_audit_detail(avsender, proposal.gyldighet),
-                ))
-                session.commit()
-            st.session_state.epost_proposed = False
-            if proposal.gyldighet == "UGYLDIG":
-                st.warning("Registrert tross indikasjon om mulig vesentlig endring. Handlingen er "
-                           "logget i revisjonssporet med saksbehandlers ansvar.")
-            else:
-                st.toast("Forpliktelsen er bekreftet og lagt til i kontrollgrunnlaget.",
-                         icon="✅")
-        if b2.button("Avvis"):
-            st.session_state.epost_proposed = False
-            st.info("Forslaget er avvist. Ingenting er lagt til.")
 
 footer()
