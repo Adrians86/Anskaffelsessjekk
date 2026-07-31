@@ -107,6 +107,30 @@ def test_verify_item_not_on_price_list_is_warn(session):
     assert r.findings[0].severity == Severity.WARN
 
 
+def test_verify_reflects_confirmed_commitment_with_quote(session):
+    """P6 (F4→F3): an item NOT on the price list but covered by a CONFIRMED e-mail forpliktelse is
+    controlled against it — verdict AVVIK naming the commitment and its source quote."""
+    from datetime import date
+
+    from core.models import ConditionType, SourceType
+    from core.registry import create_commitment
+    sup, _ = _supplier_with_contract(session)
+    create_commitment(
+        session, supplier_id=sup.id, condition_type=ConditionType.PRICE,
+        source_type=SourceType.EMAIL, source_ref="e-post 2026-06-01, J. Hansen",
+        item_ref="TILLEGG-7", value=Decimal("2000"),
+        source_quote="Vi holder 2000 kr pr enhet for TILLEGG-7", valid_from=date(2026, 1, 1),
+        confirmed_by_user=True)
+    inv = intake_invoice(session, parse_csv(
+        "fakturanr;orgnr;artikkelnr;antall;pris\nF-C;998877665;TILLEGG-7;1;2500\n")[0],
+        source=InvoiceSource.MANUAL)
+    r = prisliste.verify(session, inv)
+    assert r.verdict.value == "AVVIK"
+    f = next(f for f in r.findings if f.code == Code.PRICE_ABOVE_AGREED)
+    assert "TILLEGG-7" in f.message and "2000" in f.message
+    assert "2000 kr pr enhet" in f.message      # the source quote is surfaced (the WHY)
+
+
 def test_verify_in_price_returns_samsvar(session):
     sup, _ = _supplier_with_contract(session)
     inv = intake_invoice(session, parse_csv(

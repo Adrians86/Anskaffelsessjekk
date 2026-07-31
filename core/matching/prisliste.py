@@ -14,9 +14,33 @@ from decimal import Decimal
 from sqlmodel import Session, select
 
 from core.matching.findings import Code, Finding, Severity
-from core.models import Contract, ContractLine, Invoice, InvoiceLine, Verdict
+from core.models import (
+    Commitment,
+    ConditionType,
+    Contract,
+    ContractLine,
+    Formalization,
+    Invoice,
+    InvoiceLine,
+    Verdict,
+)
 
 _PRICE_TOLERANCE = Decimal("0")
+
+
+def _active_commitment(session: Session, invoice: Invoice, item_ref: str) -> Commitment | None:
+    """Most recent ACTIVE (confirmed, not deleted, valid) price/rate commitment for this item and
+    supplier — a confirmed e-mail/meeting agreement that participates in control (F4 → F3). Read-only."""
+    cands = [
+        c for c in session.exec(
+            select(Commitment)
+            .where(Commitment.supplier_id == invoice.supplier_id)
+            .where(Commitment.item_ref == item_ref)
+            .where(Commitment.condition_type.in_([ConditionType.PRICE, ConditionType.RATE]))
+        ).all()
+        if c.is_active_on(invoice.invoice_date)
+    ]
+    return max(cands, key=lambda c: c.valid_from) if cands else None
 
 
 def _fmt(d: Decimal) -> str:
@@ -74,6 +98,34 @@ def check(session: Session, invoice: Invoice, contract: Contract | None) -> list
                 .where(ContractLine.item_ref == line.item_ref)
             ).first()
         if cl is None:
+            # P6 — no price line, but a CONFIRMED forpliktelse (e-mail/meeting) may cover this item.
+            # The verdict then reflects it WITH the source quote (F4 feeds the faktura-verifikasjon).
+            commitment = _active_commitment(session, invoice, line.item_ref)
+            if commitment is not None and commitment.value is not None:
+                quote = getattr(commitment, "source_quote", None) or commitment.source_ref
+                basis = f"Bekreftet forpliktelse ({commitment.source_type.value}): {commitment.source_ref}"
+                if line.unit_price > commitment.value + _PRICE_TOLERANCE:
+                    over = (line.unit_price - commitment.value) * line.quantity
+                    findings.append(Finding(
+                        code=Code.PRICE_ABOVE_AGREED, severity=Severity.DEVIATION,
+                        invoice_id=invoice.id, invoice_line_id=line.id,
+                        message=(f"Pris {_fmt(line.unit_price)} > avtalt {_fmt(commitment.value)} for "
+                                 f"{line.item_ref} — bekreftet e-postavtale «{quote}»."),
+                        citation=basis,
+                        expected=_fmt(commitment.value), actual=_fmt(line.unit_price),
+                        deviation_amount=over,
+                    ))
+                elif commitment.formalization != Formalization.FORMALIZED:
+                    findings.append(Finding(
+                        code=Code.INFORMAL_BASIS, severity=Severity.WARN,
+                        invoice_id=invoice.id, invoice_line_id=line.id,
+                        message=(f"Pris samsvarer med bekreftet e-postavtale for {line.item_ref} "
+                                 f"«{quote}» — krever formalisering."),
+                        citation=basis,
+                        expected=_fmt(commitment.value), actual=_fmt(line.unit_price),
+                    ))
+                continue
+
             findings.append(Finding(
                 code=Code.NO_AGREED_BASIS, severity=Severity.WARN,
                 invoice_id=invoice.id, invoice_line_id=line.id,
