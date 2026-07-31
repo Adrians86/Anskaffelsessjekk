@@ -59,10 +59,13 @@ class Commitment(SQLModel, table=True):
     extracted_by: str = "manual"         # "manual" | "llm:<model>"
     confirmed_by_user: bool = False      # human-in-the-loop gate: unconfirmed
                                          # LLM extractions never participate in control
+    is_deleted: bool = False             # soft delete — row + audit trail are kept (hard rule #7)
     created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
     def is_active_on(self, on: date) -> bool:
-        """A commitment participates in control only when confirmed and valid."""
+        """A commitment participates in control only when confirmed, not deleted, and valid."""
+        if getattr(self, "is_deleted", False):
+            return False
         if not self.confirmed_by_user and self.extracted_by != "manual":
             return False
         if on < self.valid_from:

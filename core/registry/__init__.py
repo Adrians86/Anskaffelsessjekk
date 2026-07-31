@@ -9,6 +9,17 @@ from core.registry.faktura import (
     latest_decision,
     record_decision,
 )
+from core.registry.forpliktelse import (
+    assess_gyldighet,
+    create_commitment,
+    create_commitments_for_suppliers,
+    get_commitment,
+    list_commitments,
+    resolve_contract_id,
+    restore_commitment,
+    soft_delete_commitment,
+    update_commitment,
+)
 from core.registry.kontrakt import (
     _clause_label,
     add_line,
@@ -64,4 +75,9 @@ __all__ = [
     "change_clause_of", "_clause_label",
     # Faktura intake + decision
     "intake_invoice", "record_decision", "latest_decision",
+    # Forpliktelse (commitment) CRUD
+    "list_commitments", "get_commitment", "create_commitment",
+    "create_commitments_for_suppliers", "update_commitment",
+    "soft_delete_commitment", "restore_commitment",
+    "assess_gyldighet", "resolve_contract_id",
 ]
