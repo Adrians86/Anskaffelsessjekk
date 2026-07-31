@@ -33,7 +33,8 @@ jobs:
           assert len(w) == 1, f"expected exactly one wheel, got {w}"
           names = zipfile.ZipFile(w[0]).namelist()
           for required in ("core/registry/__init__.py", "core/registry/kontrakt.py",
-                           "core/registry/faktura.py", "core/matching/prisliste.py",
+                           "core/registry/faktura.py", "core/registry/forpliktelse.py",
+                           "core/matching/prisliste.py",
                            "core/extraction/csv_faktura.py", "core/models/decision.py",
                            "core/models/contact.py", "core/models/service.py",
                            "core/models/qualification.py",

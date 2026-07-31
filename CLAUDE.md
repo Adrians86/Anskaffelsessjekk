@@ -63,6 +63,31 @@ external integrations, changes to core data model.
 
 ## Current tasks
 
+**Funksjon 4 levert — Forpliktelse A–Z (P1–P8): e-postavtaler/møte/aneks som fullt verktøy på leverandøren.**
+
+Brief "Funksjon 4: Forpliktelse A–Z" (docs/BRIEF_FORPLIKTELSE_AZ.md) delivered on main. Siste av
+serien 2/3/4. Partner-approved core-model change (Commitment.is_deleted). Version 0.9.0 → **0.10.0**
++ requirements rebuild marker.
+- **Foundation (P1)** — `Commitment.is_deleted` (soft delete; `is_active_on` excludes deleted).
+  `core/registry/forpliktelse.py` = pure CRUD (list/get/create/update/soft_delete/restore), EVERY
+  write appends an AuditLog row; `create_commitments_for_suppliers` (P2); `assess_gyldighet` disposed
+  by the contract endringsklausul (P3, read-only H1).
+- **P1** `app/ui_forpliktelser.py` `render_ny_forpliktelse` — fire registreringsveier: **manuelt /
+  lim inn e-post (fyller skjemaet) / møte / aneks**. Innliming = bekvemmelighet, ikke krav. Forankret
+  PÅ leverandøren (leverandørkort), ikke i en løsrevet fane. **P2** én eller flere leverandører
+  (standard én). **P4** felles vilkår ELLER ulik verdi per leverandør. **P5** full CRUD (rediger
+  popover + slett) via `render_commitment_card`.
+- **P3** gyldighet som **indikasjon** (SANNSYNLIGVIS GYLDIG / KREVER FORMALISERING / MULIG UGYLDIG)
+  m/ fast disclaimer, bruker endringsklausulen; scope/pct-utvidelse → MULIG UGYLDIG uansett klausul.
+- **P6** `core/matching/prisliste.py`: en faktura som treffer et **bekreftet** e-postforpliktelse
+  (uten prislinje) → verdikt gjenspeiler det MED sitat (PRICE_ABOVE_AGREED / INFORMAL_BASIS). ADDITIV
+  → reconciliation urørt. **P7** fjernet den løsrevne fanen «Registrer fra e-post» (bor nå på leverandøren).
+- **P8** `tests/test_forpliktelse_crud.py` (7 tester: CRUD + audit-per-skriv + H1 + soft-delete-ut-av-
+  kontroll + gyldighet-per-klausul + multi-leverandør) + P6-test i test_faktura_az. CI package-guard
+  utvidet med registry/forpliktelse. pytest **129 passed**, ruff clean, alle 8 sider åpner.
+  **Reconciliation unchanged: 22 310 kr.**
+- **Neste:** OCR (PDF/JPG) = bølge 2; ev. forpliktelse i evaluate_invoice-kjeden (three_way) senere.
+
 **Funksjon 3 levert — Faktura A–Z (N1–N8): inntak + verifikasjon end-to-end, første fulle kjede.**
 
 Brief "Funksjon 3: Faktura A–Z" (docs/BRIEF_FAKTURA_AZ.md) delivered on main. Domyka kjeden

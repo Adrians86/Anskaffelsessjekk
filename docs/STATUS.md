@@ -1106,3 +1106,28 @@ finding with real product impact; the rest are low-risk hardening I can batch on
 - Decisions needed / questions for the partner: none open. F3 lukker første fulle kjede A→Z.
 - Next planned step: F4 (forpliktelser) — eller partner-review. Live-verifisering på streamlit.app
   ligger på partner-/Adrian-siden (egress blokkerer streamlit.app fra sandbox).
+
+---
+
+### 2026-07-31 · claude-code
+- Done: **Funksjon 4 — Forpliktelse A–Z (P1–P8)** delivered on main (brief: docs/BRIEF_FORPLIKTELSE_AZ.md).
+  Siste av serien 2/3/4. E-postavtaler/møte/aneks blir et fullt verktøy (add→view→edit→delete→use)
+  forankret PÅ leverandøren. Version 0.9.0 → **0.10.0** + requirements rebuild marker (Commitment.is_deleted,
+  partner-approved core-model change).
+  - **P1** `core/models/commitment.py` is_deleted (soft delete); `core/registry/forpliktelse.py` pure
+    CRUD, hver skriv = 1 AuditLog. `app/ui_forpliktelser.py` `render_ny_forpliktelse` — fire veier:
+    manuelt / lim inn e-post (fyller skjemaet) / møte / aneks. Bor på leverandørkortet, ikke i en
+    løsrevet fane («fikser fortsatt manuelt»).
+  - **P2** én eller flere leverandører (standard én). **P4** felles vilkår ELLER ulik verdi per
+    leverandør. **P5** full CRUD (rediger popover + slett).
+  - **P3** gyldighet som indikasjon (SANNSYNLIGVIS GYLDIG / KREVER FORMALISERING / MULIG UGYLDIG) m/
+    disclaimer, disponert av avtalens endringsklausul; scope/pct → MULIG UGYLDIG uansett klausul.
+  - **P6** `core/matching/prisliste.py`: faktura mot bekreftet e-postforpliktelse (uten prislinje) →
+    verdikt m/ sitat. ADDITIV → reconciliation urørt. **P7** fjernet «Registrer fra e-post»-fanen.
+  - **P8** `tests/test_forpliktelse_crud.py` (7) + P6-test. CI package-guard utvidet med
+    registry/forpliktelse.
+- Tests: **129 passed**, ruff clean, alle 8 sider åpner (AppTest), wheel-guard grønt lokalt.
+  **Reconciliation unchanged: 22 310 kr.**
+- Decisions needed / questions for the partner: none open. Serien 2/3/4 er nå fullført A→Z.
+- Next planned step: OCR (PDF/JPG, bølge 2) eller partner-review. Live-verifisering på streamlit.app
+  ligger på partner-/Adrian-siden (egress blokkerer streamlit.app fra sandbox).
