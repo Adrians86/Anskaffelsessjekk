@@ -63,6 +63,21 @@ external integrations, changes to core data model.
 
 ## Current tasks
 
+**Funksjon 6 levert — Worklist A–Z (W1–W7): arbeidsliste med filtrering, paginering og status.**
+
+Brief "Funksjon 6: Worklist A–Z" (docs/BRIEF_WORKLIST_AZ.md) delivered. Siste kjernefunksjon
+i Streamlit. Ingen modellendring → ingen versjonsbump.
+- **W1** Landing page (Hjem.py) strippet: handlingsknapper + KPI + porteføljehelse + maks 5
+  presserende (avvik først, besluttede filtrert bort) + «→ Åpne arbeidsliste». Fakturakøen med
+  tabs og alle fakturaer fjernet.
+- **W2** `app/pages/8_Arbeidsliste.py`: kompakt HTML-tabell, paginering 25/side, fire filtere
+  (verdikt/status/leverandør/søk), standard sortering avvik øverst.
+- **W3** «Åpne →» setter preselect_invoice → Fakturakontroll. Filter/side bevares i session_state.
+- **W4** Fakturastatus utledet: ny/under_kontroll/godkjent/avvist. Chip + filter i arbeidslisten.
+- **W6** Ytelse: @st.cache_data + ren HTML. Tom tilstand: «Alt er kontrollert 🎯».
+- **W7** `tests/test_worklist.py` (7 tester). pytest **152 passed**, ruff clean, alle 9 sider åpner.
+  **Reconciliation unchanged: 22 310 kr.**
+
 **Funksjon 3.5 levert — OCR A–Z (O1–O7): skann → bekreftelse → DERETTER kontroll.**
 
 Brief "Funksjon 3.5: OCR A–Z" (docs/BRIEF_OCR_AZ.md) delivered on main. **NB:** partnerens brief-tekst

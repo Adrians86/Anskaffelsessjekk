@@ -1,13 +1,17 @@
+"""Arbeidsflate — concise landing: actions + KPIs + top urgent items + worklist link.
+
+W1: the landing page is NOT a wall of invoices. It shows actions, counters, the 3–5 most
+pressing items (avvik first), and a link to the dedicated worklist (Arbeidsliste).
+"""
 from html import escape
 
 import streamlit as st
 from db import get_session, money, nok
 from sqlmodel import select
-from texts import RECOMMENDED_ACTIONS
 from ui_common import verdict_pill
 
 from core.matching.currency import is_foreign
-from core.models import AuditLog, Invoice, Supplier
+from core.models import AuditLog, Invoice, InvoiceDecision, Supplier
 from core.reporting import evaluate_invoice
 
 st.set_page_config(page_title="Arbeidsflate", page_icon="📊", layout="wide")
@@ -22,7 +26,7 @@ page_header(
     chip="Syntetiske data · regelverk per 01.07.2026",
 )
 
-# U7 — actions first: the three primary tasks right at the top.
+# Actions first (U7)
 _act = st.columns(3)
 if _act[0].button("⬆ Last opp faktura (EHF)", use_container_width=True):
     st.switch_page("pages/1_Fakturakontroll.py")
@@ -32,9 +36,9 @@ if _act[2].button("⚖ Kjør terskelsjekk", use_container_width=True):
     st.switch_page("pages/4_Terskelsjekk.py")
 st.markdown("---")
 
+
 @st.cache_data
 def compute_portfolio_stats():
-    """Compute all portfolio metrics (cached)."""
     with get_session() as session:
         invoices = session.exec(select(Invoice)).all()
         counts = {"SAMSVAR": 0, "TIL_VURDERING": 0, "AVVIK": 0}
@@ -58,48 +62,45 @@ def compute_portfolio_stats():
 
 
 @st.cache_data
-def queue_rows():
-    """Fakturakø rows (cached, read-only). evaluate_invoice never writes."""
+def _urgent_rows():
+    """Top 5 urgent invoices (avvik first, then amount desc) for the landing page."""
     with get_session() as session:
-        invoices = session.exec(select(Invoice).order_by(Invoice.invoice_number)).all()
+        invoices = session.exec(select(Invoice)).all()
         rows = []
         for inv in invoices:
             result = evaluate_invoice(session, inv)
+            if result.verdict.value == "SAMSVAR":
+                continue
             sup = session.get(Supplier, inv.supplier_id)
-            finding_text = "—"
+            dec = session.exec(
+                select(InvoiceDecision)
+                .where(InvoiceDecision.invoice_id == inv.id)
+                .order_by(InvoiceDecision.created_at.desc(), InvoiceDecision.id.desc())
+            ).first()
+            if dec is not None and dec.decision in ("godkjent", "avvist"):
+                continue
+            finding_text = ""
             if result.findings:
                 f = result.findings[0]
                 prefix = "📧 " if f.code.value == "INFORMAL_BASIS" else ""
-                finding_text = prefix + f.message[:60]
+                finding_text = prefix + f.message[:55]
             rows.append({
-                "invoice": inv.invoice_number, "supplier": sup.name,
-                "amount": money(inv.total_ex_vat, inv.currency), "status": result.verdict.value,
-                "finding": finding_text, "invoice_id": inv.id,
+                "invoice_id": inv.id,
+                "invoice_number": inv.invoice_number,
+                "supplier_name": sup.name,
+                "amount": money(inv.total_ex_vat, inv.currency),
+                "amount_raw": float(inv.total_ex_vat),
+                "verdict": result.verdict.value,
+                "finding": finding_text,
             })
-        return rows
-
-
-@st.cache_data
-def action_items():
-    """"Krever handling" worklist rows (cached, read-only)."""
-    with get_session() as session:
-        invoices = session.exec(select(Invoice)).all()
-        items = []
-        for inv in invoices:
-            result = evaluate_invoice(session, inv)
-            for finding in result.findings:
-                if finding.severity.value in ["WARN", "DEVIATION"]:
-                    items.append({
-                        "invoice": inv.invoice_number, "message": finding.message,
-                        "recommended": RECOMMENDED_ACTIONS.get(
-                            finding.code.value, "Vurder med saksbehandler"),
-                    })
-        return items
+        order = {"AVVIK": 0, "TIL_VURDERING": 1}
+        rows.sort(key=lambda r: (order.get(r["verdict"], 2), -r["amount_raw"]))
+        return rows[:5]
 
 
 stats = compute_portfolio_stats()
 
-# KPI editorial strip (variant C) — one connected strip with hairline dividers, not loose cards.
+# KPI editorial strip (variant C)
 _verdi_txt = nok(stats["total_verdi"]) if stats["total_verdi"] > 0 else "0 kr"
 _kpi_cells = [
     ("", "Kontrollert", str(stats["total_invoices"])),
@@ -125,7 +126,7 @@ if stats.get("n_foreign"):
 
 st.markdown("---")
 
-# Porteføljehelse bar (horizontal stacked)
+# Portfolio health bar
 total = stats["total_invoices"]
 if total > 0:
     pct_err = (stats["counts"]["AVVIK"] / total) * 100
@@ -135,88 +136,77 @@ if total > 0:
     col_bar, col_legend = st.columns([4, 1])
     with col_bar:
         st.write("**Porteføljehelse**")
-        bar_html = f"""
-        <div style="display:flex;height:12px;border-radius:6px;overflow:hidden;margin:8px 0">
-            <div style="width:{pct_err}%;background:#C62828"></div>
-            <div style="width:{pct_warn}%;background:#B58900"></div>
-            <div style="width:{pct_ok}%;background:#2E7D32"></div>
-        </div>
-        """
+        bar_html = (
+            '<div style="display:flex;height:12px;border-radius:6px;overflow:hidden;margin:8px 0">'
+            f'<div style="width:{pct_err}%;background:#C62828"></div>'
+            f'<div style="width:{pct_warn}%;background:#B58900"></div>'
+            f'<div style="width:{pct_ok}%;background:#2E7D32"></div>'
+            '</div>'
+        )
         st.markdown(bar_html, unsafe_allow_html=True)
     with col_legend:
-        st.caption(f"● {stats['counts']['AVVIK']} avvik · {stats['counts']['TIL_VURDERING']} til vurdering · {stats['counts']['SAMSVAR']} samsvar")
+        st.caption(
+            f"● {stats['counts']['AVVIK']} avvik · "
+            f"{stats['counts']['TIL_VURDERING']} til vurdering · "
+            f"{stats['counts']['SAMSVAR']} samsvar"
+        )
 
 st.markdown("---")
 
-# Fakturakø with tabs
-st.write("**Fakturakø**")
+# W1 — Top urgent items (max 5, avvik first) + link to full worklist
+urgent = _urgent_rows()
 
-rows = queue_rows()
+col_title, col_link = st.columns([3, 1])
+with col_title:
+    st.write("**Krever handling**")
+with col_link:
+    if st.button("→ Åpne arbeidsliste", type="primary", use_container_width=True):
+        st.switch_page("pages/8_Arbeidsliste.py")
 
-# Tabs for filtering
-tab_names = ["Alle", "Avvik", "Til vurdering", "Samsvar"]
-tab_filters = [None, "AVVIK", "TIL_VURDERING", "SAMSVAR"]
-
-tabs = st.tabs([f"{name} ({sum(1 for r in rows if r['status'] == f or f is None)})"
-                for name, f in zip(tab_names, tab_filters, strict=True)])
-
-for tab_idx, (tab, filter_status) in enumerate(zip(tabs, tab_filters, strict=True)):
-    with tab:
-        filtered_rows = [r for r in rows if filter_status is None or r["status"] == filter_status]
-
-        for row in filtered_rows[:8]:  # Show first 8
-            col1, col2, col3, col4, col5, col6 = st.columns([1.5, 2.5, 1.5, 1.2, 2, 0.8])
-            with col1:
-                st.text(row["invoice"])
-            with col2:
-                st.text(row["supplier"])
-            with col3:
-                st.text(row["amount"])
-            with col4:
-                st.markdown(verdict_pill(row["status"]), unsafe_allow_html=True)
-            with col5:
-                st.caption(row["finding"])
-            with col6:
-                if st.button("Åpne →", key=f"open_{tab_idx}_{row['invoice_id']}", use_container_width=True):
-                    st.session_state.preselect_invoice = row["invoice_id"]
-                    st.switch_page("pages/1_Fakturakontroll.py")
+if urgent:
+    for row in urgent:
+        c1, c2, c3, c4, c5 = st.columns([1.2, 2.2, 1.4, 2.5, 0.8])
+        with c1:
+            st.text(row["invoice_number"])
+        with c2:
+            st.text(row["supplier_name"])
+        with c3:
+            st.markdown(verdict_pill(row["verdict"]), unsafe_allow_html=True)
+        with c4:
+            st.caption(row["finding"])
+        with c5:
+            if st.button("Åpne →", key=f"home_open_{row['invoice_id']}",
+                         use_container_width=True):
+                st.session_state.preselect_invoice = row["invoice_id"]
+                st.switch_page("pages/1_Fakturakontroll.py")
+else:
+    st.markdown(
+        '<div style="text-align:center;padding:24px 16px;color:#5A6673">'
+        '<div style="font-size:32px;margin-bottom:6px">🎯</div>'
+        '<div style="font-size:14px;font-weight:600">Alt er kontrollert</div>'
+        '<div style="font-size:12px;margin-top:3px">'
+        'Ingen fakturaer krever handling akkurat nå.</div></div>',
+        unsafe_allow_html=True,
+    )
 
 st.markdown("---")
 
-# Worklist ("Krever handling") and "Siste hendelser" side by side (variant C).
-col_work, col_feed = st.columns([3, 2], gap="large")
-
-with col_work:
-    st.markdown('<div class="as-panel-title">Krever handling</div>', unsafe_allow_html=True)
-    items = action_items()
-    if items:
-        for idx, item in enumerate(items[:10]):  # Show first 10
-            c1, c2 = st.columns([0.6, 6])
-            with c1:
-                st.checkbox("Kvitter", key=f"action_{idx}", label_visibility="collapsed")
-            with c2:
-                st.markdown(f"**{item['invoice']}** — {item['message'][:44]}")
-                st.caption(f"Anbefalt: {item['recommended']}")
+# Events feed (compact)
+st.markdown('<div class="as-panel-title">Siste hendelser</div>', unsafe_allow_html=True)
+with get_session() as session:
+    events = session.exec(select(AuditLog).order_by(AuditLog.created_at.desc())).all()[:8]
+    if events:
+        feed_rows = "".join(
+            f'<div class="as-feed-row"><time>{escape(e.created_at.strftime("%H:%M"))}</time>'
+            f'{escape(e.actor)}: {escape(e.action)} '
+            f'<span style="color:#5A6673">({escape(e.entity)})</span></div>'
+            for e in events
+        )
     else:
-        st.caption("Ingen funn som krever handling — alle fakturaer er i orden.")
-
-with col_feed:
-    st.markdown('<div class="as-panel-title">Siste hendelser</div>', unsafe_allow_html=True)
-    with get_session() as session:
-        events = session.exec(select(AuditLog).order_by(AuditLog.created_at.desc())).all()[:8]
-        if events:
-            feed_rows = "".join(
-                f'<div class="as-feed-row"><time>{escape(e.created_at.strftime("%H:%M"))}</time>'
-                f'{escape(e.actor)}: {escape(e.action)} '
-                f'<span style="color:#5A6673">({escape(e.entity)})</span></div>'
-                for e in events
-            )
-        else:
-            feed_rows = '<div class="as-feed-row">Ingen hendelser ennå.</div>'
-    st.markdown(f'<div class="as-feed">{feed_rows}</div>', unsafe_allow_html=True)
+        feed_rows = '<div class="as-feed-row">Ingen hendelser ennå.</div>'
+st.markdown(f'<div class="as-feed">{feed_rows}</div>', unsafe_allow_html=True)
 
 st.markdown("---")
-
-st.caption("**SYNTETISKE DATA** — alle leverandører, avtaler og fakturaer er generert. Ingen reelle data inngår.")
-
+st.caption("**SYNTETISKE DATA** — alle leverandører, avtaler og fakturaer er generert. "
+           "Ingen reelle data inngår.")
 footer()

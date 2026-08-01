@@ -1162,3 +1162,28 @@ finding with real product impact; the rest are low-risk hardening I can batch on
      eventuell senere utvidelse, ikke bygget nå.
 - Next planned step: partner-review. Live-verifisering på streamlit.app ligger på partner-/Adrian-
   siden (egress blokkerer streamlit.app fra sandbox).
+
+---
+
+### 2026-08-01 · claude-code
+- Done: **Funksjon 6: Worklist A–Z (W1–W7)** — siste kjernefunksjon i Streamlit-grensesnittet.
+  Arbeidsflaten er ikke lenger en portiank med alle fakturaer. Dedikert arbeidsliste håndterer 100+
+  fakturaer uten treig rendering.
+  - **W1** Arbeidsflaten (Hjem.py) viser nå: handlingsknapper + KPI-stripe + porteføljehelse-bar +
+    maks 5 presserende faktuaer (avvik først, besluttede filtrert bort) + «→ Åpne arbeidsliste».
+    Fakturakøen med tabs og alle fakturaer er fjernet fra landingen.
+  - **W2** Ny side `app/pages/8_Arbeidsliste.py`: kompakt HTML-tabell (ikke N Streamlit-widgets),
+    paginering 25/side, fire filtere (verdikt/status/leverandør/søk), standard sortering avvik øverst
+    deretter beløp synkende.
+  - **W3** «Åpne →» fra arbeidslisten setter `preselect_invoice` og navigerer til Fakturakontroll.
+    Filter/side bevares i session_state.
+  - **W4** Fakturastatus utledet: `ny` (SAMSVAR uten beslutning), `under_kontroll` (AVVIK/VURDERING
+    uten beslutning), `godkjent` / `avvist` (fra InvoiceDecision). Vises som chip, filterbar.
+  - **W6** Ytelse: `@st.cache_data`, ren HTML-tabell. Tom tilstand: «Alt er kontrollert 🎯».
+  - **W7** `tests/test_worklist.py` (7 tester): begge sider åpner, arbeidsliste-link på landing,
+    maks 5 på landing, status-avledning, reconciliation 22 310, filtere finnes.
+  - Ingen modellendring → ingen versjonsbump.
+- Tests: **152 passed** (145 → +7), ruff clean, alle 9 sider åpner (AppTest), wheel-guard grønt.
+  **Reconciliation unchanged: 22 310 kr.**
+- Decisions needed / questions for the partner: ingen.
+- Next planned step: partner-review. Brief lagret i docs/BRIEF_WORKLIST_AZ.md.
