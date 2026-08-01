@@ -1,0 +1,6 @@
+# apt-packages Streamlit Community Cloud installs before pip (system binaries).
+# tesseract-ocr = the image-OCR engine behind pytesseract (Funksjon 3.5).
+# If this install fails the app still runs: PDF text-layer reading is pure Python, and
+# core/extraction/ocr.py degrades with an honest message instead of crashing.
+tesseract-ocr
+tesseract-ocr-nor

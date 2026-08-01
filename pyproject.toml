@@ -1,6 +1,6 @@
 [project]
 name = "anskaffelsessjekk"
-version = "0.10.0"
+version = "0.11.0"
 description = "KI-drevet kontroll av fakturaer, avtaler og anskaffelsesregelverk for offentlig sektor"
 requires-python = ">=3.11"
 dependencies = [
@@ -8,6 +8,12 @@ dependencies = [
     "pyyaml>=6.0",
     "fpdf2>=2.8",
     "defusedxml>=0.7",
+    # OCR-inntak (Funksjon 3.5): pypdf reads a PDF text layer with no system binary.
+    # pytesseract/pillow cover image OCR and need the tesseract binary (see packages.txt);
+    # core/extraction/ocr.py degrades honestly when it is absent.
+    "pypdf>=4.0",
+    "pytesseract>=0.3.10",
+    "pillow>=10.0",
 ]
 
 [project.optional-dependencies]
