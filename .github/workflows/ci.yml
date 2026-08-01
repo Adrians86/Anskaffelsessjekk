@@ -35,7 +35,8 @@ jobs:
           for required in ("core/registry/__init__.py", "core/registry/kontrakt.py",
                            "core/registry/faktura.py", "core/registry/forpliktelse.py",
                            "core/matching/prisliste.py",
-                           "core/extraction/csv_faktura.py", "core/models/decision.py",
+                           "core/extraction/csv_faktura.py", "core/extraction/ocr.py",
+                           "core/models/decision.py",
                            "core/models/contact.py", "core/models/service.py",
                            "core/models/qualification.py",
                            "core/rules/data/thresholds_2026.yaml"):

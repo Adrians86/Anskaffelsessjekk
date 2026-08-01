@@ -1131,3 +1131,34 @@ finding with real product impact; the rest are low-risk hardening I can batch on
 - Decisions needed / questions for the partner: none open. Serien 2/3/4 er nå fullført A→Z.
 - Next planned step: OCR (PDF/JPG, bølge 2) eller partner-review. Live-verifisering på streamlit.app
   ligger på partner-/Adrian-siden (egress blokkerer streamlit.app fra sandbox).
+
+---
+
+### 2026-08-01 · claude-code
+- Done: **Funksjon 3.5 — OCR A–Z (O1–O7)** delivered on main (brief: docs/BRIEF_OCR_AZ.md).
+  Version 0.10.0 → **0.11.0** + requirements rebuild marker (nytt core-modul + nye avhengigheter).
+  Sikkerhetsprinsippet fra briefen er implementert bokstavelig: **OCR leser → viser hva den leste →
+  mennesket bekrefter/retter → FØRST DA kontroll.** Skann går aldri rett i kontrollgrunnlaget.
+  - **O1** `core/extraction/ocr.py`: PDF-tekstlag via pypdf (ren Python — ingen systembinær, virker
+    på Cloud); bilde via pytesseract kun når tesseract-binæren finnes. Mangler motoren → ærlig
+    melding, aldri gjetting, aldri krasj. Skannet PDF uten tekstlag avvises eksplisitt.
+  - **O2** feltuttrekk m/ konfidens (HØY/LAV) + kildelinje per felt. Bildegjenkjent tekst → alle
+    beløp LAV. Tallparsing fikset så «2 11800,00 23600,00» ikke slås sammen til ett falskt beløp.
+  - **O3 (hjertet)** bekreftelsesskjerm «Slik leste vi fakturaen»: alt redigerbart, kryssjekk øverst
+    (antall × pris per linje + Σ linjer mot total) — fanger 11 800 lest som 1 180 — råtekst,
+    disclaimer, og «Bekreft og kontroller» som eneste vei videre.
+  - **O4** bekreftede verdier → samme `ParsedInvoice` som EHF/CSV → samme kjede. Ingen egen OCR-vei.
+  - **O5** revisjonsrad navngir motor + hver rettelse mennesket gjorde. **O6** syntetisk eksempel-PDF
+    der én linje bevisst ikke går opp, så kryssjekken demonstreres i stedet for bare beskrives.
+  - **O7** `tests/test_ocr.py` (16), CI package-guard utvidet med `core/extraction/ocr.py`.
+- Tests: **145 passed** (129 → +16), ruff clean, alle 8 sider åpner (AppTest), wheel-guard grønt.
+  **Reconciliation unchanged: 22 310 kr.**
+- Decisions needed / questions for the partner:
+  1. **Brief-teksten kom ikke gjennom** — bare kjernen (sedno). O1–O7 er utledet av kjernen og
+     dokumentert i docs/BRIEF_OCR_AZ.md. Si fra hvis stegene skal se annerledes ut.
+  2. **packages.txt** (tesseract-ocr) er lagt til for bilde-OCR på Cloud, men kan ikke verifiseres
+     herfra. Uten den fungerer PDF-tekstlag normalt og bilde-OCR degraderer ærlig — ingen krasj.
+  3. Skannet PDF (uten tekstlag) rasteriseres ikke — det ville krevd poppler/pymupdf. Foreslått som
+     eventuell senere utvidelse, ikke bygget nå.
+- Next planned step: partner-review. Live-verifisering på streamlit.app ligger på partner-/Adrian-
+  siden (egress blokkerer streamlit.app fra sandbox).

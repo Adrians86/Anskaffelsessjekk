@@ -63,6 +63,34 @@ external integrations, changes to core data model.
 
 ## Current tasks
 
+**Funksjon 3.5 levert — OCR A–Z (O1–O7): skann → bekreftelse → DERETTER kontroll.**
+
+Brief "Funksjon 3.5: OCR A–Z" (docs/BRIEF_OCR_AZ.md) delivered on main. **NB:** partnerens brief-tekst
+kom ikke gjennom i meldingen — bare kjernen (sedno). O1–O7 er utledet av kjernen og står i brief-filen
+som et forslag partneren kan korrigere. Version 0.10.0 → **0.11.0** + requirements rebuild marker.
+- **Sikkerhetsprinsipp:** et skannet dokument er en LESEHJELP, aldri et kontrollgrunnlag. Uttrekket er
+  et FORSLAG; det deltar først i kontroll etter at et menneske har bekreftet tallene (hard rule #3).
+- **O1** `core/extraction/ocr.py` `read_document()`: PDF-tekstlag via **pypdf** (ren Python — virker
+  på Cloud uten systembinær); bilde via **pytesseract** KUN når tesseract-binæren finnes. Mangler
+  motoren → `OcrUnavailable` m/ ærlig norsk melding; skannet PDF uten tekstlag avvises, gjettes ikke.
+  Avhengigheter på tre flater: pyproject + requirements + **packages.txt** (tesseract-ocr).
+- **O2** `parse_scanned_invoice()` → `ProposedInvoice`: hvert felt m/ **konfidens (HØY/LAV)** og
+  **kildelinjen**. Bildegjenkjent tekst tvinger ALLE beløp til LAV. Ren tekstbehandling → CI trenger
+  ingen binær.
+- **O3 (hjertet)** `render_ocr_confirmation` «Slik leste vi fakturaen»: alt redigerbart, kryssjekk
+  ØVERST (antall × pris per linje + Σ linjer mot totalbeløp) — fanger nettopp 11 800 lest som 1 180 —
+  råtekst i expander, ingenting kontrolleres før «Bekreft og kontroller».
+- **O4** `confirmed_to_parsed()` bygger SAMME `ParsedInvoice` som EHF/CSV → intake → prisliste-
+  verifikasjon → verdikt → beslutning → protokoll. **Ingen egen OCR-verifikasjonsvei.**
+- **O5** `record_ocr_confirmation()` + `corrections_vs_proposal()`: revisjonsraden navngir motoren og
+  HVER rettelse mennesket gjorde. **O6** `build_sample_pdf()` (syntetisk; KAB-3003-linjen går bevisst
+  ikke opp, så kryssjekken demonstreres).
+- **O7** `tests/test_ocr.py` (16 tester: motor/degradering · konfidens · kryssjekk fanger feillesing ·
+  bekreftede verdier → samme kjede · audit m/ rettelser · H1). CI-guard utvidet. pytest **145 passed**,
+  ruff clean, alle 8 sider åpner. **Reconciliation unchanged: 22 310 kr.**
+- **Gjenstår å verifisere live:** at Streamlit Cloud faktisk installerer `packages.txt` (tesseract) —
+  uten den virker PDF-tekstlag som normalt og bilde-OCR degraderer ærlig.
+
 **Funksjon 4 levert — Forpliktelse A–Z (P1–P8): e-postavtaler/møte/aneks som fullt verktøy på leverandøren.**
 
 Brief "Funksjon 4: Forpliktelse A–Z" (docs/BRIEF_FORPLIKTELSE_AZ.md) delivered on main. Siste av
