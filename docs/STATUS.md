@@ -1187,3 +1187,30 @@ finding with real product impact; the rest are low-risk hardening I can batch on
   **Reconciliation unchanged: 22 310 kr.**
 - Decisions needed / questions for the partner: ingen.
 - Next planned step: partner-review. Brief lagret i docs/BRIEF_WORKLIST_AZ.md.
+
+---
+
+### 2026-08-01 · claude-code
+- Done: **Droga B Steg 1 (B1–B7)** — first vertical slice Next.js + FastAPI, parallel to Streamlit.
+  Streamlit untouched. core/ unchanged. No version bump.
+  - **B1** `api/main.py`: FastAPI thin wrapper over core/ — endpoints: /api/stats, /api/invoices
+    (filters/sort/pagination), /api/invoices/{id} (findings/WHY), /api/suppliers (search),
+    /api/suppliers/{id} (invoices/contracts). In-memory SQLite with same seed as Streamlit.
+    10 API tests (httpx TestClient) in tests/test_api.py.
+  - **B2** `web/` Next.js 16 + Tailwind v4 skeleton: design tokens matching «Lyst kontor» (navy,
+    copper, paper, serif Georgia), root layout with Header/Footer, typed API client (lib/api.ts),
+    format helpers (nb-NO locale), VerdictPill component.
+  - **B3** Landing page (Server Component): KpiStrip (5 KPI cells) + HealthBar + UrgentList
+    (top 5 urgent, avvik first). Graceful empty state when API unreachable.
+  - **B4** Supplier pages: leverandorer/ list + [id] detail (firm info cards, contracts table,
+    invoices table with verdict pills).
+  - **B6** Invoice pages: faktura/ worklist (all invoices, avvik first, StatusChip component) +
+    [id] detail (findings with WHY/citation/deviation, severity dots, invoice lines table).
+  - **B7** `next build` clean (6 routes, TypeScript green). netlify.toml created.
+  - Brief saved as docs/BRIEF_VEIB_STEG1.md.
+- Tests: **162 passed** (152 + 10 API tests), ruff clean, all 9 Streamlit pages open (AppTest).
+  Next.js build clean (0 TS errors, 6 routes compile). **Reconciliation unchanged: 22 310 kr.**
+- Decisions needed / questions for the partner: none. Vertical slice proves the architecture.
+  Deploy target (Netlify/Vercel/Railway) for the API + web can be configured whenever ready.
+- Next planned step: partner-review. Remaining Streamlit screens can be ported screen-by-screen
+  to Next.js once the slice is validated visually.
