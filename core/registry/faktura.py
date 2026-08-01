@@ -97,3 +97,26 @@ def latest_decision(session: Session, invoice_id: int) -> InvoiceDecision | None
         select(InvoiceDecision).where(InvoiceDecision.invoice_id == invoice_id)
         .order_by(InvoiceDecision.created_at.desc(), InvoiceDecision.id.desc())
     ).first()
+
+
+def record_ocr_confirmation(
+    session: Session,
+    invoice_id: int,
+    *,
+    engine: str,
+    corrections: list[str] | None = None,
+    actor: str = "demo-bruker",
+) -> None:
+    """Record that a scanned invoice was READ by OCR and CONFIRMED by a human (O5).
+
+    The audit row names the engine and every field the human corrected, so a reviewer can later
+    see both what the machine claimed and what the human decided it actually said. Append-only
+    (hard rule #7); the scan itself never entered control without passing this step.
+    """
+    if session.get(Invoice, invoice_id) is None:
+        raise RegistryError(f"Ukjent faktura: {invoice_id}")
+    fixed = corrections or []
+    detail = f"skannet faktura lest med {engine} og bekreftet av saksbehandler"
+    detail += (" — rettet: " + "; ".join(fixed)) if fixed else " — uten rettelser"
+    _audit(session, actor, "invoice.ocr_confirmed", f"invoice:{invoice_id}", detail)
+    session.commit()

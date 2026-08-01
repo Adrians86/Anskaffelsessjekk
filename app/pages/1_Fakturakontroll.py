@@ -10,12 +10,21 @@ from ui_faktura import (
     linkage_banner,
     render_batch_results,
     render_decision,
+    render_ocr_confirmation,
     render_single_result,
 )
 
-from core.extraction import build_sample_ehf, parse_ehf
+from core.extraction import (
+    build_sample_ehf,
+    build_sample_pdf,
+    image_ocr_available,
+    parse_ehf,
+    parse_scanned_invoice,
+    read_document,
+)
 from core.extraction.csv_faktura import CSVParseError, parse_csv
 from core.extraction.ehf import EHFParseError
+from core.extraction.ocr import OcrReadError, OcrUnavailable
 from core.matching.currency import is_foreign
 from core.matching.findings import Severity
 from core.models import Invoice, InvoiceSource, Order, Supplier
@@ -291,10 +300,44 @@ with tab_intake:
                     st.divider()
                     render_batch_results(session, imported)
 
-    else:  # PDF / JPG
-        st.file_uploader("PDF / JPG", type=["pdf", "jpg", "jpeg", "png"], disabled=True,
-                         key="ocr_disabled")
-        st.info("PDF/JPG-inntak med OCR kommer i bølge 2. Foreløpig støttes EHF og CSV — som gir "
-                "strukturerte linjer å kontrollere direkte mot prislisten.")
+    else:  # PDF / JPG — OCR (Funksjon 3.5): les → bekreft → DERETTER kontroll
+        st.caption("Et skannet dokument er en lesehjelp, ikke et kontrollgrunnlag. Vi viser hva vi "
+                   "leste, du retter og bekrefter — først da kontrolleres fakturaen, gjennom "
+                   "nøyaktig samme kjede som EHF og CSV.")
+        img_ok, img_reason = image_ocr_available()
+        if not img_ok:
+            st.info(f"PDF med tekstlag leses her og nå. {img_reason}")
+
+        st.download_button("Last ned eksempel-PDF (syntetisk)", data=build_sample_pdf(),
+                           file_name="eksempel-faktura-F-2026-77.pdf", mime="application/pdf")
+        up = st.file_uploader("PDF / JPG", type=["pdf", "jpg", "jpeg", "png"], key="ocr_upload")
+        if up is not None and up.size > _MAX_UPLOAD_BYTES:
+            st.error("Filen er for stor (maks 5 MB).")
+            up = None
+
+        confirmed_id = st.session_state.get("ocr_confirmed_invoice")
+        if confirmed_id is not None:
+            # O4 — after confirmation the invoice runs the SAME chain as EHF/CSV.
+            with get_session() as session:
+                inv = session.get(Invoice, confirmed_id)
+                if inv is not None:
+                    st.divider()
+                    render_single_result(session, inv)
+            if st.button("Les et nytt dokument"):
+                del st.session_state["ocr_confirmed_invoice"]
+                st.rerun()
+        elif up is not None:
+            try:
+                reading = read_document(up.getvalue(), up.name)
+            except OcrUnavailable as exc:
+                st.warning(str(exc))          # honest degrade — never a guess
+                reading = None
+            except OcrReadError as exc:
+                st.error(str(exc))
+                reading = None
+            if reading is not None:
+                proposal = parse_scanned_invoice(reading)
+                with get_session() as session:
+                    render_ocr_confirmation(session, proposal)
 
 footer()

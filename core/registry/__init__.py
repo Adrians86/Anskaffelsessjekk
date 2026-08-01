@@ -8,6 +8,7 @@ from core.registry.faktura import (
     intake_invoice,
     latest_decision,
     record_decision,
+    record_ocr_confirmation,
 )
 from core.registry.forpliktelse import (
     assess_gyldighet,
@@ -74,7 +75,7 @@ __all__ = [
     "list_lines", "add_line", "update_line", "delete_line",
     "change_clause_of", "_clause_label",
     # Faktura intake + decision
-    "intake_invoice", "record_decision", "latest_decision",
+    "intake_invoice", "record_decision", "latest_decision", "record_ocr_confirmation",
     # Forpliktelse (commitment) CRUD
     "list_commitments", "get_commitment", "create_commitment",
     "create_commitments_for_suppliers", "update_commitment",

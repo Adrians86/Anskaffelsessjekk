@@ -449,3 +449,127 @@ def parse_scanned_invoice(reading: OcrReading) -> ProposedInvoice:
         currency=cur, total_ex_vat=total, lines=parsed_lines,
         raw_text=text, engine=reading.engine, warnings=warnings,
     )
+
+
+# =============================================================================
+# O4/O5 — the gate: CONFIRMED values leave this module; corrections are recorded
+# =============================================================================
+
+@dataclass(frozen=True)
+class ConfirmedLine:
+    """One line as a human confirmed it."""
+    item_ref: str | None
+    description: str
+    quantity: Decimal
+    unit_price: Decimal
+
+
+def confirmed_to_parsed(
+    *,
+    invoice_number: str,
+    invoice_date: date,
+    currency: str,
+    supplier_org: str | None,
+    supplier_name: str | None,
+    lines: list[ConfirmedLine],
+):
+    """Turn HUMAN-CONFIRMED values into the same `ParsedInvoice` that EHF and CSV produce.
+
+    This is the only exit from the OCR module into the control basis, and it takes confirmed
+    values only — never a `ProposedInvoice`. Downstream (intake → prisliste-verifikasjon → verdikt
+    → beslutning → protokoll) is byte-for-byte the same chain as EHF/CSV: no separate OCR path,
+    so a scan can never be verified by weaker rules than an EHF file.
+    """
+    from core.extraction.ehf import ParsedInvoice, ParsedLine
+    if not (invoice_number or "").strip():
+        raise OcrReadError("Fakturanummer er påkrevd før kontroll.")
+    if invoice_date is None:
+        raise OcrReadError("Fakturadato er påkrevd før kontroll.")
+    if not lines:
+        raise OcrReadError("Minst én fakturalinje er påkrevd før kontroll.")
+    parsed_lines = [
+        ParsedLine(item_ref=(ln.item_ref or None), description=ln.description or "",
+                   quantity=ln.quantity, unit_price=ln.unit_price,
+                   line_total=ln.quantity * ln.unit_price)
+        for ln in lines
+    ]
+    return ParsedInvoice(
+        invoice_number=invoice_number.strip(),
+        invoice_date=invoice_date,
+        currency=(currency or "NOK").strip().upper(),
+        supplier_org=(re.sub(r"\D", "", supplier_org) if supplier_org else None),
+        supplier_name=(supplier_name.strip() if supplier_name else None),
+        lines=parsed_lines,
+    )
+
+
+def corrections_vs_proposal(
+    proposal: ProposedInvoice,
+    *,
+    invoice_number: str,
+    invoice_date: date,
+    supplier_org: str | None,
+    lines: list[ConfirmedLine],
+) -> list[str]:
+    """What the human CHANGED relative to the machine reading — for the audit trail (O5).
+
+    Recording the corrections is what makes the OCR step auditable after the fact: a reviewer can
+    see both what the machine claimed and what the human decided it actually said.
+    """
+    out: list[str] = []
+    if proposal.invoice_number.value != invoice_number and invoice_number:
+        out.append(f"fakturanr: «{proposal.invoice_number.value or '—'}» → «{invoice_number}»")
+    if proposal.invoice_date.value != invoice_date:
+        out.append(f"dato: {proposal.invoice_date.value or '—'} → {invoice_date}")
+    prop_org = proposal.supplier_org.value
+    if (supplier_org or None) != (prop_org or None):
+        out.append(f"org.nr: {prop_org or '—'} → {supplier_org or '—'}")
+    by_ref = {ln.item_ref: ln for ln in proposal.lines}
+    for ln in lines:
+        p = by_ref.get(ln.item_ref)
+        if p is None:
+            out.append(f"linje lagt til manuelt: {ln.item_ref or '—'}")
+            continue
+        if p.quantity != ln.quantity:
+            out.append(f"antall {ln.item_ref}: {p.quantity} → {ln.quantity}")
+        if p.unit_price != ln.unit_price:
+            out.append(f"pris {ln.item_ref}: {p.unit_price} → {ln.unit_price}")
+    confirmed_refs = {ln.item_ref for ln in lines}
+    for ref in by_ref:
+        if ref not in confirmed_refs:
+            out.append(f"linje fjernet: {ref or '—'}")
+    return out
+
+
+# =============================================================================
+# O6 — a synthetic sample document, so the flow is demonstrable without real invoices
+# =============================================================================
+
+def build_sample_pdf() -> bytes:
+    """A synthetic demo invoice as a real PDF with a text layer (hard rule #6: synthetic only).
+
+    Deliberately contains a line whose arithmetic does NOT hold (KAB-3003: 3 × 950 ≠ 2 850 + 100),
+    so the kryssjekk on the bekreftelsesskjerm demonstrably fires instead of only being described.
+    """
+    from fpdf import FPDF
+    pdf = FPDF()
+    pdf.add_page()
+    pdf.set_font("Helvetica", "B", 14)
+    pdf.cell(0, 9, "FAKTURA (SYNTETISK DEMODATA)", new_x="LMARGIN", new_y="NEXT")
+    pdf.set_font("Helvetica", size=11)
+    for line in (
+        "Hydraulikk Nord AS",
+        "Org.nr: 998 877 665",
+        "Fakturanummer: F-2026-77",
+        "Fakturadato: 12.07.2026",
+        "Valuta: NOK",
+        "",
+        "Artikkel     Beskrivelse        Antall   Pris        Sum",
+        "HYD-1001     Pumpehus           2        11800,00    23600,00",
+        "HYD-2002     Hydraulikkslange   1        8300,00     8300,00",
+        "KAB-3003     Kabelsett          3        950,00      2950,00",
+        "",
+        "Belop eks. mva: 34850,00",
+    ):
+        pdf.cell(0, 6, line, new_x="LMARGIN", new_y="NEXT")
+    return bytes(pdf.output())
