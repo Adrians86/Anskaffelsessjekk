@@ -10,13 +10,26 @@ client = TestClient(app)
 
 
 def test_stats_endpoint():
-    r = client.get("/api/stats")
+    r = client.get("/api/stats?periode=ar")
     assert r.status_code == 200
     data = r.json()
     assert "kpi" in data and "health" in data
+    assert "periode_fra" in data and "periode_til" in data
     kpi = data["kpi"]
     assert kpi["total_invoices"] >= 4
     assert kpi["verdi_funnet"] == pytest.approx(22310.0, abs=1)
+
+
+def test_stats_period_filters_change_totals():
+    jul = client.get("/api/stats?periode=egendefinert&fra=2026-07-01&til=2026-07-31").json()
+    aug = client.get("/api/stats?periode=egendefinert&fra=2026-08-01&til=2026-08-31").json()
+    assert jul["kpi"]["total_invoices"] > 0
+    assert aug["kpi"]["total_invoices"] > 0
+    assert jul["kpi"]["verdi_funnet"] != aug["kpi"]["verdi_funnet"]
+    full = client.get("/api/stats?periode=ar").json()
+    assert full["kpi"]["verdi_funnet"] == pytest.approx(
+        jul["kpi"]["verdi_funnet"] + aug["kpi"]["verdi_funnet"], abs=1
+    )
 
 
 def test_invoices_list():

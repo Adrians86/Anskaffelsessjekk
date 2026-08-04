@@ -26,6 +26,8 @@ export interface HealthBar {
 export interface StatsResponse {
   kpi: KpiStats;
   health: HealthBar;
+  periode_fra: string;
+  periode_til: string;
 }
 
 export interface InvoiceRow {

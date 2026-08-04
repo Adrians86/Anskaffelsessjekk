@@ -1,16 +1,26 @@
 import Link from "next/link";
+import { Suspense } from "react";
 import { fetchApi } from "@/lib/api";
 import type { StatsResponse, InvoiceRow } from "@/lib/api";
 import { KpiStrip } from "@/components/KpiStrip";
 import { HealthBar } from "@/components/HealthBar";
 import { UrgentList } from "@/components/UrgentList";
+import { PeriodSelector } from "@/components/PeriodSelector";
+import { dato } from "@/lib/format";
 
-export default async function HomePage() {
+export default async function HomePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+}) {
+  const sp = await searchParams;
+  const periode = (typeof sp.periode === "string" ? sp.periode : "kvartal") as string;
+
   let stats: StatsResponse | null = null;
   let urgent: InvoiceRow[] = [];
 
   try {
-    stats = await fetchApi<StatsResponse>("/api/stats");
+    stats = await fetchApi<StatsResponse>(`/api/stats?periode=${periode}`);
     const all = await fetchApi<InvoiceRow[]>("/api/invoices?sort=avvik_first&limit=5");
     urgent = all.filter((inv) => inv.verdict !== "SAMSVAR" && inv.status !== "godkjent" && inv.status !== "avvist");
   } catch {
@@ -34,6 +44,18 @@ export default async function HomePage() {
       {/* KPIs */}
       {stats ? (
         <>
+          <div className="flex items-center justify-between mb-3">
+            <div>
+              <h2 className="font-semibold text-ink">Nøkkeltall</h2>
+              <div className="text-xs text-muted mt-0.5">
+                {dato(stats.periode_fra)} – {dato(stats.periode_til)}
+                <span className="ml-2 text-muted/60">· sist oppdatert {new Date().toLocaleString("nb-NO", { hour: "2-digit", minute: "2-digit", day: "2-digit", month: "2-digit", year: "numeric" })}</span>
+              </div>
+            </div>
+            <Suspense>
+              <PeriodSelector active={periode} />
+            </Suspense>
+          </div>
           <KpiStrip kpi={stats.kpi} />
           <HealthBar health={stats.health} />
         </>

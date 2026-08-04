@@ -8,7 +8,7 @@ Run: uvicorn api.main:app --reload
 from __future__ import annotations
 
 from contextlib import asynccontextmanager
-from datetime import date
+from datetime import date, timedelta
 from decimal import Decimal
 
 from fastapi import FastAPI, HTTPException, Query
@@ -91,6 +91,8 @@ class HealthBar(BaseModel):
 class StatsResponse(BaseModel):
     kpi: KpiStats
     health: HealthBar
+    periode_fra: date
+    periode_til: date
 
 
 class InvoiceRow(BaseModel):
@@ -199,13 +201,45 @@ def _build_invoice_row(session: Session, inv: Invoice) -> InvoiceRow:
 
 # --- Endpoints ---
 
+def _resolve_period(
+    periode: str, fra: date | None, til: date | None, today: date | None = None,
+) -> tuple[date, date]:
+    today = today or date.today()
+    if periode == "egendefinert":
+        return (fra or today.replace(day=1), til or today)
+    if periode == "kvartal":
+        q_start_month = ((today.month - 1) // 3) * 3 + 1
+        start = today.replace(month=q_start_month, day=1)
+        end_month = q_start_month + 2
+        if end_month == 12:
+            end = today.replace(month=12, day=31)
+        else:
+            end = today.replace(month=end_month + 1, day=1) - timedelta(days=1)
+        return (start, end)
+    if periode == "ar":
+        return (today.replace(month=1, day=1), today.replace(month=12, day=31))
+    # default: maned
+    if today.month == 12:
+        last = today.replace(day=31)
+    else:
+        last = today.replace(month=today.month + 1, day=1) - timedelta(days=1)
+    return (today.replace(day=1), last)
+
+
 @app.get("/api/stats", response_model=StatsResponse)
-def get_stats():
-    """Portfolio KPIs and health bar percentages."""
+def get_stats(
+    periode: str = Query("maned", description="maned|kvartal|ar|egendefinert"),
+    fra: date | None = Query(None, description="Start date (egendefinert)"),
+    til: date | None = Query(None, description="End date (egendefinert)"),
+):
+    """Portfolio KPIs and health bar percentages, filtered by period."""
     from core.matching.currency import is_foreign
+
+    p_fra, p_til = _resolve_period(periode, fra, til)
 
     with get_session() as session:
         invoices = session.exec(select(Invoice)).all()
+        invoices = [inv for inv in invoices if p_fra <= inv.invoice_date <= p_til]
         counts = {"SAMSVAR": 0, "TIL_VURDERING": 0, "AVVIK": 0}
         total_verdi = Decimal("0")
         n_foreign = 0
@@ -232,6 +266,8 @@ def get_stats():
                 pct_til_vurdering=(counts["TIL_VURDERING"] / total) * 100,
                 pct_samsvar=(counts["SAMSVAR"] / total) * 100,
             ),
+            periode_fra=p_fra,
+            periode_til=p_til,
         )
 
 
