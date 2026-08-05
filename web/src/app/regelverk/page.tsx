@@ -1,4 +1,9 @@
-import { fetchApi } from "@/lib/api";
+"use client";
+
+import { useState, useEffect, useCallback } from "react";
+import { SleepBanner } from "@/components/SleepBanner";
+
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
 interface RegelverkRow {
   id: string;
@@ -52,11 +57,42 @@ function sourceLabel(url: string): string {
   }
 }
 
-export default async function RegelverkPage() {
-  const rules = await fetchApi<RegelverkRow[]>("/api/regelverk");
+function TableSkeleton() {
+  return (
+    <div className="border border-line rounded-xl overflow-hidden">
+      <div className="bg-paper-dark border-b border-line h-10" />
+      {Array.from({ length: 5 }).map((_, i) => (
+        <div key={i} className="border-b border-line last:border-b-0 px-4 py-3 flex gap-4">
+          <div className="h-4 rounded bg-paper-dark animate-pulse flex-1" />
+          <div className="h-4 rounded bg-paper-dark animate-pulse flex-1" />
+          <div className="h-4 rounded bg-paper-dark animate-pulse w-32" />
+          <div className="h-4 rounded bg-paper-dark animate-pulse w-20" />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+export default function RegelverkPage() {
+  const [rules, setRules] = useState<RegelverkRow[] | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  const load = useCallback(async () => {
+    setError(null);
+    setRules(null);
+    try {
+      const res = await fetch(`${API_BASE}/api/regelverk`);
+      if (!res.ok) throw new Error(`${res.status}`);
+      setRules(await res.json());
+    } catch {
+      setError("sleep");
+    }
+  }, []);
+
+  useEffect(() => { load(); }, [load]);
 
   const grouped = Object.fromEntries(
-    REGIME_ORDER.map((r) => [r, rules.filter((rule) => rule.regime === r)]),
+    REGIME_ORDER.map((r) => [r, (rules ?? []).filter((rule) => rule.regime === r)]),
   );
 
   return (
@@ -72,89 +108,93 @@ export default async function RegelverkPage() {
         </p>
       </div>
 
-      <div className="space-y-10">
-        {REGIME_ORDER.map((regime) => {
-          const rows = grouped[regime] ?? [];
-          if (rows.length === 0) return null;
-          const meta = REGIME_LABELS[regime];
-          return (
-            <section key={regime}>
+      {error ? (
+        <SleepBanner onRetry={load} />
+      ) : rules === null ? (
+        <div className="space-y-10">
+          {REGIME_ORDER.map((r) => (
+            <section key={r}>
               <div className="mb-3 pb-2 border-b-2 border-copper">
-                <h2 className="font-serif text-lg font-semibold text-ink">{meta.title}</h2>
-                <p className="text-xs text-muted mt-0.5">{meta.sub}</p>
+                <div className="h-5 w-64 rounded bg-paper-dark animate-pulse mb-1" />
+                <div className="h-3 w-80 rounded bg-paper-dark animate-pulse" />
               </div>
-              <div className="overflow-x-auto rounded-xl border border-line">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="bg-paper-dark border-b border-line text-left">
-                      <th className="px-4 py-2.5 text-xs font-semibold text-muted uppercase tracking-wide">
-                        Betingelse
-                      </th>
-                      <th className="px-4 py-2.5 text-xs font-semibold text-muted uppercase tracking-wide">
-                        Konsekvens
-                      </th>
-                      <th className="px-4 py-2.5 text-xs font-semibold text-muted uppercase tracking-wide">
-                        Kilde
-                      </th>
-                      <th className="px-4 py-2.5 text-xs font-semibold text-muted uppercase tracking-wide whitespace-nowrap">
-                        Gjelder fra
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {rows.map((rule) => (
-                      <tr
-                        key={rule.id}
-                        className={`border-b border-line last:border-b-0 hover:bg-paper-dark/50 transition-colors ${
-                          rule.active ? "" : "opacity-50"
-                        }`}
-                      >
-                        <td className="px-4 py-3 text-xs text-ink leading-relaxed max-w-[280px]">
-                          {rule.condition}
-                        </td>
-                        <td className="px-4 py-3 max-w-[260px]">
-                          <span className="text-xs font-medium text-ink leading-snug block">
-                            {CONSEQUENCE_LABELS[rule.consequence] ?? rule.consequence}
-                          </span>
-                          {!rule.active && (
-                            <span className="inline-block mt-1 text-[10px] bg-paper-dark text-muted px-1.5 py-0.5 rounded">
-                              Utløpt
-                            </span>
-                          )}
-                        </td>
-                        <td className="px-4 py-3 max-w-[200px]">
-                          <p className="text-xs text-muted leading-snug mb-1">{rule.citation}</p>
-                          {rule.citation_url && (
-                            <a
-                              href={rule.citation_url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-xs text-copper hover:text-copper-light hover:underline"
-                            >
-                              {sourceLabel(rule.citation_url)} ↗
-                            </a>
-                          )}
-                        </td>
-                        <td className="px-4 py-3 text-xs text-muted tabular-nums whitespace-nowrap align-top">
-                          {rule.valid_from}
-                          {rule.valid_to && (
-                            <span className="block text-muted">→ {rule.valid_to}</span>
-                          )}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+              <TableSkeleton />
             </section>
-          );
-        })}
-      </div>
+          ))}
+        </div>
+      ) : (
+        <div className="space-y-10">
+          {REGIME_ORDER.map((regime) => {
+            const rows = grouped[regime] ?? [];
+            if (rows.length === 0) return null;
+            const meta = REGIME_LABELS[regime];
+            return (
+              <section key={regime}>
+                <div className="mb-3 pb-2 border-b-2 border-copper">
+                  <h2 className="font-serif text-lg font-semibold text-ink">{meta.title}</h2>
+                  <p className="text-xs text-muted mt-0.5">{meta.sub}</p>
+                </div>
+                <div className="overflow-x-auto rounded-xl border border-line">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="bg-paper-dark border-b border-line text-left">
+                        <th className="px-4 py-2.5 text-xs font-semibold text-muted uppercase tracking-wide">Betingelse</th>
+                        <th className="px-4 py-2.5 text-xs font-semibold text-muted uppercase tracking-wide">Konsekvens</th>
+                        <th className="px-4 py-2.5 text-xs font-semibold text-muted uppercase tracking-wide">Kilde</th>
+                        <th className="px-4 py-2.5 text-xs font-semibold text-muted uppercase tracking-wide whitespace-nowrap">Gjelder fra</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {rows.map((rule) => (
+                        <tr
+                          key={rule.id}
+                          className={`border-b border-line last:border-b-0 hover:bg-paper-dark/50 transition-colors ${rule.active ? "" : "opacity-50"}`}
+                        >
+                          <td className="px-4 py-3 text-xs text-ink leading-relaxed max-w-[280px]">
+                            {rule.condition}
+                          </td>
+                          <td className="px-4 py-3 max-w-[260px]">
+                            <span className="text-xs font-medium text-ink leading-snug block">
+                              {CONSEQUENCE_LABELS[rule.consequence] ?? rule.consequence}
+                            </span>
+                            {!rule.active && (
+                              <span className="inline-block mt-1 text-[10px] bg-paper-dark text-muted px-1.5 py-0.5 rounded">
+                                Utløpt
+                              </span>
+                            )}
+                          </td>
+                          <td className="px-4 py-3 max-w-[200px]">
+                            <p className="text-xs text-muted leading-snug mb-1">{rule.citation}</p>
+                            {rule.citation_url && (
+                              <a
+                                href={rule.citation_url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-xs text-copper hover:text-copper-light hover:underline"
+                              >
+                                {sourceLabel(rule.citation_url)} ↗
+                              </a>
+                            )}
+                          </td>
+                          <td className="px-4 py-3 text-xs text-muted tabular-nums whitespace-nowrap align-top">
+                            {rule.valid_from}
+                            {rule.valid_to && <span className="block">→ {rule.valid_to}</span>}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+            );
+          })}
 
-      <p className="text-xs text-muted mt-10 pt-4 border-t border-line">
-        Kilde: Lovdata og Regjeringen.no. Alle beløp i NOK ekskl. mva. EØS-terskelverdier justert
-        med virkning fra 21.04.2026 (regjeringen.no). Oppdateres ved regelverksendringer.
-      </p>
+          <p className="text-xs text-muted pt-4 border-t border-line">
+            Kilde: Lovdata og Regjeringen.no. Alle beløp i NOK ekskl. mva. EØS-terskelverdier justert
+            med virkning fra 21.04.2026. Oppdateres ved regelverksendringer.
+          </p>
+        </div>
+      )}
     </div>
   );
 }

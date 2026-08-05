@@ -1,59 +1,113 @@
+"use client";
+
+import { useState, useEffect, useCallback, Suspense } from "react";
 import Link from "next/link";
-import { Suspense } from "react";
-import { fetchApi } from "@/lib/api";
+import { useSearchParams, usePathname } from "next/navigation";
 import type { InvoiceRow } from "@/lib/api";
 import { VerdictPill } from "@/components/VerdictPill";
 import { money, dato } from "@/lib/format";
 import { FakturaFilterBar } from "@/components/FakturaFilterBar";
+import { SleepBanner } from "@/components/SleepBanner";
 
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 const PAGE_SIZE = 25;
 
-export default async function FakturaPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
-}) {
-  const sp = await searchParams;
-  const verdikt = typeof sp.verdikt === "string" ? sp.verdikt : "";
-  const status = typeof sp.status === "string" ? sp.status : "";
-  const soek = typeof sp.soek === "string" ? sp.soek : "";
-  const side = typeof sp.side === "string" ? parseInt(sp.side, 10) : 1;
+function StatusChip({ status }: { status: string }) {
+  const styles: Record<string, string> = {
+    ny: "bg-blue-50 text-blue-700 border-blue-200",
+    under_kontroll: "bg-amber-50 text-amber-700 border-amber-200",
+    godkjent: "bg-samsvar-bg text-samsvar border-samsvar/30",
+    avvist: "bg-avvik-bg text-avvik border-avvik/30",
+  };
+  const labels: Record<string, string> = {
+    ny: "Ny",
+    under_kontroll: "Under kontroll",
+    godkjent: "Godkjent",
+    avvist: "Avvist",
+  };
+  const cls = styles[status] || "bg-paper-dark text-muted border-line";
+  return (
+    <span className={`inline-block text-xs font-medium px-2 py-0.5 rounded-full border ${cls}`}>
+      {labels[status] ?? status}
+    </span>
+  );
+}
 
-  let invoices: InvoiceRow[] = [];
-  let total = 0;
-  try {
-    const params = new URLSearchParams({ sort: "avvik_first", limit: "200" });
-    if (verdikt) params.set("verdict", verdikt);
-    if (status) params.set("status", status);
-    if (soek) params.set("search", soek);
-    const all = await fetchApi<InvoiceRow[]>(`/api/invoices?${params}`);
-    total = all.length;
-    const offset = (side - 1) * PAGE_SIZE;
-    invoices = all.slice(offset, offset + PAGE_SIZE);
-  } catch {
-    // API unavailable
-  }
+function TableSkeleton() {
+  return (
+    <div className="border border-line rounded-xl overflow-hidden">
+      <div className="bg-paper-dark border-b border-line h-10" />
+      {Array.from({ length: 8 }).map((_, i) => (
+        <div key={i} className="border-b border-line last:border-b-0 px-4 py-3 flex gap-4">
+          <div className="h-4 rounded bg-paper-dark animate-pulse w-20" />
+          <div className="h-4 rounded bg-paper-dark animate-pulse flex-1" />
+          <div className="h-4 rounded bg-paper-dark animate-pulse w-24" />
+          <div className="h-4 rounded bg-paper-dark animate-pulse w-20" />
+          <div className="h-4 rounded bg-paper-dark animate-pulse w-20" />
+          <div className="h-4 rounded bg-paper-dark animate-pulse w-20" />
+          <div className="h-4 rounded bg-paper-dark animate-pulse flex-1" />
+        </div>
+      ))}
+    </div>
+  );
+}
 
-  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+function FakturaContent() {
+  const searchParams = useSearchParams();
+  const pathname = usePathname();
+
+  const verdikt = searchParams.get("verdikt") || "";
+  const status = searchParams.get("status") || "";
+  const soek = searchParams.get("soek") || "";
+  const side = parseInt(searchParams.get("side") || "1", 10);
+
+  const [allInvoices, setAllInvoices] = useState<InvoiceRow[] | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  const load = useCallback(async () => {
+    setError(null);
+    setAllInvoices(null);
+    try {
+      const params = new URLSearchParams({ sort: "avvik_first", limit: "200" });
+      if (verdikt) params.set("verdict", verdikt);
+      if (status) params.set("status", status);
+      if (soek) params.set("search", soek);
+      const res = await fetch(`${API_BASE}/api/invoices?${params}`);
+      if (!res.ok) throw new Error(`${res.status}`);
+      setAllInvoices(await res.json());
+    } catch {
+      setError("sleep");
+    }
+  }, [verdikt, status, soek]);
+
+  useEffect(() => { load(); }, [load]);
 
   function buildPageUrl(p: number) {
-    const params = new URLSearchParams();
-    if (verdikt) params.set("verdikt", verdikt);
-    if (status) params.set("status", status);
-    if (soek) params.set("soek", soek);
-    if (p > 1) params.set("side", String(p));
+    const params = new URLSearchParams(searchParams.toString());
+    if (p > 1) {
+      params.set("side", String(p));
+    } else {
+      params.delete("side");
+    }
     const q = params.toString();
-    return `/faktura${q ? `?${q}` : ""}`;
+    return `${pathname}${q ? `?${q}` : ""}`;
   }
 
+  const total = allInvoices?.length ?? 0;
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  const offset = (side - 1) * PAGE_SIZE;
+  const invoices = allInvoices?.slice(offset, offset + PAGE_SIZE) ?? [];
+
   return (
-    <div>
+    <>
       <div className="flex items-start justify-between mb-6">
         <div>
           <div className="text-xs uppercase tracking-widest text-muted font-semibold">Kontroll</div>
           <h1 className="font-serif text-3xl font-bold text-ink mt-1">Fakturaer</h1>
           <p className="text-sm text-muted mt-1">
-            {total > 0 ? `${total} faktura${total === 1 ? "" : "er"} · avvik sortert øverst` : "Avvik sortert øverst."}
+            {allInvoices !== null && total > 0
+              ? `${total} faktura${total === 1 ? "" : "er"} · avvik sortert øverst`
+              : "Avvik sortert øverst."}
           </p>
         </div>
         <Link
@@ -64,15 +118,17 @@ export default async function FakturaPage({
         </Link>
       </div>
 
-      <Suspense>
-        <FakturaFilterBar
-          currentVerdikt={verdikt}
-          currentStatus={status}
-          currentSearch={soek}
-        />
-      </Suspense>
+      <FakturaFilterBar
+        currentVerdikt={verdikt}
+        currentStatus={status}
+        currentSearch={soek}
+      />
 
-      {invoices.length === 0 ? (
+      {error ? (
+        <SleepBanner onRetry={load} />
+      ) : allInvoices === null ? (
+        <TableSkeleton />
+      ) : invoices.length === 0 ? (
         <div className="border border-line rounded-xl p-12 text-center text-muted bg-card">
           <p className="font-medium text-ink">Ingen fakturaer funnet</p>
           <p className="text-xs mt-1">
@@ -132,7 +188,6 @@ export default async function FakturaPage({
             </div>
           </div>
 
-          {/* Pagination */}
           {totalPages > 1 && (
             <div className="flex items-center justify-between mt-4 text-xs text-muted">
               <span>Side {side} av {totalPages} · {total} fakturaer</span>
@@ -152,27 +207,25 @@ export default async function FakturaPage({
           )}
         </>
       )}
-    </div>
+    </>
   );
 }
 
-function StatusChip({ status }: { status: string }) {
-  const styles: Record<string, string> = {
-    ny: "bg-blue-50 text-blue-700 border-blue-200",
-    under_kontroll: "bg-amber-50 text-amber-700 border-amber-200",
-    godkjent: "bg-samsvar-bg text-samsvar border-samsvar/30",
-    avvist: "bg-avvik-bg text-avvik border-avvik/30",
-  };
-  const labels: Record<string, string> = {
-    ny: "Ny",
-    under_kontroll: "Under kontroll",
-    godkjent: "Godkjent",
-    avvist: "Avvist",
-  };
-  const cls = styles[status] || "bg-paper-dark text-muted border-line";
+export default function FakturaPage() {
   return (
-    <span className={`inline-block text-xs font-medium px-2 py-0.5 rounded-full border ${cls}`}>
-      {labels[status] ?? status}
-    </span>
+    <div>
+      <Suspense fallback={
+        <div>
+          <div className="mb-6">
+            <div className="text-xs uppercase tracking-widest text-muted font-semibold">Kontroll</div>
+            <h1 className="font-serif text-3xl font-bold text-ink mt-1">Fakturaer</h1>
+          </div>
+          <div className="h-10 rounded bg-paper-dark animate-pulse mb-4" />
+          <TableSkeleton />
+        </div>
+      }>
+        <FakturaContent />
+      </Suspense>
+    </div>
   );
 }

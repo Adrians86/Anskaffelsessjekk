@@ -1,7 +1,12 @@
+"use client";
+
+import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
-import { fetchApi } from "@/lib/api";
 import type { ContractOut } from "@/lib/api";
 import { money, dato } from "@/lib/format";
+import { SleepBanner } from "@/components/SleepBanner";
+
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
 const STATUS_LABELS: Record<string, string> = {
   aktiv: "Aktiv",
@@ -10,13 +15,43 @@ const STATUS_LABELS: Record<string, string> = {
   under_forhandling: "Under forhandling",
 };
 
-export default async function AvtalerPage() {
-  let contracts: ContractOut[] = [];
-  try {
-    contracts = await fetchApi<ContractOut[]>("/api/contracts");
-  } catch {
-    // API unavailable
-  }
+function TableSkeleton() {
+  return (
+    <div className="border border-line rounded-xl overflow-hidden">
+      <div className="bg-paper-dark border-b border-line h-10" />
+      {Array.from({ length: 5 }).map((_, i) => (
+        <div key={i} className="border-b border-line last:border-b-0 px-4 py-3 flex gap-4">
+          <div className="h-4 rounded bg-paper-dark animate-pulse w-20" />
+          <div className="h-4 rounded bg-paper-dark animate-pulse flex-1" />
+          <div className="h-4 rounded bg-paper-dark animate-pulse w-32" />
+          <div className="h-4 rounded bg-paper-dark animate-pulse w-16" />
+          <div className="h-4 rounded bg-paper-dark animate-pulse w-20" />
+          <div className="h-4 rounded bg-paper-dark animate-pulse w-20" />
+          <div className="h-4 rounded bg-paper-dark animate-pulse w-24" />
+          <div className="h-4 rounded bg-paper-dark animate-pulse w-16" />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+export default function AvtalerPage() {
+  const [contracts, setContracts] = useState<ContractOut[] | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  const load = useCallback(async () => {
+    setError(null);
+    setContracts(null);
+    try {
+      const res = await fetch(`${API_BASE}/api/contracts`);
+      if (!res.ok) throw new Error(`${res.status}`);
+      setContracts(await res.json());
+    } catch {
+      setError("sleep");
+    }
+  }, []);
+
+  useEffect(() => { load(); }, [load]);
 
   return (
     <div>
@@ -36,7 +71,11 @@ export default async function AvtalerPage() {
         </Link>
       </div>
 
-      {contracts.length === 0 ? (
+      {error ? (
+        <SleepBanner onRetry={load} />
+      ) : contracts === null ? (
+        <TableSkeleton />
+      ) : contracts.length === 0 ? (
         <div className="border border-line rounded-xl p-12 text-center text-muted bg-card">
           <p className="font-medium text-ink">Ingen avtaler registrert</p>
           <p className="text-xs mt-1">Legg til din første kontrakt for å starte kontrollen.</p>
