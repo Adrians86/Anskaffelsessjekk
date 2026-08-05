@@ -3,11 +3,13 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import type { SupplierDetail } from "@/lib/api";
+import { useToast } from "@/components/Toast";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
 export function SupplierEditForm({ supplier }: { supplier: SupplierDetail }) {
   const router = useRouter();
+  const { showToast, ToastNode } = useToast();
   const [name, setName] = useState(supplier.name);
   const [orgNumber, setOrgNumber] = useState(supplier.org_number);
   const [address, setAddress] = useState(supplier.address ?? "");
@@ -21,13 +23,11 @@ export function SupplierEditForm({ supplier }: { supplier: SupplierDetail }) {
   const [notes, setNotes] = useState(supplier.notes ?? "");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [saved, setSaved] = useState(false);
 
   async function handleSave(e: React.FormEvent) {
     e.preventDefault();
     setSaving(true);
     setError(null);
-    setSaved(false);
     try {
       const res = await fetch(`${API_BASE}/api/suppliers/${supplier.id}`, {
         method: "PUT",
@@ -50,7 +50,7 @@ export function SupplierEditForm({ supplier }: { supplier: SupplierDetail }) {
         const err = await res.json().catch(() => ({}));
         throw new Error(err.detail ?? `${res.status}`);
       }
-      setSaved(true);
+      showToast("Firmadata lagret");
       router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Lagring feilet");
@@ -61,14 +61,10 @@ export function SupplierEditForm({ supplier }: { supplier: SupplierDetail }) {
 
   return (
     <div className="max-w-lg">
+      <ToastNode />
       {error && (
         <div className="bg-avvik-bg border border-avvik/30 text-avvik rounded-lg p-3 text-sm mb-4">
           {error}
-        </div>
-      )}
-      {saved && (
-        <div className="bg-samsvar-bg border border-samsvar/30 text-samsvar rounded-lg p-3 text-sm mb-4">
-          Lagret
         </div>
       )}
       <form onSubmit={handleSave} className="space-y-4">

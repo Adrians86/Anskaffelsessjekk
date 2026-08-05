@@ -1214,3 +1214,34 @@ finding with real product impact; the rest are low-risk hardening I can batch on
   Deploy target (Netlify/Vercel/Railway) for the API + web can be configured whenever ready.
 - Next planned step: partner-review. Remaining Streamlit screens can be ported screen-by-screen
   to Next.js once the slice is validated visually.
+
+### 2026-08-05 · claude-code
+- Done: **Steg 2 A→D** complete per BRIEF_VEIB_STEG2.md.
+  - **A** Design fix (previous session): Fraunces/Inter fonts, new design tokens (navy #16233B,
+    copper #C56B3E, paper #F7F5F0), Fiori shell header with full 5-item nav, ActionTiles grid,
+    KpiStrip + HealthBar + UrgentList on landing, PeriodSelector with /api/stats?periode= endpoint.
+    Netlify fix: @netlify/plugin-nextjs, removed hardcoded NEXT_PUBLIC_API_URL.
+  - **B** API write endpoints: POST/PUT/DELETE /api/suppliers (+ contacts/services/qualifications),
+    GET/POST/PUT/DELETE /api/contracts (+ price lines CRUD), GET/POST/PUT/DELETE /api/forpliktelser,
+    POST /api/invoices/upload/ehf|csv (multipart → draft), /confirm, /{id}/decision,
+    POST /api/terskelsjekk (RulesEngine+Facts). Version bumped to 0.2.0. 163 pytest passed.
+  - **C** Frontend pages: /terskelsjekk (form+result), /leverandorer/ny (create form),
+    /leverandorer/[id] extended to 7-tab layout (Oversikt/Firmadata/Tjenester/Kvalifikasjoner/
+    Personer/Avtaler+Forp./Vurdering) with SupplierEditForm (PUT /api/suppliers), /avtaler list
+    + /avtaler/[id] detail (price lines) + /avtaler/ny (create form), /faktura/ny (EHF/CSV
+    upload → draft preview → confirm → /faktura/{id}), /faktura extended with URL-based
+    filters (verdikt/status/søk) + 25/page pagination (FakturaFilterBar client component).
+    next build clean: 12 routes, TypeScript green.
+  - **D** Nav polish: Header converted to "use client" with active-route highlight + mobile
+    hamburger menu (dropdown). Toast component (useToast hook) added and wired to SupplierEditForm.
+    Empty states on all list pages with CTAs. Tables all overflow-x-auto. Tab bars scroll on mobile.
+    next build clean: 12 routes. 163 pytest passed. Reconciliation: 22 310 kr unchanged.
+- Tests: **163 passed**, ruff clean, next build clean (12 routes). **Reconciliation: 22 310 kr.**
+- Decisions needed / questions for the partner:
+  - /leverandorer/[id]/ny-avtale route (linked from supplier card header) not yet implemented —
+    currently links to /avtaler/ny?leverandor_id=X which works but the path 404s. Should we add
+    a redirect or change the link to point directly to /avtaler/ny?leverandor_id={id}? Recommend
+    changing the link in the supplier card (done in next session).
+  - The /api/invoices/confirm endpoint requires supplier_id to be passed manually by the user in
+    /faktura/ny. Consider adding a supplier-name lookup to match by name from the parsed draft.
+- Next planned step: Fix the supplier-card link to /avtaler/ny, then live verification on Netlify.

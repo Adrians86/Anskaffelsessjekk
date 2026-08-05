@@ -68,7 +68,7 @@ export default async function SupplierDetailPage({
           </div>
           <div className="flex gap-2">
             <Link
-              href={`/leverandorer/${id}/ny-avtale`}
+              href={`/avtaler/ny?leverandor_id=${id}`}
               className="border border-line text-sm px-3 py-1.5 rounded-lg hover:border-navy transition-colors text-muted"
             >
               + Avtale
