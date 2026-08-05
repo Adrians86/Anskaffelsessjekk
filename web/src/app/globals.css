@@ -1,23 +1,30 @@
 @import "tailwindcss";
 
 @theme inline {
-  --color-navy: #20364F;
-  --color-navy-light: #2D4A6A;
-  --color-copper: #A8842A;
-  --color-copper-light: #C9A84C;
-  --color-paper: #FCFBF7;
-  --color-paper-dark: #F5F3ED;
-  --color-ink: #1C2733;
-  --color-muted: #5A6673;
-  --color-hairline: #E4E1D8;
-  --color-avvik: #C62828;
-  --color-avvik-bg: #FBEAEA;
-  --color-vurdering: #B58900;
-  --color-vurdering-bg: #FCF4DE;
-  --color-samsvar: #2E7D32;
-  --color-samsvar-bg: #E8F4E8;
-  --font-serif: Georgia, 'Times New Roman', serif;
-  --font-sans: system-ui, -apple-system, sans-serif;
+  /* Brand */
+  --color-navy: #16233B;
+  --color-navy-light: #243352;
+  --color-copper: #C56B3E;
+  --color-copper-light: #D9895E;
+  --color-paper: #F7F5F0;
+  --color-paper-dark: #EEEBe4;
+  --color-card: #FFFFFF;
+  --color-line: #E8E4DB;
+  --color-hairline: #E8E4DB;
+  --color-ink: #16233B;
+  --color-muted: #8A93A3;
+
+  /* Status */
+  --color-avvik: #B23A1E;
+  --color-avvik-bg: #F6E4DE;
+  --color-vurdering: #9A7B1E;
+  --color-vurdering-bg: #F5EDD8;
+  --color-samsvar: #2F7D4F;
+  --color-samsvar-bg: #EAF3ED;
+
+  /* Typography */
+  --font-serif: var(--font-fraunces), Georgia, 'Times New Roman', serif;
+  --font-sans: var(--font-inter), system-ui, -apple-system, sans-serif;
 }
 
 body {
