@@ -10,6 +10,7 @@ const NAV = [
   { href: "/leverandorer", label: "Leverandører" },
   { href: "/avtaler", label: "Avtaler" },
   { href: "/terskelsjekk", label: "Terskelsjekk" },
+  { href: "/regelverk", label: "Regelverk" },
 ];
 
 export function Header() {

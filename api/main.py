@@ -408,6 +408,18 @@ class TerskelRequest(BaseModel):
     regime: str = "FOA"
 
 
+class RegelverkRow(BaseModel):
+    id: str
+    regime: str
+    condition: str
+    consequence: str
+    citation: str
+    citation_url: str
+    valid_from: str
+    valid_to: str | None = None
+    active: bool = True
+
+
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
@@ -1286,3 +1298,75 @@ def terskelsjekk(body: TerskelRequest):
         )
         for h in hits
     ]
+
+
+# ---------------------------------------------------------------------------
+# Regelverk — read-only view of YAML rules
+# ---------------------------------------------------------------------------
+
+def _format_condition(when: dict) -> str:
+    """Convert a rule when-clause to a readable Norwegian condition string."""
+    FIELD_LABELS = {
+        "estimated_value": "Estimert verdi",
+        "kontrakttype": "Kontrakttype",
+        "oppdragsgiver": "Oppdragsgiver",
+    }
+    OP_SYMBOLS = {"lt": "<", "lte": "≤", "gt": ">", "gte": "≥", "eq": "="}
+    VALUE_LABELS = {
+        "vare_tjeneste": "varer/tjenester",
+        "bygg_anlegg": "bygg og anlegg",
+        "saerlige_tjenester": "særlige tjenester",
+        "statlig": "statlig",
+        "andre": "andre oppdragsgivere",
+    }
+
+    def _single(c: dict) -> str:
+        field = FIELD_LABELS.get(c.get("field", ""), c.get("field", ""))
+        op = OP_SYMBOLS.get(c.get("op", ""), c.get("op", ""))
+        v = c.get("value", "")
+        if c.get("field") == "estimated_value":
+            try:
+                v = f"{int(v):,}".replace(",", "\xa0") + " kr"
+            except (TypeError, ValueError):
+                v = str(v)
+        else:
+            v = VALUE_LABELS.get(str(v), str(v))
+        return f"{field} {op} {v}"
+
+    if not when:
+        return "—"
+    if "all" in when:
+        return " · ".join(_single(c) for c in when["all"])
+    if "field" in when:
+        return _single(when)
+    return "—"
+
+
+@app.get("/api/regelverk", response_model=list[RegelverkRow])
+def get_regelverk():
+    """Return all rules from thresholds_2026.yaml as structured, readable JSON."""
+    import yaml
+    from pathlib import Path
+
+    yaml_path = Path(__file__).parent.parent / "core" / "rules" / "data" / "thresholds_2026.yaml"
+    with open(yaml_path, encoding="utf-8") as f:
+        rules = yaml.safe_load(f)
+
+    today = date.today()
+    result = []
+    for rule in rules:
+        vf = rule.get("valid_from")
+        vt = rule.get("valid_to")
+        active = vt is None or (hasattr(vt, "year") and vt >= today)
+        result.append(RegelverkRow(
+            id=rule["id"],
+            regime=rule["regime"],
+            condition=_format_condition(rule.get("when", {})),
+            consequence=rule["consequence"],
+            citation=rule.get("citation", ""),
+            citation_url=rule.get("citation_url") or "",
+            valid_from=str(vf) if vf else "",
+            valid_to=str(vt) if vt else None,
+            active=active,
+        ))
+    return result
