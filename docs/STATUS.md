@@ -1245,3 +1245,28 @@ finding with real product impact; the rest are low-risk hardening I can batch on
   - The /api/invoices/confirm endpoint requires supplier_id to be passed manually by the user in
     /faktura/ny. Consider adding a supplier-name lookup to match by name from the parsed draft.
 - Next planned step: Fix the supplier-card link to /avtaler/ny, then live verification on Netlify.
+
+---
+
+### 2026-08-05 · claude-code (supplier auto-match in /faktura/ny)
+- Done: **EHF supplier auto-match + searchable dropdown** complete.
+  - `InvoiceDraft` model gains `supplier_org: str | None` and `supplier_id: int | None`.
+  - `upload_ehf`: after EHF parse, looks up `Supplier.org_number == parsed.supplier_org` in DB;
+    populates `supplier_id` in the response when a match is found.
+  - `upload_csv`: same lookup (org.nr typically absent from CSV → graceful null).
+  - Bonus fix: both upload endpoints were passing `date=` instead of `invoice_date=` (field was
+    renamed to avoid Pydantic shadowing but the kwarg wasn't updated → `invoice_date` silently
+    defaulted to null). Now passes `invoice_date=` correctly.
+  - New `GET /api/suppliers/lookup?q=` endpoint: lightweight name/org.nr search, returns
+    up to 20 `{id, name, org_number}` rows. Registered before `{supplier_id}` to avoid
+    int-cast routing collision.
+  - `/faktura/ny`: replaced the crude manual "Leverandør-ID" number input with a `DraftCard`
+    component. Each draft has independent supplier-selection state:
+      - Auto-match found → green "✓ NamnAS 999888777 · Automatisk koblet" + "Endre" button.
+      - Org.nr known but not in DB → amber warning + search input pre-filled with org.nr.
+      - No org.nr at all → empty search input.
+    Search fires debounced (300 ms) calls to `/api/suppliers/lookup`; results appear as a
+    clickable dropdown. "Bekreft og kontroller →" stays disabled until a supplier is selected.
+- Tests: **163 passed**, ruff clean, TypeScript green. Reconciliation: 22 310 kr unchanged.
+- Decisions needed / questions: none.
+- Next planned step: partner to review and assign next task via CLAUDE.md.
