@@ -33,44 +33,134 @@ interface SupplierLookupRow {
 
 type Tab = "ehf" | "csv" | "pdf";
 
-function CreateSupplierButton({
-  name,
-  orgNumber,
+function CreateSupplierPanel({
+  initialName,
+  initialOrgNumber,
   onCreated,
 }: {
-  name: string;
-  orgNumber: string;
+  initialName: string;
+  initialOrgNumber?: string;
   onCreated: (sup: SupplierLookupRow) => void;
 }) {
-  const [creating, setCreating] = useState(false);
-  const [done, setDone] = useState(false);
+  const [open, setOpen] = useState(false);
+  const [navn, setNavn] = useState(initialName);
+  const [orgNr, setOrgNr] = useState(initialOrgNumber ?? "");
+  const [adresse, setAdresse] = useState("");
+  const [epost, setEpost] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  async function handleCreate() {
-    setCreating(true);
+  useEffect(() => {
+    if (!open) {
+      setNavn(initialName);
+      setOrgNr(initialOrgNumber ?? "");
+    }
+  }, [initialName, initialOrgNumber, open]);
+
+  function validate(): string | null {
+    if (!navn.trim()) return "Navn er påkrevd";
+    const digits = orgNr.replace(/\s/g, "");
+    if (digits && !/^\d{9}$/.test(digits)) return "Org.nr må være nøyaktig 9 siffer";
+    return null;
+  }
+
+  async function handleSubmit() {
+    const err = validate();
+    if (err) { setError(err); return; }
+    setSaving(true);
+    setError(null);
     try {
       const res = await fetch(`${API_BASE}/api/suppliers`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, org_number: orgNumber }),
+        body: JSON.stringify({
+          name: navn.trim(),
+          org_number: orgNr.replace(/\s/g, ""),
+          address: adresse.trim() || undefined,
+          email: epost.trim() || undefined,
+        }),
       });
-      if (!res.ok) throw new Error(`${res.status}`);
+      if (!res.ok) {
+        const e = await res.json().catch(() => ({}));
+        throw new Error(e.detail ?? `${res.status}`);
+      }
       const sup = await res.json();
-      setDone(true);
       onCreated({ id: sup.id, name: sup.name, org_number: sup.org_number });
-    } catch {
-      setCreating(false);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Feil ved oppretting");
+      setSaving(false);
     }
   }
 
-  if (done) return null;
+  if (!open) {
+    return (
+      <button
+        onClick={() => setOpen(true)}
+        className="mt-2 text-xs text-copper hover:text-copper-light font-medium flex items-center gap-1"
+      >
+        + Legg til ny leverandør
+      </button>
+    );
+  }
+
   return (
-    <button
-      onClick={handleCreate}
-      disabled={creating}
-      className="text-xs font-semibold text-copper border border-copper/40 px-2 py-0.5 rounded hover:bg-copper/10 transition-colors disabled:opacity-50"
-    >
-      {creating ? "Oppretter…" : `Opprett «${name}»`}
-    </button>
+    <div className="mt-3 border border-copper/30 rounded-lg p-3 bg-paper space-y-2">
+      <div className="text-xs font-semibold text-muted uppercase tracking-wide">Ny leverandør</div>
+      <div>
+        <label className="text-xs text-muted block mb-0.5">Navn <span className="text-avvik">*</span></label>
+        <input
+          type="text"
+          value={navn}
+          onChange={(e) => setNavn(e.target.value)}
+          className="w-full border border-line rounded px-2 py-1 text-sm focus:outline-none focus:border-copper"
+        />
+      </div>
+      <div>
+        <label className="text-xs text-muted block mb-0.5">Org.nr (9 siffer)</label>
+        <input
+          type="text"
+          value={orgNr}
+          onChange={(e) => setOrgNr(e.target.value)}
+          maxLength={9}
+          placeholder="123456789"
+          className="w-full border border-line rounded px-2 py-1 text-sm tabular-nums focus:outline-none focus:border-copper"
+        />
+      </div>
+      <div>
+        <label className="text-xs text-muted block mb-0.5">Adresse</label>
+        <input
+          type="text"
+          value={adresse}
+          onChange={(e) => setAdresse(e.target.value)}
+          className="w-full border border-line rounded px-2 py-1 text-sm focus:outline-none focus:border-copper"
+        />
+      </div>
+      <div>
+        <label className="text-xs text-muted block mb-0.5">E-post</label>
+        <input
+          type="email"
+          value={epost}
+          onChange={(e) => setEpost(e.target.value)}
+          className="w-full border border-line rounded px-2 py-1 text-sm focus:outline-none focus:border-copper"
+        />
+      </div>
+      {error && <div className="text-xs text-avvik">{error}</div>}
+      <div className="flex gap-2 pt-1">
+        <button
+          onClick={handleSubmit}
+          disabled={saving}
+          className="bg-copper text-white text-xs font-semibold px-3 py-1.5 rounded-lg hover:bg-copper-light transition-colors disabled:opacity-50"
+        >
+          {saving ? "Lagrer…" : "Legg til leverandør"}
+        </button>
+        <button
+          onClick={() => { setOpen(false); setError(null); }}
+          className="text-xs text-muted hover:text-ink"
+        >
+          Avbryt
+        </button>
+      </div>
+    </div>
   );
 }
 
@@ -194,16 +284,8 @@ function DraftCard({
         ) : (
           <div>
             {draft.supplier_org && !draft.supplier_id && (
-              <div className="text-xs text-avvik mb-2 flex items-center gap-2 flex-wrap">
-                <span>⚠ Org.nr {draft.supplier_org} ikke funnet</span>
-                {draft.supplier_name && (
-                  <CreateSupplierButton
-                    name={draft.supplier_name}
-                    orgNumber={draft.supplier_org}
-                    onCreated={(sup) => { setSelectedSupplier(sup); setShowSearch(false); }}
-                  />
-                )}
-                <span className="text-muted">— eller søk manuelt nedenfor</span>
+              <div className="text-xs text-avvik mb-2">
+                ⚠ Org.nr {draft.supplier_org} finnes ikke i registeret — søk eller legg til nedenfor
               </div>
             )}
             <div className="relative">
@@ -232,19 +314,17 @@ function DraftCard({
                 ))}
               </div>
             )}
-            {searchQuery.length >= 2 && !searching && (
-              <div className="mt-2">
-                <CreateSupplierButton
-                  name={searchQuery}
-                  orgNumber=""
-                  onCreated={(sup) => { setSelectedSupplier(sup); setShowSearch(false); }}
-                />
-              </div>
+            {searchQuery.length >= 2 && (
+              <CreateSupplierPanel
+                initialName={searchQuery}
+                initialOrgNumber={draft.supplier_org ?? undefined}
+                onCreated={(sup) => { setSelectedSupplier(sup); setShowSearch(false); }}
+              />
             )}
             {selectedSupplier && (
               <button
                 onClick={() => setShowSearch(false)}
-                className="text-xs text-muted mt-1.5 hover:text-ink"
+                className="text-xs text-muted mt-2 hover:text-ink"
               >
                 Avbryt
               </button>
