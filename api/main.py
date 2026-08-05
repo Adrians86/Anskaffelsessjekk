@@ -372,10 +372,18 @@ class InvoiceDraftLine(BaseModel):
 class InvoiceDraft(BaseModel):
     invoice_number: str
     supplier_name: str
+    supplier_org: str | None = None
+    supplier_id: int | None = None
     amount: float
     currency: str
     invoice_date: date | None = None
     lines: list[InvoiceDraftLine]
+
+
+class SupplierLookupRow(BaseModel):
+    id: int
+    name: str
+    org_number: str
 
 
 class InvoiceConfirm(BaseModel):
@@ -599,6 +607,17 @@ def get_invoice(invoice_id: int):
 # Invoices — write (B4)
 # ---------------------------------------------------------------------------
 
+def _match_supplier_by_org(session: Session, org: str | None) -> int | None:
+    if not org:
+        return None
+    sup = session.exec(
+        select(Supplier)
+        .where(Supplier.org_number == org)
+        .where(Supplier.is_deleted == False)  # noqa: E712
+    ).first()
+    return sup.id if sup else None
+
+
 @app.post("/api/invoices/upload/ehf", response_model=InvoiceDraft)
 async def upload_ehf(file: UploadFile = File(...)):
     """Parse an EHF/UBL file and return a draft (not saved). Human confirms before saving."""
@@ -608,12 +627,17 @@ async def upload_ehf(file: UploadFile = File(...)):
         parsed = parse_ehf(io.BytesIO(content))
     except Exception as e:
         raise HTTPException(422, f"Kunne ikke lese EHF-fil: {e}")
+    supplier_org = getattr(parsed, "supplier_org", None)
+    with get_session() as session:
+        matched_id = _match_supplier_by_org(session, supplier_org)
     return InvoiceDraft(
         invoice_number=parsed.invoice_number or "",
         supplier_name=parsed.supplier_name or "",
+        supplier_org=supplier_org,
+        supplier_id=matched_id,
         amount=float(parsed.total_ex_vat or 0),
         currency=parsed.currency or "NOK",
-        date=parsed.invoice_date,
+        invoice_date=parsed.invoice_date,
         lines=[
             InvoiceDraftLine(
                 item_ref=ln.item_ref, description=ln.description,
@@ -634,24 +658,27 @@ async def upload_csv(file: UploadFile = File(...)):
         parsed_list = parse_csv_invoices(content.decode("utf-8", errors="replace"))
     except Exception as e:
         raise HTTPException(422, f"Kunne ikke lese CSV: {e}")
-    return [
-        InvoiceDraft(
-            invoice_number=p.invoice_number or "",
-            supplier_name=p.supplier_name or "",
-            amount=float(p.total_ex_vat or 0),
-            currency=p.currency or "NOK",
-            date=p.invoice_date,
-            lines=[
-                InvoiceDraftLine(
-                    item_ref=ln.item_ref, description=ln.description,
-                    quantity=float(ln.quantity), unit_price=float(ln.unit_price),
-                    line_total=float(ln.line_total),
-                )
-                for ln in (p.lines or [])
-            ],
-        )
-        for p in parsed_list
-    ]
+    with get_session() as session:
+        return [
+            InvoiceDraft(
+                invoice_number=p.invoice_number or "",
+                supplier_name=p.supplier_name or "",
+                supplier_org=getattr(p, "supplier_org", None),
+                supplier_id=_match_supplier_by_org(session, getattr(p, "supplier_org", None)),
+                amount=float(p.total_ex_vat or 0),
+                currency=p.currency or "NOK",
+                invoice_date=p.invoice_date,
+                lines=[
+                    InvoiceDraftLine(
+                        item_ref=ln.item_ref, description=ln.description,
+                        quantity=float(ln.quantity), unit_price=float(ln.unit_price),
+                        line_total=float(ln.line_total),
+                    )
+                    for ln in (p.lines or [])
+                ],
+            )
+            for p in parsed_list
+        ]
 
 
 @app.post("/api/invoices/confirm", response_model=InvoiceRow)
@@ -729,6 +756,22 @@ def list_suppliers(
         q = search.lower()
         rows = [r for r in rows if q in r.name.lower() or q in r.org_number]
     return rows[offset:offset + limit]
+
+
+@app.get("/api/suppliers/lookup", response_model=list[SupplierLookupRow])
+def lookup_suppliers(q: str = Query("", description="Partial name or org.nr")):
+    """Lightweight supplier search for frontend dropdowns."""
+    with get_session() as session:
+        suppliers = session.exec(
+            select(Supplier).where(Supplier.is_deleted == False)  # noqa: E712
+        ).all()
+    if q:
+        ql = q.lower()
+        suppliers = [s for s in suppliers if ql in s.name.lower() or (s.org_number and ql in s.org_number)]
+    return [
+        SupplierLookupRow(id=s.id, name=s.name, org_number=s.org_number or "")
+        for s in suppliers[:20]
+    ]
 
 
 @app.get("/api/suppliers/{supplier_id}", response_model=SupplierDetail)
