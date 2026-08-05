@@ -28,7 +28,16 @@ All demonstrasjon kjører på **syntetiske data** (tydelig merket). Ingen reelle
 
 ## Teknisk
 
-Python · SQLModel · regelverk som versjonerte YAML-data · Streamlit (MVP) · se [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)
+Python · SQLModel · regelverk som versjonerte YAML-data · Streamlit (MVP) · FastAPI · Next.js · se [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)
+
+## Deployment (Render)
+
+API build command:
+```
+pip install -e . && pip install -r api/requirements.txt
+```
+
+Se [DEPLOY.md](DEPLOY.md) for fullstendig konfigurasjon.
 
 ## Kontakt
 
