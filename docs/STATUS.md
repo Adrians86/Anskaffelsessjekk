@@ -1270,3 +1270,25 @@ finding with real product impact; the rest are low-risk hardening I can batch on
 - Tests: **163 passed**, ruff clean, TypeScript green. Reconciliation: 22 310 kr unchanged.
 - Decisions needed / questions: none.
 - Next planned step: partner to review and assign next task via CLAUDE.md.
+
+---
+
+### 2026-08-05 · claude-code (Regelverk — dedikert side i navigasjonen)
+- Done: **Regelverk-siden** levert som egen nav-side (ikke zakładka i Avtaler — partnerfeedback).
+  - `GET /api/regelverk`: leser `core/rules/data/thresholds_2026.yaml` via PyYAML, returnerer 16
+    regler som strukturert JSON. Hvert element: `{id, regime, condition, consequence, citation,
+    citation_url, valid_from, valid_to, active}`. `_format_condition()` oversetter when-klausulen
+    til norsk lesbar tekst (f.eks. "Estimert verdi ≥ 1 630 000 kr · Kontrakttype = varer/tjenester").
+    `active` = `valid_to` er null eller i fremtiden.
+  - `RegelverkRow` Pydantic-modell lagt til i `api/main.py`.
+  - `web/src/app/regelverk/page.tsx`: server-komponent (ingen klient-state nødvendig), tabell
+    gruppert per regime (FOA / FOSA / ART123) med regime-header (tittel + undertekst). Kolonner:
+    Betingelse · Konsekvens (norsk navn fra map) · Kilde (sitatekst + Lovdata/Regjeringen.no-lenke) ·
+    Gjelder fra (med utløpsdato hvis satt). Utløpte regler vises med 50 % opacity + "Utløpt"-badge.
+    Footer-note med kildehenvisning.
+  - `Header.tsx`: "Regelverk" lagt til som 6. nav-item.
+  - Avtaler-siden er **ikke endret** — regelverk er ikke en zakładka der.
+- Tests: **163 passed**, ruff clean, TypeScript clean. Reconciliation: 22 310 kr unchanged.
+- Decisions needed / questions: ingen.
+- Next planned step: partner vurderer om Internt reglement (brukerdefinerte interne regler
+  med CRUD) skal bygges som neste steg, eller om Regelverk-siden er tilstrekkelig for nå.
