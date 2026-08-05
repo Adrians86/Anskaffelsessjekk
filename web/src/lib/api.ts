@@ -77,6 +77,81 @@ export interface SupplierRow {
   n_contracts: number;
 }
 
+export interface ContactOut {
+  id: number;
+  name: string;
+  role: string | null;
+  email: string | null;
+  phone: string | null;
+  side: string;
+}
+
+export interface ServiceOut {
+  id: number;
+  name: string;
+  description: string | null;
+  unit: string | null;
+  unit_price: number | null;
+}
+
+export interface QualificationOut {
+  id: number;
+  name: string;
+  valid_to: string | null;
+}
+
+export interface ContractLineOut {
+  id: number;
+  item_ref: string;
+  description: string | null;
+  unit: string;
+  unit_price: number;
+  max_quantity: number | null;
+  currency: string;
+}
+
+export interface ContractOut {
+  id: number;
+  supplier_id: number;
+  supplier_name: string;
+  title: string;
+  reference: string;
+  contract_type: string;
+  regime: string;
+  valid_from: string;
+  valid_to: string | null;
+  total_value: number | null;
+  change_clause: string;
+  status: string;
+  lines: ContractLineOut[];
+}
+
+export interface CommitmentOut {
+  id: number;
+  supplier_id: number;
+  condition_type: string;
+  source_type: string;
+  source_ref: string;
+  item_ref: string | null;
+  value: number | null;
+  unit: string | null;
+  valid_from: string;
+  valid_to: string | null;
+  formalization: string;
+  confirmed_by_user: boolean;
+  gyldighet: string | null;
+}
+
+export interface TerskelResult {
+  regime: string;
+  consequence: string;
+  citation: string;
+  citation_url: string | null;
+  verdi: number;
+  oppdragsgiver: string;
+  kontrakttype: string;
+}
+
 export interface SupplierDetail {
   id: number;
   name: string;
@@ -88,6 +163,11 @@ export interface SupplierDetail {
   email: string | null;
   phone: string | null;
   status: string | null;
+  categories: string | null;
+  notes: string | null;
   invoices: InvoiceRow[];
   contracts: { id: number; reference: string; title: string; valid_from: string; status: string | null }[];
+  contacts: ContactOut[];
+  services: ServiceOut[];
+  qualifications: QualificationOut[];
 }
