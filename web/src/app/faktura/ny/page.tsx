@@ -31,7 +31,48 @@ interface SupplierLookupRow {
   org_number: string;
 }
 
-type Tab = "ehf" | "csv";
+type Tab = "ehf" | "csv" | "pdf";
+
+function CreateSupplierButton({
+  name,
+  orgNumber,
+  onCreated,
+}: {
+  name: string;
+  orgNumber: string;
+  onCreated: (sup: SupplierLookupRow) => void;
+}) {
+  const [creating, setCreating] = useState(false);
+  const [done, setDone] = useState(false);
+
+  async function handleCreate() {
+    setCreating(true);
+    try {
+      const res = await fetch(`${API_BASE}/api/suppliers`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, org_number: orgNumber }),
+      });
+      if (!res.ok) throw new Error(`${res.status}`);
+      const sup = await res.json();
+      setDone(true);
+      onCreated({ id: sup.id, name: sup.name, org_number: sup.org_number });
+    } catch {
+      setCreating(false);
+    }
+  }
+
+  if (done) return null;
+  return (
+    <button
+      onClick={handleCreate}
+      disabled={creating}
+      className="text-xs font-semibold text-copper border border-copper/40 px-2 py-0.5 rounded hover:bg-copper/10 transition-colors disabled:opacity-50"
+    >
+      {creating ? "Oppretter…" : `Opprett «${name}»`}
+    </button>
+  );
+}
 
 function DraftCard({
   draft,
@@ -153,8 +194,16 @@ function DraftCard({
         ) : (
           <div>
             {draft.supplier_org && !draft.supplier_id && (
-              <div className="text-xs text-avvik mb-2">
-                ⚠ Org.nr {draft.supplier_org} ikke funnet — søk manuelt nedenfor
+              <div className="text-xs text-avvik mb-2 flex items-center gap-2 flex-wrap">
+                <span>⚠ Org.nr {draft.supplier_org} ikke funnet</span>
+                {draft.supplier_name && (
+                  <CreateSupplierButton
+                    name={draft.supplier_name}
+                    orgNumber={draft.supplier_org}
+                    onCreated={(sup) => { setSelectedSupplier(sup); setShowSearch(false); }}
+                  />
+                )}
+                <span className="text-muted">— eller søk manuelt nedenfor</span>
               </div>
             )}
             <div className="relative">
@@ -249,11 +298,18 @@ export default function NyFakturaPage() {
     try {
       const fd = new FormData();
       fd.append("file", file);
-      const endpoint = tab === "ehf" ? "/api/invoices/upload/ehf" : "/api/invoices/upload/csv";
+      const endpoint =
+        tab === "ehf" ? "/api/invoices/upload/ehf"
+        : tab === "csv" ? "/api/invoices/upload/csv"
+        : "/api/invoices/upload/pdf";
       const res = await fetch(`${API_BASE}${endpoint}`, { method: "POST", body: fd });
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
-        throw new Error(err.detail ?? `${res.status}`);
+        const detail: string = err.detail ?? `${res.status}`;
+        if (detail.startsWith("no_text_layer")) {
+          throw new Error("Skannet dokument — fyll inn feltene manuelt.");
+        }
+        throw new Error(detail);
       }
       const data = await res.json();
       setDrafts(Array.isArray(data) ? data : [data]);
@@ -273,13 +329,13 @@ export default function NyFakturaPage() {
         </div>
         <h1 className="font-serif text-3xl font-bold text-ink mt-1">Kontroller faktura</h1>
         <p className="text-sm text-muted mt-1">
-          Last opp EHF eller CSV — parse, bekreft og kontroller mot avtalt prisliste.
+          Last opp EHF, CSV eller PDF/bilde — parse, bekreft og kontroller mot avtalt prisliste.
         </p>
       </div>
 
       {/* Tab selector */}
       <div className="flex gap-1 border-b border-line mb-6">
-        {(["ehf", "csv"] as Tab[]).map((t) => (
+        {(["ehf", "csv", "pdf"] as Tab[]).map((t) => (
           <button
             key={t}
             onClick={() => { setTab(t); setFile(null); setDrafts([]); setUploadError(null); }}
@@ -287,7 +343,7 @@ export default function NyFakturaPage() {
               tab === t ? "border-copper text-copper" : "border-transparent text-muted hover:text-ink"
             }`}
           >
-            {t === "ehf" ? "EHF / XML" : "CSV batch"}
+            {t === "ehf" ? "EHF / XML" : t === "csv" ? "CSV batch" : "PDF / JPG"}
           </button>
         ))}
       </div>
@@ -295,11 +351,11 @@ export default function NyFakturaPage() {
       <div className="bg-card border border-line rounded-xl p-6 mb-6">
         <div>
           <label className="block text-xs font-semibold text-muted uppercase tracking-wide mb-2">
-            {tab === "ehf" ? "EHF-fil (.xml, .ehf)" : "CSV-fil (.csv)"}
+            {tab === "ehf" ? "EHF-fil (.xml, .ehf)" : tab === "csv" ? "CSV-fil (.csv)" : "PDF eller bilde (.pdf, .jpg, .png)"}
           </label>
           <input
             type="file"
-            accept={tab === "ehf" ? ".xml,.ehf" : ".csv"}
+            accept={tab === "ehf" ? ".xml,.ehf" : tab === "csv" ? ".csv" : ".pdf,.jpg,.jpeg,.png"}
             onChange={(e) => { setFile(e.target.files?.[0] ?? null); setDrafts([]); }}
             className="block w-full text-sm text-muted file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border file:border-line file:text-sm file:font-semibold file:bg-paper-dark file:text-ink hover:file:bg-paper"
           />
@@ -309,7 +365,11 @@ export default function NyFakturaPage() {
           disabled={!file || uploading}
           className="mt-4 bg-navy text-white font-semibold py-2 px-6 rounded-lg hover:bg-navy-light transition-colors disabled:opacity-50"
         >
-          {uploading ? "Laster opp…" : "Last opp og parse"}
+          {uploading
+            ? "Laster opp…"
+            : tab === "pdf"
+            ? "Les faktura"
+            : "Last opp og parse"}
         </button>
       </div>
 
