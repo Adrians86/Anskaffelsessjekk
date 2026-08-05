@@ -243,7 +243,7 @@ class TerskelResult(BaseModel):
 
 class SupplierCreate(BaseModel):
     name: str
-    org_number: str
+    org_number: str = ""
     address: str | None = None
     postal_code: str | None = None
     city: str | None = None
@@ -743,24 +743,35 @@ def _parse_text_to_draft(text: str) -> dict:
             except ValueError:
                 pass
 
+    def _to_float(raw: str) -> float:
+        """Normalise Norwegian/Polish number format → float. Returns 0.0 on failure."""
+        clean = raw.replace(" ", "").replace("\xa0", "")
+        clean = re.sub(r"[^\d,.]", "", clean)
+        if "," in clean and "." in clean:
+            # e.g. "1.234,56" — dot is thousands sep, comma is decimal
+            clean = clean.replace(".", "").replace(",", ".")
+        elif "," in clean:
+            # e.g. "300,00" — comma is decimal sep
+            clean = clean.replace(",", ".")
+        try:
+            return float(clean)
+        except ValueError:
+            return 0.0
+
     amount_raw = find([
         r"total(?:beløp)?[.:;]?\s*([\d\s.,]+)",
         r"sum[.:;]?\s*([\d\s.,]+)",
         r"å betale[.:;]?\s*([\d\s.,]+)",
         r"beløp[.:;]?\s*([\d\s.,]+)",
     ])
-    amount = 0.0
-    if amount_raw:
-        clean = amount_raw.replace(" ", "").replace("\xa0", "")
-        clean = re.sub(r"[^\d,.]", "", clean)
-        if "," in clean and "." in clean:
-            clean = clean.replace(".", "").replace(",", ".")
-        elif "," in clean:
-            clean = clean.replace(",", ".")
-        try:
-            amount = float(clean)
-        except ValueError:
-            pass
+    amount = _to_float(amount_raw) if amount_raw else 0.0
+
+    # Fallback: scan all "number with 2 decimal places" patterns in text, take the largest.
+    # Catches amounts without a label (e.g. bare "300,00" or "1 234,56").
+    if amount == 0.0:
+        candidates = re.findall(r"\d[\d\s\xa0]*[,.]\d{2}", text)
+        if candidates:
+            amount = max(_to_float(c) for c in candidates)
 
     currency = "NOK"
     if re.search(r"\bEUR\b", text):
@@ -981,10 +992,16 @@ def get_supplier(supplier_id: int):
 @app.post("/api/suppliers", response_model=SupplierRow, status_code=201)
 def create_supplier(body: SupplierCreate):
     from core.registry.leverandor import RegistryError, create_supplier as _create
+    import uuid
+    org_number = body.org_number.strip() if body.org_number else ""
+    if not org_number:
+        # Generate a unique placeholder so core's uniqueness check passes.
+        # The user can edit the real org.nr later via the leverandørkort.
+        org_number = f"UTEN-{uuid.uuid4().hex[:8].upper()}"
     with get_session() as session:
         try:
             sup = _create(
-                session, org_number=body.org_number, name=body.name,
+                session, org_number=org_number, name=body.name,
                 categories=body.categories,
             )
             if body.address or body.postal_code or body.city or body.email or body.phone:
