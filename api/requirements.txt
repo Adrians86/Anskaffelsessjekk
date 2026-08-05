@@ -1,0 +1,6 @@
+# API-specific dependencies for Render deployment.
+# Build command: pip install -e . && pip install -r api/requirements.txt
+fastapi>=0.111
+uvicorn[standard]>=0.30
+pdfplumber>=0.10
+python-multipart>=0.0.9

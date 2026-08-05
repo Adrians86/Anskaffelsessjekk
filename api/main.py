@@ -703,6 +703,128 @@ async def upload_csv(file: UploadFile = File(...)):
         ]
 
 
+def _parse_text_to_draft(text: str) -> dict:
+    """Best-effort regex extraction from raw invoice text."""
+    import re
+
+    def find(patterns, default=""):
+        for p in patterns:
+            m = re.search(p, text, re.IGNORECASE | re.MULTILINE)
+            if m:
+                return m.group(1).strip()
+        return default
+
+    invoice_number = find([
+        r"fakturanr[.:;]?\s*([A-Z0-9\-/]+)",
+        r"invoice\s+no[.:;]?\s*([A-Z0-9\-/]+)",
+        r"faktura\s+nr[.:;]?\s*([A-Z0-9\-/]+)",
+    ])
+    supplier_name = find([
+        r"^([A-ZÆØÅ][A-Za-zÆØÅæøå &\-\.]{3,60}(?:AS|ASA|DA|ANS|SA))\b",
+        r"leverand[oø]r[.:;]?\s*(.+)",
+    ])
+    supplier_org = find([
+        r"org(?:\.?nr)?[.:;]?\s*(\d{9})",
+        r"(\d{9})\s*MVA",
+    ])
+    date_raw = find([
+        r"fakturadato[.:;]?\s*(\d{1,2}[.\-/]\d{1,2}[.\-/]\d{2,4})",
+        r"dato[.:;]?\s*(\d{1,2}[.\-/]\d{1,2}[.\-/]\d{2,4})",
+        r"(\d{4}-\d{2}-\d{2})",
+    ])
+    # Normalise date to ISO
+    invoice_date = None
+    if date_raw:
+        for fmt in ("%d.%m.%Y", "%d-%m-%Y", "%d/%m/%Y", "%d.%m.%y", "%Y-%m-%d"):
+            try:
+                from datetime import datetime
+                invoice_date = datetime.strptime(date_raw, fmt).date().isoformat()
+                break
+            except ValueError:
+                pass
+
+    amount_raw = find([
+        r"total(?:beløp)?[.:;]?\s*([\d\s.,]+)",
+        r"sum[.:;]?\s*([\d\s.,]+)",
+        r"å betale[.:;]?\s*([\d\s.,]+)",
+        r"beløp[.:;]?\s*([\d\s.,]+)",
+    ])
+    amount = 0.0
+    if amount_raw:
+        clean = amount_raw.replace(" ", "").replace("\xa0", "")
+        clean = re.sub(r"[^\d,.]", "", clean)
+        if "," in clean and "." in clean:
+            clean = clean.replace(".", "").replace(",", ".")
+        elif "," in clean:
+            clean = clean.replace(",", ".")
+        try:
+            amount = float(clean)
+        except ValueError:
+            pass
+
+    currency = "NOK"
+    if re.search(r"\bEUR\b", text):
+        currency = "EUR"
+    elif re.search(r"\bUSD\b", text):
+        currency = "USD"
+
+    return dict(
+        invoice_number=invoice_number,
+        supplier_name=supplier_name,
+        supplier_org=supplier_org or None,
+        amount=amount,
+        currency=currency,
+        invoice_date=invoice_date,
+        lines=[],
+    )
+
+
+@app.post("/api/invoices/upload/pdf", response_model=InvoiceDraft)
+async def upload_pdf(file: UploadFile = File(...)):
+    """Parse a PDF or image invoice and return a draft. Raises 422 with no_text_layer if unreadable."""
+    content = await file.read()
+    filename = (file.filename or "").lower()
+    text = ""
+
+    if filename.endswith(".pdf"):
+        try:
+            import pdfplumber
+            import io as _io
+            with pdfplumber.open(_io.BytesIO(content)) as pdf:
+                parts = [page.extract_text() or "" for page in pdf.pages]
+            text = "\n".join(parts).strip()
+        except Exception as e:
+            raise HTTPException(422, f"no_text_layer: {e}")
+        if not text:
+            raise HTTPException(422, "no_text_layer")
+    else:
+        # Image: JPG / PNG
+        try:
+            import pytesseract
+            from PIL import Image
+            import io as _io
+            img = Image.open(_io.BytesIO(content))
+            text = pytesseract.image_to_string(img, lang="nor+eng").strip()
+        except Exception as e:
+            raise HTTPException(422, f"no_text_layer: {e}")
+        if not text:
+            raise HTTPException(422, "no_text_layer")
+
+    fields = _parse_text_to_draft(text)
+    with get_session() as session:
+        matched_id = _match_supplier_by_org(session, fields["supplier_org"])
+    return InvoiceDraft(
+        invoice_number=fields["invoice_number"],
+        supplier_name=fields["supplier_name"],
+        supplier_org=fields["supplier_org"],
+        supplier_id=matched_id,
+        amount=fields["amount"],
+        currency=fields["currency"],
+        invoice_date=fields["invoice_date"],
+        lines=[],
+    )
+
+
 @app.post("/api/invoices/confirm", response_model=InvoiceRow)
 def confirm_invoice(body: InvoiceConfirm):
     """Save a confirmed invoice draft and run the control engine. Returns verdict."""
