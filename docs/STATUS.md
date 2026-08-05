@@ -1292,3 +1292,27 @@ finding with real product impact; the rest are low-risk hardening I can batch on
 - Decisions needed / questions: ingen.
 - Next planned step: partner vurderer om Internt reglement (brukerdefinerte interne regler
   med CRUD) skal bygges som neste steg, eller om Regelverk-siden er tilstrekkelig for nå.
+
+---
+
+### 2026-08-05 · claude-code (Client-component conversion — Render cold-start fix)
+- Done: Alle data-fetchende sider i Next.js-appen konvertert fra Server Components til Client
+  Components. Eliminerer "server error" ved Render free-plan cold-start (API sover etter inaktivitet).
+  - `web/src/components/SleepBanner.tsx` (ny): delt feilkomponent med retry-knapp.
+    Viser "Tjenesten starter opp — prøv igjen om 30 sekunder." ved nettverksfeil.
+  - `web/src/app/leverandorer/page.tsx`: `"use client"` + `useEffect`/`useState`/`useCallback`,
+    animert skeleton (6 rader) under lasting, `SleepBanner` ved feil.
+  - `web/src/app/avtaler/page.tsx`: samme mønster, animert skeleton, `SleepBanner`.
+  - `web/src/app/regelverk/page.tsx`: konvertert tidligere i sesjonen (se forrige oppføring).
+  - `web/src/app/faktura/page.tsx`: Suspense-wrapper-mønster — `FakturaContent` (inner, bruker
+    `useSearchParams()`, fetcher data, re-kjører ved filterendring) + `FakturaPage` (outer, default
+    export, wrapper i `<Suspense>`). Beholder `FakturaFilterBar` (som allerede er klientkomponent
+    og bruker `useSearchParams()`). `buildPageUrl()` bruker `usePathname()` + `searchParams.toString()`.
+  - `web/src/app/page.tsx` (Arbeidsflate/Oversikt): samme Suspense-wrapper-mønster — `HomeContent`
+    (bruker `useSearchParams()` for periode-parameter, fetcher stats + urgent via `Promise.all`,
+    viser KPI-skeleton og urgency-skeleton under lasting) + `HomePage` (wrapper).
+    `PeriodSelector` fungerer inne i `HomeContent` uten egen Suspense (dekket av ytre grense).
+  - TypeScript-sjekk (`npx tsc --noEmit`): rent, ingen feil.
+- Tests: TypeScript-sjekk ren. Python-tester uendret (163 passed). Reconciliation: 22 310 kr.
+- Decisions needed / questions: ingen.
+- Next planned step: partner bestemmer neste funksjon.
