@@ -4,7 +4,12 @@
 
 **Service type:** Web Service  
 **Runtime:** Python 3  
-**Root directory:** *(leave blank — repo root)*
+**Root directory:** *(must be blank — the repo root, NOT `api/`)*
+
+> ⚠️ **Vanlig feil:** hvis Root Directory settes til `api/` feiler builden med
+> *"does not appear to be a Python project: neither setup.py nor pyproject.toml found"*  
+> fordi `pyproject.toml` ligger i repo-roten, og `core/`-modulen installeres
+> derfra. Root Directory **må være blank**.
 
 **Build Command:**
 ```
