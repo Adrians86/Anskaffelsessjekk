@@ -232,6 +232,15 @@ function DraftCard({
                 ))}
               </div>
             )}
+            {searchQuery.length >= 2 && !searching && (
+              <div className="mt-2">
+                <CreateSupplierButton
+                  name={searchQuery}
+                  orgNumber=""
+                  onCreated={(sup) => { setSelectedSupplier(sup); setShowSearch(false); }}
+                />
+              </div>
+            )}
             {selectedSupplier && (
               <button
                 onClick={() => setShowSearch(false)}
