@@ -36,6 +36,19 @@ if _act[2].button("⚖ Kjør terskelsjekk", use_container_width=True):
     st.switch_page("pages/4_Terskelsjekk.py")
 st.markdown("---")
 
+# G6a — DFØ 9-stegsmodellen: static context widget
+st.markdown("""
+<div style="background:var(--card);border:1px solid var(--line);
+            border-radius:var(--radius-card);padding:14px 18px;margin-bottom:20px">
+  <span style="font-size:11px;letter-spacing:2px;text-transform:uppercase;
+               color:var(--muted)">DFØ 9-STEGSMODELLEN</span>
+  <p style="margin:6px 0 0;font-size:14px;color:var(--ink)">
+    Anskaffelsessjekk dekker <strong>steg 6</strong> (terskelsjekk og prosedyre)
+    og <strong>steg 9</strong> (kontraktsoppfølging og fakturakontroll).
+  </p>
+</div>
+""", unsafe_allow_html=True)
+
 
 @st.cache_data
 def compute_portfolio_stats():

@@ -47,6 +47,26 @@ _CHIP_FORPLIKTELSER = "#B08D2E"   # gold
 _CHIP_REGELVERK = "#2E7D32"       # green
 _CHIP_INTERNT = "#1F3A5F"         # navy
 
+# G6c — DFØ "Vanlig fallgruve" per avvikstype (static contextual hints, no new logic)
+_FALLGRUVER: dict[str, str] = {
+    "PRICE_ABOVE_AGREED": (
+        "Priser endres ofte i e-poster som ikke oppdateres i avtalen. "
+        "Registrer alle prisendringer som forpliktelser (DFØ Modul 9)."
+    ),
+    "QTY_ABOVE_MAX": (
+        "Avrop over rammeavtalens maksimalverdi er vanlig ved manglende "
+        "løpende kontroll. Sjekk forpliktelsesregisteret (DFØ Modul 9)."
+    ),
+    "MISSING_RECEIPT": (
+        "Faktura uten bekreftet mottak er den vanligste årsaken til "
+        "tvister i kontraktsoppfølging (DFØ Modul 9)."
+    ),
+    "NO_AGREED_BASIS": (
+        "Feil prosedyre ved feil terskelverdi — eller manglende avtale. "
+        "Kjør terskelsjekk (steg 6) ved alle nye bestillinger over 100 000 kr."
+    ),
+}
+
 
 def _source_chip(label: str, color: str) -> str:
     return (f'<span style="border:1px solid {color};color:{color};font-size:10px;'
@@ -122,6 +142,12 @@ def render_audit_card(session, inv) -> None:
                 st.markdown(f"**Avtalt:** {f.expected} · **Fakturert:** {f.actual}")
             if not is_email and f.deviation_amount:
                 st.markdown(f"**Avvik:** {nok(f.deviation_amount)}")
+        # G6c — DFØ "Vanlig fallgruve" — only for deviations with a known pattern
+        if f.severity == Severity.DEVIATION:
+            _hint = _FALLGRUVER.get(f.code.value)
+            if _hint:
+                with st.expander("💡 Vanlig fallgruve"):
+                    st.caption(_hint)
 
     # V3 — Internt reglement: the THIRD source (organization's own rules, data-driven).
     reglement_hits = ReglementEngine().evaluate({
