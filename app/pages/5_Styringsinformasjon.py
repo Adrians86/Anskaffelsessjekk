@@ -6,6 +6,7 @@ import streamlit as st
 from chrome import footer, header, page_header
 from db import get_session, money, nok
 from sqlmodel import select
+from theme import section_header
 
 from core.matching.currency import is_foreign
 from core.models import Invoice, Supplier
@@ -141,7 +142,7 @@ st.altair_chart(chart, use_container_width=True)
 st.markdown("---")
 
 # --- Per-supplier deviation table ---------------------------------------------
-st.subheader("Avvik per leverandør")
+section_header("Avvik per leverandør")
 sup_rows = [
     {"Leverandør": name, "Fakturaer": a["fakturaer"], "Funn": a["funn"],
      "_verdi": a["verdi"], "Verdi funnet": nok(a["verdi"])}
@@ -154,7 +155,7 @@ st.dataframe(
 )
 
 st.markdown("---")
-st.subheader("Fakturaer")
+section_header("Fakturaer")
 st.dataframe(rows, hide_index=True, use_container_width=True)
 st.caption("Hver kontroll er logget i revisjonssporet med regelversjon — "
            "fullt etterprøvbart ved revisjon.")
