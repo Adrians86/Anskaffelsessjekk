@@ -41,10 +41,10 @@ def test_every_page_opens(page: str) -> None:
 
 
 def test_theme_and_page_header_on_every_page() -> None:
-    """The «Lyst kontor» theme (navy #20364F) and the editorial header render on each page."""
+    """The «Lyst kontor» theme (navy #1F3A5F) and the editorial header render on each page."""
     for page in PAGES:
         md = " ".join(m.value for m in _run(page).markdown)
-        assert "#20364F" in md, f"{page}: theme not injected"
+        assert "#1F3A5F" in md, f"{page}: theme not injected"
         assert "as-header" in md, f"{page}: shared page header missing"
         assert "Syntetiske data" in md, f"{page}: syntetiske-data chip missing"
 
