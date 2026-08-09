@@ -2,6 +2,7 @@ import streamlit as st
 from chrome import footer, header, page_header
 from db import dato, get_session, nok
 from sqlmodel import select
+from theme import section_header
 from ui_forpliktelser import (
     gyldighet_legend,
     render_email_commitment,
@@ -90,7 +91,7 @@ with tab_register:
             select(Commitment).where(Commitment.source_type == "EMAIL")
         ).all()
 
-        st.subheader("📧 E-postavtaler i kontrollgrunnlaget")
+        section_header("E-postavtaler i kontrollgrunnlaget")
         st.caption("En e-postavtale kontrolleres alltid mot avtalen og regelverket — "
                    "den er aldri et selvstendig bevis. Nye forpliktelser legges til på "
                    "leverandørkortet (Leverandører → fanen «Avtaler, forpliktelser og fakturaer»).")
@@ -107,7 +108,7 @@ with tab_register:
 
         st.divider()
 
-        st.subheader("Kontrakter")
+        section_header("Kontrakter")
         for contract in session.exec(select(Contract)).all():
             sup = session.get(Supplier, contract.supplier_id)
             with st.container(border=True):

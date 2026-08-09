@@ -7,6 +7,7 @@ import streamlit as st
 from chrome import footer, header, page_header
 from db import dato, get_session, money, nok
 from sqlmodel import select
+from theme import section_header
 from ui_common import verdict_pill
 from ui_forpliktelser import forpliktelse_flash, render_supplier_forpliktelser
 from ui_kontrakt import render_ny_avtale_form, show_kontrakt_flash, status_badge, type_label
@@ -226,7 +227,7 @@ else:
 
     # --- Leverandørkartotek (U1: faner + popover-redigering) -------------------
     st.divider()
-    st.subheader("Leverandørkartotek")
+    section_header("Leverandørkartotek")
     st.caption("Alt om leverandøren på ett sted — organisert i faner. Redigering ligger i popover, "
                "så skjermen holdes ryddig.")
     chosen_name = st.selectbox("Åpne kartotek", options=[r["Navn"] for r in rows])
