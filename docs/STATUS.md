@@ -1316,3 +1316,21 @@ finding with real product impact; the rest are low-risk hardening I can batch on
 - Tests: TypeScript-sjekk ren. Python-tester uendret (163 passed). Reconciliation: 22 310 kr.
 - Decisions needed / questions: ingen.
 - Next planned step: partner bestemmer neste funksjon.
+
+---
+
+### 2026-08-09 · claude-code (Grafikk v1 + DFØ — G0→G8)
+
+- Done: «Grafikk v1 + DFØ»-brief gjennomført end-to-end på Streamlit-appen (ingen Next.js-endringer, ingen core/-endringer, scope freeze overholdt).
+  - **G0** `docs/GRAFIKK_AUDIT.md`: visuell revisjon av alle 8 sider — hardkodede verdier kartlagt og mappet til nye design-tokens.
+  - **G1** `app/theme.py` fullstendig oppdatert: nye primær-tokens (NAVY=#1F3A5F, NAVY_DEEP=#152A47, GOLD=#B08D2E, INK=#1A2230, MUTED=#5C6B7F, LINE=#E3E8EF, BG=#F4F6F9, CARD=#FFFFFF), status-tokens (STATUS_OK/WARN/AVVIK BG+FG), radius/skygge/typografi-konstanter.
+  - **G2–G4** Bakoverkompatible aliaser (HAIRLINE=LINE, PAPER=BG, SURFACE=CARD, SERIF, --as-*-CSS-variabler) bevart. Ny PILL_COLORS-dict (SAMSVAR/TIL_VURDERING/AVVIK/FORMALISERT/UFORMELL). Nye hjelpere: `inject_css` (alias), `section_header()`, `card_open/close()`, `kpi_tile()`, `pill()`.
+  - **G3** `st.subheader()` erstattet med `section_header()` i Avtaler, Leverandørkort og Styringsinformasjon.
+  - **G5** Navy sidebar CSS med gull aktiv-indikator i `_STYLE`.
+  - **G6a** DFØ 9-stegsmodell-widget på Hjem.py (steg 6 + steg 9 identifisert).
+  - **G6b+G6d** DFØ-kildekilde-caption ved Terskelsjekk-vurdering + alltid-synlig DFØ 9-steg kontekst-expander med FOA-referanser.
+  - **G6c** `_FALLGRUVER`-dict i Fakturakontroll: konteksthint per DEVIATION-funn (PRICE_ABOVE_AGREED, QTY_ABOVE_MAX, MISSING_RECEIPT, NO_AGREED_BASIS) i egne expanders.
+  - **G8** `tests/test_theme.py` (12 tester): primær-tokens, BRAND.md-farger uendret, status-token-justering, bakoverkompatibilitet, inject_css alias, pill HTML, PILL_COLORS-dekning, kortstruktur, Georgia i FONT_SERIF, XSS-escaping i section_header (hard rule #11). Ruff E741-feil fikset i test_worklist.py.
+- Tests: **175 passed**, ruff clean. Reconciliation: 22 310 kr unchanged.
+- Decisions needed / questions: ingen.
+- Next planned step: partner vurderer neste sprint — PDF protokoll-eksport, Streamlit Community Cloud deploy-klargjøring eller nye funksjoner etter kommersialiserings-gate.
