@@ -4,8 +4,6 @@ from __future__ import annotations
 import os
 import sys
 
-import pytest
-
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "app")))
 
 
@@ -28,7 +26,7 @@ def test_landing_has_worklist_link():
     at = AppTest.from_file("app/Hjem.py", default_timeout=30)
     at.run()
     labels = [b.label for b in at.button]
-    assert any("arbeidsliste" in l.lower() for l in labels), \
+    assert any("arbeidsliste" in lbl.lower() for lbl in labels), \
         f"Expected worklist link on landing, got buttons: {labels}"
 
 
@@ -44,7 +42,6 @@ def test_landing_not_a_wall_of_invoices():
 
 def test_status_derivation():
     """W4: invoice status is derived from verdict + decision."""
-    from core.models import InvoiceDecision
 
     # Import the status helper from the worklist page module
     sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "app", "pages")))
@@ -100,10 +97,10 @@ def test_arbeidsliste_has_filters():
     at = AppTest.from_file("app/pages/8_Arbeidsliste.py", default_timeout=30)
     at.run()
     selectbox_labels = [s.label for s in at.selectbox]
-    assert any("verdikt" in l.lower() for l in selectbox_labels), \
+    assert any("verdikt" in lbl.lower() for lbl in selectbox_labels), \
         f"Expected verdict filter, got: {selectbox_labels}"
-    assert any("status" in l.lower() for l in selectbox_labels), \
+    assert any("status" in lbl.lower() for lbl in selectbox_labels), \
         f"Expected status filter, got: {selectbox_labels}"
     text_input_labels = [t.label for t in at.text_input]
-    assert any("søk" in l.lower() for l in text_input_labels), \
+    assert any("søk" in lbl.lower() for lbl in text_input_labels), \
         f"Expected search field, got: {text_input_labels}"
