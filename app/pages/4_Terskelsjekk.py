@@ -104,5 +104,25 @@ if st.button("Vurder", type="primary"):
     st.caption("**Regimet vurderes ALLTID før beløpet — beløp avgjør aldri regime.**")
     st.caption("Veiledende vurdering basert på registrerte regler — "
                "beslutningsstøtte, ikke juridisk rådgivning.")
+    # G6b — DFØ reference under terskelsjekk result
+    st.caption("Kilde: DFØ 9-stegsmodellen, steg 6 — Valg av prosedyre")
+
+# G6d — DFØ 9-stegsmodellen context expander (always visible, below the result)
+st.markdown("---")
+with st.expander("📋 DFØs 9-stegsmodellen — kontekst for regelverket"):
+    st.markdown("""
+Anskaffelsesregelverket (FOA/FOSA/RAF) gjelder gjennom hele anskaffelsesprosessen.
+Anskaffelsessjekk støtter spesielt:
+
+**Steg 6 — Valg av prosedyre:** Terskelsjekk mot FOA del II/III, FOSA og RAF
+sikrer at riktig regime og prosedyre velges. Fra 1. juli 2026 gjelder nytt
+innslagspunkt på 500 000 kr (Anskaffelsesloven §2).
+
+**Steg 9 — Kontraktsoppfølging:** Three-way match (bestilling ↔ mottak ↔ faktura),
+kontroll mot rammeavtale og forpliktelser, verdikt med paragrafhenvisning.
+Kontinuerlig dialog mellom oppdragsgiver og leverandør er avgjørende (DFØ Modul 9).
+
+*Kilde: DFØ — Innovative anskaffelser, 9-stegsmodellen (2026)*
+    """)
 
 footer()
