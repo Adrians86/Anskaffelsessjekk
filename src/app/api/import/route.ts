@@ -39,10 +39,12 @@ export async function POST(req: NextRequest) {
 
     await supabase.from('materials').upsert(materials, { onConflict: 'organization_id,material_number' })
 
-    const hasMovements = rows.some(r => r.movement_type || r.date)
+    // FIX: detect MB51 by movement_type presence only — MB52 has snapshot dates but no movement types
+    const hasMovements = rows.some(r => r.movement_type && r.movement_type !== '')
     let rowsImported = 0
 
     if (hasMovements) {
+      // --- MB51: stock movements ---
       const movements = rows.map(r => ({
         organization_id: orgId,
         material_number: r.material_number,
@@ -57,11 +59,24 @@ export async function POST(req: NextRequest) {
       if (mvtError) throw new Error(mvtError.message)
       rowsImported = insertedMvt?.length || movements.length
 
+      // Read current stock from DB to use in ROP calculation
+      const { data: currentStockRows } = await supabase
+        .from('current_stock')
+        .select('material_number, quantity')
+        .eq('organization_id', orgId)
+
+      const currentStockMap: Record<string, number> = {}
+      for (const s of currentStockRows || []) {
+        currentStockMap[s.material_number] = s.quantity
+      }
+
       const allMovements = movements as StockMovement[]
+      const unitPrices = Object.fromEntries(rows.map(r => [r.material_number, r.unit_price || 0]))
+
       const ropResults = computeRop({
         movements: allMovements,
-        currentStock: {},
-        unitPrices: Object.fromEntries(rows.map(r => [r.material_number, r.unit_price || 0])),
+        currentStock: currentStockMap,
+        unitPrices,
         leadTimeDays: 14,
         serviceLevel: 0.95,
         organizationId: orgId,
@@ -73,21 +88,70 @@ export async function POST(req: NextRequest) {
         await supabase.from('rop_results').insert(ropResults.map(r => ({ ...r, computed_at: new Date().toISOString() })))
       }
     } else {
+      // --- MB52: stock snapshot ---
       const stockRows = rows.map(r => ({
         organization_id: orgId,
         material_number: r.material_number,
         quantity: r.quantity,
         open_orders: 0,
-        snapshot_date: new Date().toISOString().slice(0, 10),
+        snapshot_date: r.date || new Date().toISOString().slice(0, 10),
         updated_at: new Date().toISOString(),
       }))
 
       const { error: stockError } = await supabase.from('current_stock').upsert(stockRows, { onConflict: 'organization_id,material_number' })
       if (stockError) throw new Error(stockError.message)
       rowsImported = stockRows.length
+
+      // FIX: After MB52 import, re-run ROP with real stock levels from DB
+      const { data: allMovementRows } = await supabase
+        .from('stock_movements')
+        .select('*')
+        .eq('organization_id', orgId)
+
+      if (allMovementRows && allMovementRows.length > 0) {
+        const currentStockMap: Record<string, number> = {}
+        for (const s of stockRows) {
+          currentStockMap[s.material_number] = s.quantity
+        }
+
+        const { data: matRows } = await supabase
+          .from('materials')
+          .select('material_number, standard_price')
+          .eq('organization_id', orgId)
+
+        const unitPrices: Record<string, number> = {}
+        for (const m of matRows || []) {
+          unitPrices[m.material_number] = m.standard_price || 0
+        }
+        for (const r of rows) {
+          if (r.unit_price) unitPrices[r.material_number] = r.unit_price
+        }
+
+        const ropResults = computeRop({
+          movements: allMovementRows as StockMovement[],
+          currentStock: currentStockMap,
+          unitPrices,
+          leadTimeDays: 14,
+          serviceLevel: 0.95,
+          organizationId: orgId,
+          lang: 'EN',
+        })
+
+        if (ropResults.length) {
+          await supabase.from('rop_results').delete().eq('organization_id', orgId)
+          await supabase.from('rop_results').insert(ropResults.map(r => ({ ...r, computed_at: new Date().toISOString() })))
+        }
+      }
     }
 
-    await supabase.from('file_imports').insert({ organization_id: orgId, filename, import_type: hasMovements ? 'MB51' : 'MB52', rows_imported: rowsImported, mapping_profile: mapping, status: 'done' })
+    await supabase.from('file_imports').insert({
+      organization_id: orgId,
+      filename,
+      import_type: hasMovements ? 'MB51' : 'MB52',
+      rows_imported: rowsImported,
+      mapping_profile: mapping,
+      status: 'done',
+    })
 
     return NextResponse.json({ rows_imported: rowsImported, status: 'ok' })
   } catch (e: unknown) {
